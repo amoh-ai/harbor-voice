@@ -42,6 +42,8 @@ from harbor_voice.perturbation.base import ApplyContext
 from harbor_voice.perturbation.base import Perturbation
 from harbor_voice.perturbation.base import SeedSet
 from harbor_voice.perturbation.conversation import ConversationPlan
+from harbor_voice.perturbation.persona import PersonaPlan
+from harbor_voice.perturbation.speech import SpeechPlan
 
 _LAYER_ORDER: dict[Layer, int] = {
     Layer.PERSONA: 0,
@@ -121,6 +123,16 @@ class PerturbationPipeline:
             it — L5 decides when the caller speaks and transforms no audio, so
             putting it in the apply loop with an identity transform would put
             a layer in the plan record that never touched a sample.
+        persona: L1 — who speaks. Lands at synthesis and at the content
+            source, both of which happen before there is audio.
+        speech: L2's **text** half. Its signal half (loudness, speaking rate,
+            muffling) are ordinary perturbations and go in ``perturbations``.
+
+    Four insertion points, because the six layers genuinely have four:
+    content and voice (L1, L2 text), the signal chain (L2 signal, L3, L4),
+    and the floor (L5). Collapsing them into one list would need three
+    identity transforms and a plan record that lies about what touched the
+    audio.
     """
 
     def __init__(
@@ -132,6 +144,8 @@ class PerturbationPipeline:
         fmt: AudioFormat = CANONICAL,
         clean_store: CleanStore | None = None,
         conversation: ConversationPlan | None = None,
+        persona: PersonaPlan | None = None,
+        speech: SpeechPlan | None = None,
     ) -> None:
         self._perturbations = tuple(
             sorted(perturbations, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
@@ -141,6 +155,8 @@ class PerturbationPipeline:
         self._fmt = fmt
         self._clean = clean_store or CleanStore()
         self._conversation = conversation or ConversationPlan()
+        self._persona = persona or PersonaPlan()
+        self._speech = speech or SpeechPlan()
         self._ctx = ApplyContext(fmt=fmt)
         self._frames = 0
         self.reset()
@@ -158,10 +174,23 @@ class PerturbationPipeline:
         return self._conversation
 
     @property
+    def persona(self) -> PersonaPlan:
+        """The L1 axes — voice at synthesis, behaviour at the content source."""
+        return self._persona
+
+    @property
+    def speech(self) -> SpeechPlan:
+        """L2's text half. The signal half lives in :attr:`perturbations`."""
+        return self._speech
+
+    @property
     def active_layers(self) -> frozenset[LayerKey]:
         """What a task has switched on. Feeds metric applicability."""
-        return frozenset(p.key for p in self._perturbations) | (
-            self._conversation.active_layers
+        return (
+            frozenset(p.key for p in self._perturbations)
+            | self._conversation.active_layers
+            | self._persona.active_layers
+            | self._speech.active_layers
         )
 
     @property
@@ -180,7 +209,7 @@ class PerturbationPipeline:
     @property
     def is_unperturbed(self) -> bool:
         """Whether *no* layer of any kind is active — the ``clean`` profile."""
-        return not self._perturbations and self._conversation.is_empty
+        return not self.active_layers
 
     @property
     def clean_store(self) -> CleanStore:
@@ -199,6 +228,8 @@ class PerturbationPipeline:
         for perturbation in self._perturbations:
             perturbation.reset(self._seeds)
         self._conversation.reset(self._seeds)
+        self._persona.reset()
+        self._speech.reset(self._seeds)
 
     def process(self, frame: AudioFrame, *, is_speech: bool = True) -> AudioFrame:
         """Degrade one frame, retaining its clean twin.
@@ -261,6 +292,8 @@ class PerturbationPipeline:
                     for p in self._perturbations
                 },
                 **self._conversation.as_record(),
+                **self._persona.as_record(),
+                **self._speech.as_record(),
             },
             frames_processed=self._frames,
         )
@@ -287,7 +320,7 @@ class PerturbationPipeline:
 
     @override
     def __repr__(self) -> str:
-        keys = [str(p.key) for p in self._perturbations]
-        keys += sorted(str(k) for k in self._conversation.active_layers)
-        layers = ", ".join(keys) or "clean"
+        signal = [str(p.key) for p in self._perturbations]
+        beside = self.active_layers - {p.key for p in self._perturbations}
+        layers = ", ".join(signal + sorted(str(k) for k in beside)) or "clean"
         return f"PerturbationPipeline({layers}, seed={self._seeds.root})"

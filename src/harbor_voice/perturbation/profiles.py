@@ -30,7 +30,12 @@ from harbor_voice.perturbation.conversation import ConversationPlan
 from harbor_voice.perturbation.conversation import ProbeKind
 from harbor_voice.perturbation.environment import BackgroundBed
 from harbor_voice.perturbation.environment import synthetic_bed
+from harbor_voice.perturbation.persona import Accent
+from harbor_voice.perturbation.persona import PersonaPlan
+from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.perturbation.plan import PerturbationPipeline
+from harbor_voice.perturbation.speech import SpeechPlan
+from harbor_voice.perturbation.speech import VocalTics
 
 Builder = Callable[[SeedSet], PerturbationPipeline]
 
@@ -71,16 +76,24 @@ class Profile:
         """Build the pipeline, or say which layer is missing.
 
         Raises:
-            ProfileNotBuildable: Naming the unbuilt layers, because "not
+            ProfileNotBuildable: Saying what is actually missing, because "not
                 supported" and "not yet" are different answers and the caller
                 deserves the second one.
+
+                The reason comes from :attr:`note` when there is one. Inferring
+                it from the layer list was right while whole layers were
+                unbuilt and became wrong the moment one was not: ``fdb_disfluent``
+                declares L2 and L5, both of which now exist, and is unbuildable
+                because nobody has the recorded corpus.
         """
         if self.build is None:
-            missing = sorted({key.layer.value for key in self.layers})
+            reason = self.note or (
+                f"it needs {sorted({k.layer.value for k in self.layers})}, "
+                f"which harbor-voice does not implement yet"
+            )
             raise ProfileNotBuildable(
-                f"profile {self.name!r} needs {missing}, which "
-                f"harbor-voice does not implement yet. Its layers are declared "
-                f"so 'doctor' and 'profiles' can report on it"
+                f"profile {self.name!r} cannot be built: {reason}. Its layers "
+                f"are declared so 'doctor' and 'profiles' can report on it"
             )
         return self.build(seeds)
 
@@ -147,6 +160,63 @@ def _selectivity_probes(seeds: SeedSet) -> PerturbationPipeline:
     )
 
 
+def _eva_accent(seeds: SeedSet) -> PerturbationPipeline:
+    """EVA condition A — an accented caller on an otherwise clean line.
+
+    Pins ``accent`` and not ``behaviour``, which is EVA's own constraint:
+    ``PerturbationConfig`` makes the two mutually exclusive because each maps
+    onto a pre-provisioned ElevenLabs agent ID and a call gets one ID. A
+    behaviour variant is therefore a *different* EVA condition, not a second
+    axis of this one.
+
+    Note:
+        Which accent EVA's published condition A uses is **unconfirmed** —
+        their four are french, indian, spanish and chinese. It must be read
+        off the paper before this profile is used for a parity claim.
+    """
+    return PerturbationPipeline(
+        seeds=seeds,
+        plan_id=PlanId("eva_a"),
+        persona=PersonaPlan(voice=VoiceSelection(accent=Accent.INDIAN)),
+    )
+
+
+def _eva_accent_plus_bed(seeds: SeedSet) -> PerturbationPipeline:
+    """EVA condition A+B — the accented caller, now in a noisy room."""
+    return PerturbationPipeline(
+        [
+            BackgroundBed(
+                source=synthetic_bed(seconds=10.0, seed=7),
+                target_snr_db=15.0,
+                snr_drift_db=3.0,
+                variation_speed=0.1,
+            )
+        ],
+        seeds=seeds,
+        plan_id=PlanId("eva_a_plus_b"),
+        persona=PersonaPlan(voice=VoiceSelection(accent=Accent.INDIAN)),
+    )
+
+
+def _tau_voice_default(seeds: SeedSet) -> PerturbationPipeline:
+    """tau-voice's default condition — tics, a room, and a telephone line."""
+    return PerturbationPipeline(
+        [
+            BackgroundBed(
+                source=synthetic_bed(seconds=10.0, seed=7),
+                target_snr_db=15.0,
+                snr_drift_db=2.0,
+                variation_speed=0.1,
+            ),
+            MuLawCodec(),
+            GilbertElliottLoss(rate=0.02, burst_duration_ms=200.0),
+        ],
+        seeds=seeds,
+        plan_id=PlanId("tau_voice_default"),
+        speech=SpeechPlan([VocalTics()], seeds=seeds),
+    )
+
+
 def _noisy_line(seeds: SeedSet) -> PerturbationPipeline:
     """L3 + L4 together — a noisy room over a bad line."""
     return PerturbationPipeline(
@@ -200,15 +270,17 @@ PROFILES: dict[str, Profile] = {
         ),
         Profile(
             name="eva_a",
-            layers=_keys("L1.accent", "L1.behaviour"),
+            layers=_keys("L1.accent"),
             reproduces="EVA condition A",
-            note="needs L1 persona",
+            build=_eva_accent,
+            note="accent only; EVA makes accent and behaviour exclusive, and "
+            "which accent condition A pins is unconfirmed",
         ),
         Profile(
             name="eva_a_plus_b",
-            layers=_keys("L1.accent", "L1.behaviour", "L3.background_bed"),
+            layers=_keys("L1.accent", "L3.background_bed"),
             reproduces="EVA condition A+B",
-            note="needs L1 persona",
+            build=_eva_accent_plus_bed,
         ),
         Profile(
             name="tau_voice_default",
@@ -216,7 +288,7 @@ PROFILES: dict[str, Profile] = {
                 "L2.vocal_tics", "L3.background_bed", "L4.codec", "L4.frame_loss"
             ),
             reproduces="tau-voice",
-            note="needs L2 speech",
+            build=_tau_voice_default,
         ),
         Profile(
             name="fdb_overlap",
@@ -236,7 +308,9 @@ PROFILES: dict[str, Profile] = {
             name="fdb_disfluent",
             layers=_keys("L2.disfluency", "L5.interruption"),
             reproduces="FDB v3",
-            note="needs L2 speech and a corpus swap",
+            note="needs FDB-v3's recorded disfluency corpus, which is "
+            "CC BY-NC 4.0. The L2 text layers exist; their docs are "
+            "explicit that a synthesised 'um' is not a substitute",
         ),
     )
 }

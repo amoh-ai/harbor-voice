@@ -159,6 +159,7 @@ class UniversalSimulator:
         self._index = 0
         self._seq = 0
         self._utterances: list[Utterance] = []
+        self._pipeline.persona.apply_to_tts(self._tts)
 
     # ------------------------------------------------------------- declared
 
@@ -178,9 +179,10 @@ class UniversalSimulator:
     def capabilities(self) -> Capabilities:
         """What this simulator can serve. Enforced at load."""
         layers = {p.layer for p in self._pipeline.perturbations}
-        if not self._pipeline.conversation.is_empty:
-            layers.add(Layer.CONVERSATION)
+        layers.update(key.layer for key in self._pipeline.active_layers)
         if self._tts is not None:
+            # A TTS makes the persona axis *servable* even when this run asked
+            # for nothing: a task may activate L1 against this simulator.
             layers.add(Layer.PERSONA)
         return Capabilities(
             duplex=frozenset({Duplex.HALF, Duplex.FULL}),
@@ -207,7 +209,8 @@ class UniversalSimulator:
         if content is None:
             return None
 
-        clean_pcm = await self._audio_for(content)
+        spoken = self._pipeline.speech.apply(content.text)
+        clean_pcm = await self._audio_for(content, text=spoken)
         clean_digest = self._pipeline.clean_store.put(clean_pcm) if clean_pcm else None
         frames = self._frame_up(clean_pcm)
         degraded = self._pipeline.process_all(frames)
@@ -215,7 +218,10 @@ class UniversalSimulator:
         utterance = Utterance(
             index=self._index,
             party=self._party,
-            said=content.text,
+            # The L2 text layer runs *before* this, so `said` is what the
+            # caller actually said. Scoring the agent against the
+            # pre-tic sentence would charge it for hearing correctly.
+            said=spoken,
             frames=degraded,
             clean_digest=clean_digest,
             intent=content.intent,
@@ -226,6 +232,17 @@ class UniversalSimulator:
         self._index += 1
         self._utterances.append(utterance)
         return utterance
+
+    @property
+    def persona_brief(self) -> str:
+        """The caller's brief with L1's behaviour folded in.
+
+        The content source is given this rather than its own brief, so a task
+        persona and a behaviour variant compose instead of one replacing the
+        other.
+        """
+        base = getattr(self._content, "brief", "")
+        return self._pipeline.persona.brief_for(str(base))
 
     async def say(
         self,
@@ -264,12 +281,18 @@ class UniversalSimulator:
         """Synthesise one scheduled L5 interjection."""
         return await self.say(probe.text, probe=probe.kind, intent=probe.kind.value)
 
-    async def _audio_for(self, content: Content) -> bytes:
-        """Pre-recorded audio wins; otherwise synthesise."""
+    async def _audio_for(self, content: Content, *, text: str | None = None) -> bytes:
+        """Pre-recorded audio wins; otherwise synthesise.
+
+        Pre-recorded audio is **not** re-synthesised to carry an L2 text
+        rewrite. A corpus clip is the point — a real
+        hesitation, recorded — and regenerating it through a TTS to insert an
+        "um" would throw away the only thing it was chosen for.
+        """
         if content.audio is not None:
             self._fmt.validate_buffer(len(content.audio))
             return content.audio
-        return await self._synthesize(content.text)
+        return await self._synthesize(content.text if text is None else text)
 
     async def _synthesize(self, text: str) -> bytes:
         if self._tts is None:

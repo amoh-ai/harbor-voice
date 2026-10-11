@@ -24,6 +24,13 @@ from harbor_voice.perturbation.conversation import ProbeSpec
 from harbor_voice.perturbation.conversation import injector_for
 from harbor_voice.perturbation.environment import BackgroundBed
 from harbor_voice.perturbation.environment import synthetic_bed
+from harbor_voice.perturbation.persona import Accent
+from harbor_voice.perturbation.persona import Behaviour
+from harbor_voice.perturbation.persona import Gender
+from harbor_voice.perturbation.persona import PersonaError
+from harbor_voice.perturbation.persona import PersonaPlan
+from harbor_voice.perturbation.persona import VoiceSelectable
+from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.perturbation.plan import CleanReferenceError
 from harbor_voice.perturbation.plan import CleanStore
 from harbor_voice.perturbation.plan import PerturbationPipeline
@@ -36,6 +43,13 @@ from harbor_voice.perturbation.profiles import UnknownProfile
 from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.perturbation.profiles import profile_names
 from harbor_voice.perturbation.profiles import summarise
+from harbor_voice.perturbation.speech import DynamicMuffling
+from harbor_voice.perturbation.speech import Loudness
+from harbor_voice.perturbation.speech import SpeakingRate
+from harbor_voice.perturbation.speech import SpeechError
+from harbor_voice.perturbation.speech import SpeechPlan
+from harbor_voice.perturbation.speech import TextPerturbation
+from harbor_voice.perturbation.speech import VocalTics
 
 __all__ = [
     "PROFILES",
@@ -47,17 +61,24 @@ __all__ = [
     "profile_names",
     "summarise",
     "TELEPHONY_HZ",
+    "Accent",
     "ApplyContext",
+    "Behaviour",
     "BackgroundBed",
     "CleanReferenceError",
     "CleanStore",
     "ConversationError",
     "ConversationPlan",
+    "DynamicMuffling",
+    "Gender",
     "GilbertElliottLoss",
     "Landing",
+    "Loudness",
     "MuLawCodec",
     "Perturbation",
     "PerturbationPipeline",
+    "PersonaError",
+    "PersonaPlan",
     "PlanRecord",
     "Probe",
     "ProbeInjector",
@@ -65,7 +86,14 @@ __all__ = [
     "ProbeResult",
     "ProbeSpec",
     "RunningMean",
+    "SpeakingRate",
+    "SpeechError",
+    "SpeechPlan",
     "SeedSet",
     "injector_for",
+    "TextPerturbation",
+    "VocalTics",
+    "VoiceSelectable",
+    "VoiceSelection",
     "synthetic_bed",
 ]

@@ -41,12 +41,12 @@ class TestProfilesAreNamedConditions:
     def test_unbuilt_layers_are_declared_not_hidden(self) -> None:
         """'Not supported' and 'not yet' are different claims."""
         names = profile_names()
-        assert "eva_a" in names
-        assert "eva_a" not in profile_names(buildable_only=True)
+        assert "fdb_disfluent" in names
+        assert "fdb_disfluent" not in profile_names(buildable_only=True)
 
     def test_an_unbuildable_profile_says_which_layer_is_missing(self) -> None:
-        with pytest.raises(ProfileNotBuildable, match=r"L1"):
-            get_profile("eva_a").pipeline(SeedSet.derive(1))
+        with pytest.raises(ProfileNotBuildable, match=r"corpus"):
+            get_profile("fdb_disfluent").pipeline(SeedSet.derive(1))
 
     def test_l5_profiles_build_now_that_the_layer_exists(self) -> None:
         """Adding L5 moved these from declared to buildable; nothing else did."""
@@ -90,10 +90,10 @@ class TestDoctorPredictsTheRun:
         assert not report.ok
 
     def test_an_unbuildable_profile_blocks(self) -> None:
-        report = diagnose(capabilities=s2s(), profile="tau_voice_default")
+        report = diagnose(capabilities=s2s(), profile="fdb_disfluent")
         blocked = report.of(Severity.BLOCKED)
         assert len(blocked) == 1
-        assert "L2" in blocked[0].detail
+        assert "corpus" in blocked[0].detail
         assert not report.ok
 
     def test_it_predicts_which_metrics_abstain_and_why(self) -> None:
@@ -151,7 +151,7 @@ class TestTheCli:
     def test_profiles_can_hide_what_cannot_run_here(self) -> None:
         result = self._run("profiles", "--buildable")
         assert "telephony" in result.stdout
-        assert "eva_a" not in result.stdout
+        assert "fdb_disfluent" not in result.stdout
 
     def test_caps_separates_attested_claims_from_unverified_ones(self) -> None:
         """The offline set is attested outright — there is no network between
@@ -185,7 +185,7 @@ class TestTheCli:
         assert "moved by:" in result.stdout
 
     def test_doctor_exits_nonzero_on_a_broken_configuration(self) -> None:
-        result = self._run("doctor", "--profile", "tau_voice_default")
+        result = self._run("doctor", "--profile", "fdb_disfluent")
         assert result.exit_code == 1
         assert "BLOCKED" in result.stdout
 

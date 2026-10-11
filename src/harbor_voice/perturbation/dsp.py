@@ -201,13 +201,13 @@ def resample_clean(samples: np.ndarray, from_hz: int, to_hz: int) -> np.ndarray:
         raise ValueError(f"sample rates must be positive: {from_hz} -> {to_hz}")
 
     if to_hz < from_hz:
-        filtered = _lowpass(samples, cutoff_hz=to_hz / 2.0, rate_hz=from_hz)
+        filtered = low_pass(samples, cutoff_hz=to_hz / 2.0, rate_hz=from_hz)
         return resample(filtered, from_hz, to_hz)
     stretched = resample(samples, from_hz, to_hz)
-    return _lowpass(stretched, cutoff_hz=from_hz / 2.0, rate_hz=to_hz)
+    return low_pass(stretched, cutoff_hz=from_hz / 2.0, rate_hz=to_hz)
 
 
-def _lowpass(
+def low_pass(
     samples: np.ndarray, *, cutoff_hz: float, rate_hz: int, taps: int = 63
 ) -> np.ndarray:
     """Windowed-sinc FIR low-pass, zero-phase by centring the kernel.
