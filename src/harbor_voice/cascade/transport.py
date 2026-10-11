@@ -1,0 +1,252 @@
+"""The reference cascade, as a transport.
+
+STT -> LLM -> TTS, composed in-process, so **harbor-voice owns every seam** and
+can mark all seven stages. A speech-to-speech provider exposes two.
+
+Turn boundaries are detected by input-side tail silence: once no frame has
+arrived for ``input_idle_s``, the accumulated audio is a turn and the pipeline
+runs. That is deliberately the same rule the output side uses
+(:func:`~harbor_voice.transport.drain.drain_until_idle`) — a turn ends when
+somebody stops talking, on both sides.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+from typing import override
+
+from harbor_voice.audio.clock import Clock
+from harbor_voice.audio.clock import SessionClock
+from harbor_voice.audio.format import CANONICAL
+from harbor_voice.audio.frame import AudioFrame
+from harbor_voice.audio.stages import Stage
+from harbor_voice.audio.stages import StageMark
+from harbor_voice.providers import LLMProvider
+from harbor_voice.providers import STTProvider
+from harbor_voice.providers import Transcript
+from harbor_voice.providers import TTSProvider
+from harbor_voice.capabilities import Capabilities
+from harbor_voice.capabilities import Duplex
+from harbor_voice.capabilities import Pipeline
+from harbor_voice.capabilities import TurnControl
+from harbor_voice.ids import PartyId
+from harbor_voice.transport.base import SessionConfig
+from harbor_voice.transport.base import VoiceTransport
+
+DEFAULT_INPUT_IDLE_S = 0.08
+
+
+class CascadeTransport(VoiceTransport):
+    """A composed STT -> LLM -> TTS agent behind the transport interface.
+
+    Args:
+        stt: Recognition slot. Swap this, hold the LLM, and you isolate
+            mishearing from misreasoning.
+        llm: Reasoning slot.
+        tts: Synthesis slot.
+        party: Who this agent speaks as.
+        input_idle_s: Tail silence on the input side that ends a turn.
+        emit_partials: Whether the STT's partials are surfaced. Must match the
+            capability declaration, which the conformance suite checks.
+    """
+
+    def __init__(
+        self,
+        *,
+        stt: STTProvider,
+        llm: LLMProvider,
+        tts: TTSProvider,
+        party: PartyId,
+        clock: SessionClock | None = None,
+        input_idle_s: float = DEFAULT_INPUT_IDLE_S,
+        emit_partials: bool = False,
+    ) -> None:
+        self._stt = stt
+        self._llm = llm
+        self._tts = tts
+        self._party = party
+        self._clock = clock or SessionClock()
+        self._input_idle_s = input_idle_s
+        self._emit_partials = emit_partials
+
+        self._open = False
+        self._inbound: list[AudioFrame] = []
+        self._outbound: asyncio.Queue[AudioFrame | None] = asyncio.Queue()
+        self._watcher: asyncio.Task[None] | None = None
+        self._last_input_at: float | None = None
+        self._seq = 0
+        self._history: list[str] = []
+        self._stages: list[StageMark] = []
+        self._transcripts: list[Transcript] = []
+
+    # ------------------------------------------------------------ declared
+
+    @property
+    @override
+    def capabilities(self) -> Capabilities:
+        """A cascade sees every seam, so it declares every stage it emits."""
+        stages = {
+            Stage.VAD_SPEECH_START,
+            Stage.VAD_SPEECH_END,
+            Stage.ASR_FINAL,
+            Stage.LLM_FIRST_TOKEN,
+            Stage.LLM_DONE,
+            Stage.TTS_FIRST_BYTE,
+            Stage.TTS_DONE,
+            Stage.RESPONSE_START,
+            Stage.RESPONSE_DONE,
+        }
+        if self._emit_partials:
+            stages.add(Stage.ASR_PARTIAL)
+        return Capabilities(
+            duplex=frozenset({Duplex.HALF, Duplex.FULL}),
+            pipeline=Pipeline.CASCADE,
+            turn_control=TurnControl.HARNESS_VAD,
+            exposes_asr=True,
+            exposes_partials=self._emit_partials,
+            exposes_stages=frozenset(stages),
+            can_be_interrupted=True,
+            audio_in=CANONICAL,
+            audio_out=self._tts.audio_format,
+        )
+
+    @property
+    @override
+    def is_open(self) -> bool:
+        return self._open
+
+    @property
+    def stages(self) -> tuple[StageMark, ...]:
+        """Stage marks emitted so far. Read by the adapter per turn."""
+        return tuple(self._stages)
+
+    @property
+    def transcripts(self) -> tuple[Transcript, ...]:
+        """Every final transcript, in order. The HEARD side."""
+        return tuple(self._transcripts)
+
+    def take_stages(self) -> tuple[StageMark, ...]:
+        """Drain and return the stage marks accumulated since the last call."""
+        marks = tuple(self._stages)
+        self._stages.clear()
+        return marks
+
+    # ----------------------------------------------------------- lifecycle
+
+    @override
+    async def open(self, config: SessionConfig) -> None:
+        self._open = True
+        self._outbound = asyncio.Queue()
+        self._inbound = []
+        self._last_input_at = None
+        self._watcher = asyncio.create_task(self._watch_for_turn_end())
+
+    @override
+    async def close(self) -> None:
+        self._open = False
+        if self._watcher is not None:
+            self._watcher.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._watcher
+            self._watcher = None
+        await self._outbound.put(None)
+
+    @override
+    async def tx(self, frame: AudioFrame) -> None:
+        self.require_open()
+        if not self._inbound:
+            self._mark(Stage.VAD_SPEECH_START, self._clock.now())
+        self._inbound.append(frame)
+        self._last_input_at = self._clock.now()
+
+    @override
+    def rx(self) -> AsyncIterator[AudioFrame]:
+        async def _gen() -> AsyncIterator[AudioFrame]:
+            while True:
+                frame = await self._outbound.get()
+                if frame is None:
+                    return
+                yield frame
+
+        return _gen()
+
+    # -------------------------------------------------------------- engine
+
+    async def _watch_for_turn_end(self) -> None:
+        """Run the pipeline once the input side goes quiet."""
+        while True:
+            await asyncio.sleep(self._input_idle_s / 2)
+            if not self._inbound or self._last_input_at is None:
+                continue
+            if self._clock.now() - self._last_input_at < self._input_idle_s:
+                continue
+            turn_audio = list(self._inbound)
+            self._inbound = []
+            self._last_input_at = None
+            await self._run_pipeline(turn_audio)
+
+    async def _run_pipeline(self, audio: list[AudioFrame]) -> None:
+        """STT -> LLM -> TTS, marking each seam as it is crossed."""
+        self._mark(Stage.VAD_SPEECH_END, self._clock.now())
+
+        heard = ""
+        async for partial in self._stt.transcribe(audio):
+            if partial.is_final:
+                heard = partial.text
+                self._transcripts.append(partial)
+                self._mark(Stage.ASR_FINAL, self._clock.now(), text=partial.text)
+            elif self._emit_partials:
+                self._mark(Stage.ASR_PARTIAL, self._clock.now(), text=partial.text)
+
+        said_parts: list[str] = []
+        first_token = True
+        async for chunk in self._llm.respond(heard, self._history):
+            if first_token:
+                self._mark(Stage.LLM_FIRST_TOKEN, self._clock.now())
+                first_token = False
+            said_parts.append(chunk)
+        # Concatenated, not space-joined. A streaming LLM yields raw text
+        # fragments ("Sure", ", I'll", " reschedule"), so inserting spaces
+        # between them mangles the text: "Sure , I'll  reschedule". The
+        # offline EchoLLM yields whole words, which made a space-join look
+        # correct for every test until a real provider arrived.
+        said = "".join(said_parts).strip()
+        self._mark(Stage.LLM_DONE, self._clock.now(), text=said)
+        self._history.extend((heard, said))
+
+        first_byte = True
+        emitted = 0
+        async for pcm in self._tts.synthesize(said, party=self._party):
+            now = self._clock.now()
+            if first_byte:
+                self._mark(Stage.TTS_FIRST_BYTE, now)
+                self._mark(Stage.RESPONSE_START, now)
+                first_byte = False
+            frame = AudioFrame(
+                pcm=pcm,
+                seq=self._seq,
+                party=self._party,
+                t_produced=now,
+                fmt=self._tts.audio_format,
+            ).stamp(Clock.RX, now)
+            self._seq += 1
+            emitted += 1
+            await self._outbound.put(frame)
+
+        done_at = self._clock.now()
+        self._mark(Stage.TTS_DONE, done_at)
+        if emitted:
+            self._mark(Stage.RESPONSE_DONE, done_at)
+
+    def _mark(self, stage: Stage, t: float, **meta: object) -> None:
+        self._stages.append(
+            StageMark(
+                stage=stage,
+                t=t,
+                party=self._party,
+                clock=Clock.PRODUCED,
+                meta=dict(meta),
+            )
+        )
