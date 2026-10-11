@@ -31,7 +31,10 @@ from harbor_voice.metrics.rollup import bootstrap_mean
 from harbor_voice.metrics.rollup import harbor_metric_payload
 from harbor_voice.metrics.rollup import load_job
 from harbor_voice.metrics.rollup import load_trial_dir
+from harbor_voice.metrics.rollup import RobustnessReport
+from harbor_voice.metrics.rollup import Unpaired
 from harbor_voice.metrics.rollup import paired_delta
+from harbor_voice.metrics.rollup import robustness
 from harbor_voice.metrics.rollup import roll_up
 from harbor_voice.metrics.rollup import roll_up_all
 from harbor_voice.metrics.task import TASK_PREFIX
@@ -77,7 +80,10 @@ __all__ = [
     "edit_counts",
     "evaluate_metric",
     "metric",
+    "RobustnessReport",
+    "Unpaired",
     "paired_delta",
+    "robustness",
     "roll_up",
     "roll_up_all",
     "word_error_rate",

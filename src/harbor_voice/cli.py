@@ -207,6 +207,66 @@ def metrics() -> None:
         typer.echo(f"{'':<34}moved by: {moved}")
 
 
+# ----------------------------------------------------------------- report
+
+
+@voice_app.command()
+def report(
+    job: Annotated[Path, typer.Argument(help="Directory of scored trials.")],
+    baseline: Annotated[
+        str, typer.Option(help="Profile every other one is compared against.")
+    ] = "clean",
+) -> None:
+    """Roll a job up, and diff each profile against the baseline.
+
+    Reads ``measurement.json`` per trial, never ``reward.json``: the reward
+    file is harbor's flat surface and has already lost the verdicts, the
+    sample sizes and the reasons.
+    """
+    from harbor_voice.metrics.rollup import load_job
+    from harbor_voice.metrics.rollup import robustness
+
+    trials = load_job(job)
+    if not trials:
+        typer.secho(f"no scored trials under {job}", fg="yellow", err=True)
+        raise typer.Exit(2)
+
+    valid = sum(1 for t in trials if t.measurement_valid)
+    typer.echo(f"{len(trials)} trials, {valid} valid, {len(trials) - valid} excluded")
+
+    from harbor_voice.metrics.rollup import roll_up_all
+
+    for name, rolled in sorted(roll_up_all(trials).items()):
+        if rolled.mean is None:
+            continue
+        spread = ""
+        if rolled.bootstrap is not None:
+            spread = f"  +/-{rolled.bootstrap.std:.3f} over a single draw"
+        typer.echo(
+            f"  {name:<34}{rolled.mean:>8.3f}  median={rolled.median:.3f}  "
+            f"n={rolled.n_reported}{spread}"
+        )
+
+    result = robustness(trials, baseline=baseline)
+    typer.echo("")
+    typer.echo(f"robustness vs {baseline!r}")
+    if result.is_empty:
+        typer.secho("  nothing paired", fg="yellow")
+    for profile in result.profiles:
+        typer.echo(f"  {profile}  ({result.pairs.get(profile, 0)} pairs)")
+        for name, delta in sorted(result.deltas[profile].items()):
+            if delta.mean is not None:
+                typer.echo(f"    {name:<32}{delta.mean:>+8.3f}")
+
+    # Loud, because a table built from four pairs out of fifty trials looks
+    # exactly like one built from fifty.
+    for entry in result.unpaired:
+        typer.secho(
+            f"  UNPAIRED {entry.trial_id or '?'} ({entry.profile}): {entry.reason}",
+            fg="yellow",
+        )
+
+
 # ----------------------------------------------------------------- listen
 
 

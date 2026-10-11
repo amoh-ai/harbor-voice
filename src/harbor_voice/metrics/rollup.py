@@ -24,6 +24,7 @@ import math
 import random
 from collections.abc import Sequence
 from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from typing import Any
 
@@ -136,12 +137,39 @@ class TrialResults:
     results: Sequence[MetricResult]
     measurement_valid: bool = True
     trial_id: str | None = None
+    comparable_on: dict[str, Any] = field(default_factory=dict)
+    """The pinned dimensions this trial may be compared along.
+
+    Carried from the trajectory through ``measurement.json`` so the robustness
+    family can pair a degraded run with its baseline from **data** rather than
+    from a filename convention somebody has to remember.
+    """
 
     def get(self, name: str) -> MetricResult | None:
         for result in self.results:
             if result.name == name:
                 return result
         return None
+
+    @property
+    def profile(self) -> str | None:
+        """Which named condition produced this trial."""
+        value = self.comparable_on.get("profile")
+        return None if value is None else str(value)
+
+    @property
+    def pairing_key(self) -> tuple[tuple[str, str], ...]:
+        """Everything that must match for a Δ to mean anything — except profile.
+
+        Profile is the one dimension a robustness comparison is *allowed* to
+        differ on. Everything else — task, duplex, pipeline, seed, schema —
+        has to be identical, or the delta is measuring two changes at once.
+        """
+        return tuple(
+            sorted(
+                (k, repr(v)) for k, v in self.comparable_on.items() if k != "profile"
+            )
+        )
 
 
 def is_failure(value: float, threshold: float, direction: Direction) -> bool:
@@ -355,6 +383,151 @@ def paired_delta(
     )
 
 
+# ----------------------------------------------------- the robustness family
+
+
+DEFAULT_BASELINE_PROFILE = "clean"
+
+
+@dataclass(frozen=True, slots=True)
+class Unpaired:
+    """A trial that produced no delta, and why.
+
+    Named rather than dropped, for the same reason the rollup keeps invalid
+    trials visible: a robustness table built from four pairs out of fifty
+    trials looks exactly like one built from fifty, and the difference is the
+    entire claim.
+    """
+
+    trial_id: str | None
+    profile: str | None
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class RobustnessReport:
+    """Δ against the baseline profile, per degraded profile."""
+
+    baseline: str
+    deltas: dict[str, dict[str, Rollup]] = field(default_factory=dict)
+    """profile -> metric -> the delta rollup."""
+
+    pairs: dict[str, int] = field(default_factory=dict)
+    """profile -> how many trials were actually matched."""
+
+    unpaired: tuple[Unpaired, ...] = ()
+
+    @property
+    def profiles(self) -> tuple[str, ...]:
+        return tuple(sorted(self.deltas))
+
+    @property
+    def is_empty(self) -> bool:
+        return not any(self.deltas.values())
+
+    def flat(self) -> dict[str, float]:
+        """One name per number, for a results table.
+
+        ``robustness.telephony.delta.divergence.wer_said_heard`` — long, and
+        every segment earns its place: which family, which condition, which
+        metric. A shorter name would need a legend.
+        """
+        out: dict[str, float] = {}
+        for profile, metrics in self.deltas.items():
+            for name, rollup in metrics.items():
+                if rollup.mean is not None:
+                    out[f"robustness.{profile}.delta.{name}"] = rollup.mean
+        return out
+
+
+def robustness(
+    trials: Sequence[TrialResults],
+    *,
+    baseline: str = DEFAULT_BASELINE_PROFILE,
+    bootstrap: bool = True,
+    seed: int = DEFAULT_BOOTSTRAP_SEED,
+) -> RobustnessReport:
+    """Pair each degraded trial with its matched baseline and diff them.
+
+    The robustness row is "Δ metric vs the ``clean`` profile at matched
+    seed". Matched means matched on *everything but the profile*: same task,
+    same duplex, same pipeline, same seed, same schema. Pairing on seed alone
+    would happily diff a half-duplex clean run against a full-duplex noisy
+    one and call the difference robustness.
+
+    Invalid trials are excluded before pairing, not after — a
+    degraded run that was never valid has nothing to contribute, and pairing
+    it would silently remove its baseline partner from the clean side too.
+    """
+    usable = [t for t in trials if t.measurement_valid]
+    unpaired: list[Unpaired] = [
+        Unpaired(t.trial_id, t.profile, "measurement_invalid")
+        for t in trials
+        if not t.measurement_valid
+    ]
+
+    baselines: dict[tuple[tuple[str, str], ...], TrialResults] = {}
+    degraded: dict[str, list[tuple[TrialResults, tuple[tuple[str, str], ...]]]] = {}
+    for trial in usable:
+        if trial.profile is None:
+            unpaired.append(Unpaired(trial.trial_id, None, "no profile recorded"))
+            continue
+        key = trial.pairing_key
+        if trial.profile == baseline:
+            if key in baselines:
+                unpaired.append(
+                    Unpaired(
+                        trial.trial_id,
+                        trial.profile,
+                        "a second baseline shares this comparison key; the "
+                        "first one was used",
+                    )
+                )
+                continue
+            baselines[key] = trial
+        else:
+            degraded.setdefault(trial.profile, []).append((trial, key))
+
+    deltas: dict[str, dict[str, Rollup]] = {}
+    pairs: dict[str, int] = {}
+    for profile, entries in sorted(degraded.items()):
+        matched: list[TrialResults] = []
+        partners: list[TrialResults] = []
+        for trial, key in entries:
+            partner = baselines.get(key)
+            if partner is None:
+                unpaired.append(
+                    Unpaired(
+                        trial.trial_id,
+                        profile,
+                        f"no {baseline!r} trial shares its comparison key",
+                    )
+                )
+                continue
+            matched.append(trial)
+            partners.append(partner)
+        pairs[profile] = len(matched)
+        if not matched:
+            deltas[profile] = {}
+            continue
+
+        degraded_rolled = roll_up_all(matched, bootstrap=bootstrap, seed=seed)
+        clean_rolled = roll_up_all(partners, bootstrap=bootstrap, seed=seed)
+        per_metric: dict[str, Rollup] = {}
+        for name, rolled in sorted(degraded_rolled.items()):
+            delta = paired_delta(name, rolled, clean_rolled.get(name))
+            if delta is not None:
+                per_metric[name] = delta
+        deltas[profile] = per_metric
+
+    return RobustnessReport(
+        baseline=baseline,
+        deltas=deltas,
+        pairs=pairs,
+        unpaired=tuple(unpaired),
+    )
+
+
 def _median(ordered: Sequence[float]) -> float:
     mid = len(ordered) // 2
     if len(ordered) % 2:
@@ -407,6 +580,7 @@ def load_trial_dir(directory: Path) -> TrialResults | None:
         results=results,
         measurement_valid=valid,
         trial_id=payload.get("trial_id"),
+        comparable_on=dict(payload.get("comparable_on") or {}),
     )
 
 

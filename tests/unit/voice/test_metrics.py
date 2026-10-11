@@ -27,6 +27,7 @@ from harbor_voice.metrics import edit_counts
 from harbor_voice.metrics import evaluate_metric
 from harbor_voice.metrics import metric
 from harbor_voice.metrics import paired_delta
+from harbor_voice.metrics import robustness
 from harbor_voice.metrics import roll_up
 from harbor_voice.metrics import word_error_rate
 from harbor_voice.providers.cache import Cassette
@@ -533,6 +534,124 @@ class TestPairedDelta:
     def test_a_missing_baseline_is_not_zero(self) -> None:
         degraded = roll_up("m", [trial(0.4)], bootstrap=False)
         assert paired_delta("m", degraded, None) is None
+
+
+# ------------------------------------------- the robustness family
+
+
+def paired_trial(
+    value: float | None,
+    *,
+    profile: str,
+    seed: int = 1,
+    valid: bool = True,
+    duplex: str = "full",
+    trial_id: str | None = None,
+):  # noqa: ANN202 - a TrialResults carrying a comparison key
+    base = trial(value, valid=valid)
+    return TrialResults(
+        results=base.results,
+        measurement_valid=valid,
+        trial_id=trial_id or f"{profile}-{seed}",
+        comparable_on={
+            "task_sha": "abc",
+            "profile": profile,
+            "duplex": duplex,
+            "pipeline": "cascade",
+            "seed_root": seed,
+            "schema_version": "atif-voice-1",
+        },
+    )
+
+
+class TestRobustnessPairsOnEverythingButProfile:
+    def test_it_diffs_a_degraded_profile_against_its_matched_baseline(self) -> None:
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1),
+                paired_trial(0.44, profile="telephony", seed=2),
+                paired_trial(0.02, profile="clean", seed=1),
+                paired_trial(0.04, profile="clean", seed=2),
+            ],
+            bootstrap=False,
+        )
+        assert report.pairs == {"telephony": 2}
+        assert report.deltas["telephony"]["m"].mean == pytest.approx(0.39)
+        assert not report.unpaired
+
+    def test_a_mismatched_seed_pairs_with_nothing_and_says_so(self) -> None:
+        """The failure that would otherwise look like a clean empty table."""
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1),
+                paired_trial(0.02, profile="clean", seed=99),
+            ],
+            bootstrap=False,
+        )
+        assert report.pairs == {"telephony": 0}
+        assert report.is_empty
+        assert [u.reason for u in report.unpaired] == [
+            "no 'clean' trial shares its comparison key"
+        ]
+
+    def test_it_refuses_to_diff_across_a_second_changed_dimension(self) -> None:
+        """Same seed, different duplex — the delta would be two changes."""
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1, duplex="full"),
+                paired_trial(0.02, profile="clean", seed=1, duplex="half"),
+            ],
+            bootstrap=False,
+        )
+        assert report.pairs == {"telephony": 0}
+        assert report.unpaired
+
+    def test_an_invalid_trial_leaves_before_pairing(self) -> None:
+        """It would otherwise consume its baseline partner too."""
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1, valid=False),
+                paired_trial(0.44, profile="telephony", seed=2),
+                paired_trial(0.02, profile="clean", seed=1),
+                paired_trial(0.04, profile="clean", seed=2),
+            ],
+            bootstrap=False,
+        )
+        assert report.pairs == {"telephony": 1}
+        assert [u.reason for u in report.unpaired] == ["measurement_invalid"]
+
+    def test_several_degraded_profiles_are_kept_apart(self) -> None:
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1),
+                paired_trial(0.20, profile="eva_b", seed=1),
+                paired_trial(0.02, profile="clean", seed=1),
+            ],
+            bootstrap=False,
+        )
+        assert report.profiles == ("eva_b", "telephony")
+        assert report.deltas["telephony"]["m"].mean == pytest.approx(0.38)
+        assert report.deltas["eva_b"]["m"].mean == pytest.approx(0.18)
+
+    def test_a_trial_with_no_recorded_profile_is_named_not_dropped(self) -> None:
+        report = robustness([trial(0.4)], bootstrap=False)
+        assert [u.reason for u in report.unpaired] == ["no profile recorded"]
+
+    def test_the_flat_table_names_family_condition_and_metric(self) -> None:
+        report = robustness(
+            [
+                paired_trial(0.40, profile="telephony", seed=1),
+                paired_trial(0.02, profile="clean", seed=1),
+            ],
+            bootstrap=False,
+        )
+        assert set(report.flat()) == {"robustness.telephony.delta.m"}
+
+    def test_a_baseline_only_job_produces_no_deltas_and_no_complaints(self) -> None:
+        """Running only the control is a legitimate thing to do."""
+        report = robustness([paired_trial(0.02, profile="clean", seed=1)])
+        assert report.is_empty
+        assert not report.unpaired
 
 
 # ----------------------------------------------------- three outputs
