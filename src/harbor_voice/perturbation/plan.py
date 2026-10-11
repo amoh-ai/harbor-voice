@@ -42,8 +42,10 @@ from harbor_voice.perturbation.base import ApplyContext
 from harbor_voice.perturbation.base import Perturbation
 from harbor_voice.perturbation.base import SeedSet
 from harbor_voice.perturbation.conversation import ConversationPlan
+from harbor_voice.perturbation.jitter import FramePerturbation
 from harbor_voice.perturbation.persona import PersonaPlan
 from harbor_voice.perturbation.speech import SpeechPlan
+from harbor_voice.perturbation.world import WorldPlan
 
 _LAYER_ORDER: dict[Layer, int] = {
     Layer.PERSONA: 0,
@@ -137,7 +139,7 @@ class PerturbationPipeline:
 
     def __init__(
         self,
-        perturbations: Iterable[Perturbation] = (),
+        perturbations: Iterable[Perturbation | FramePerturbation] = (),
         *,
         seeds: SeedSet | None = None,
         plan_id: PlanId = PlanId("plan"),
@@ -146,10 +148,16 @@ class PerturbationPipeline:
         conversation: ConversationPlan | None = None,
         persona: PersonaPlan | None = None,
         speech: SpeechPlan | None = None,
+        world: WorldPlan | None = None,
     ) -> None:
+        ordered = sorted(perturbations, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
+        # Split by shape rather than asking the caller to. A frame-stream
+        # layer runs after every per-frame one: a codec runs in the handset
+        # and the network delays what it produced, never the other way round.
         self._perturbations = tuple(
-            sorted(perturbations, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
+            p for p in ordered if not isinstance(p, FramePerturbation)
         )
+        self._stream = tuple(p for p in ordered if isinstance(p, FramePerturbation))
         self._seeds = seeds or SeedSet.derive(0)
         self._plan_id = plan_id
         self._fmt = fmt
@@ -157,6 +165,7 @@ class PerturbationPipeline:
         self._conversation = conversation or ConversationPlan()
         self._persona = persona or PersonaPlan()
         self._speech = speech or SpeechPlan()
+        self._world = world or WorldPlan()
         self._ctx = ApplyContext(fmt=fmt)
         self._frames = 0
         self.reset()
@@ -184,10 +193,27 @@ class PerturbationPipeline:
         return self._speech
 
     @property
+    def world(self) -> WorldPlan:
+        """L6 — latency, errors and outages on the tool boundary."""
+        return self._world
+
+    @property
+    def stream(self) -> tuple[FramePerturbation, ...]:
+        """L4 layers that transform the frame stream, not a frame.
+
+        Separate because they are not definable on one frame: delay
+        *variation* needs a sequence, so :meth:`process` cannot apply them
+        and :meth:`process_all` must.
+        """
+        return self._stream
+
+    @property
     def active_layers(self) -> frozenset[LayerKey]:
         """What a task has switched on. Feeds metric applicability."""
         return (
             frozenset(p.key for p in self._perturbations)
+            | frozenset(p.key for p in self._stream)
+            | self._world.active_layers
             | self._conversation.active_layers
             | self._persona.active_layers
             | self._speech.active_layers
@@ -204,7 +230,7 @@ class PerturbationPipeline:
         store a redundant copy of every frame and then verify it against
         itself.
         """
-        return not self._perturbations
+        return not self._perturbations and not self._stream
 
     @property
     def is_unperturbed(self) -> bool:
@@ -225,9 +251,10 @@ class PerturbationPipeline:
         """Re-seed every layer and clear per-run state."""
         self._ctx = ApplyContext(fmt=self._fmt)
         self._frames = 0
-        for perturbation in self._perturbations:
+        for perturbation in (*self._perturbations, *self._stream):
             perturbation.reset(self._seeds)
         self._conversation.reset(self._seeds)
+        self._world.reset(self._seeds)
         self._persona.reset()
         self._speech.reset(self._seeds)
 
@@ -277,7 +304,17 @@ class PerturbationPipeline:
     def process_all(
         self, frames: Sequence[AudioFrame], *, is_speech: bool = True
     ) -> tuple[AudioFrame, ...]:
-        return tuple(self.process(f, is_speech=is_speech) for f in frames)
+        """Degrade a whole utterance, per frame and then as a stream.
+
+        The stream stage can **return fewer frames than it was given**: a
+        frame that misses its playout deadline is discarded, which is loss
+        caused by delay. That is why jitter cannot live in ``process`` — a
+        per-frame contract has nowhere to express "this one never arrived".
+        """
+        out = tuple(self.process(f, is_speech=is_speech) for f in frames)
+        for stream in self._stream:
+            out = stream.apply(out)
+        return out
 
     # -------------------------------------------------------------- record
 
@@ -294,6 +331,11 @@ class PerturbationPipeline:
                 **self._conversation.as_record(),
                 **self._persona.as_record(),
                 **self._speech.as_record(),
+                **self._world.as_record(),
+                **{
+                    str(p.key): {"params": p.params(), "achieved": p.achieved()}
+                    for p in self._stream
+                },
             },
             frames_processed=self._frames,
         )
@@ -320,7 +362,9 @@ class PerturbationPipeline:
 
     @override
     def __repr__(self) -> str:
-        signal = [str(p.key) for p in self._perturbations]
-        beside = self.active_layers - {p.key for p in self._perturbations}
+        signal = [str(p.key) for p in (*self._perturbations, *self._stream)]
+        beside = self.active_layers - {
+            p.key for p in (*self._perturbations, *self._stream)
+        }
         layers = ", ".join(signal + sorted(str(k) for k in beside)) or "clean"
         return f"PerturbationPipeline({layers}, seed={self._seeds.root})"

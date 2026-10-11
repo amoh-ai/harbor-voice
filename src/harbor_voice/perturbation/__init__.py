@@ -24,6 +24,10 @@ from harbor_voice.perturbation.conversation import ProbeSpec
 from harbor_voice.perturbation.conversation import injector_for
 from harbor_voice.perturbation.environment import BackgroundBed
 from harbor_voice.perturbation.environment import synthetic_bed
+from harbor_voice.perturbation.jitter import Distribution
+from harbor_voice.perturbation.jitter import FramePerturbation
+from harbor_voice.perturbation.jitter import Jitter
+from harbor_voice.perturbation.jitter import JitterError
 from harbor_voice.perturbation.persona import Accent
 from harbor_voice.perturbation.persona import Behaviour
 from harbor_voice.perturbation.persona import Gender
@@ -50,6 +54,12 @@ from harbor_voice.perturbation.speech import SpeechError
 from harbor_voice.perturbation.speech import SpeechPlan
 from harbor_voice.perturbation.speech import TextPerturbation
 from harbor_voice.perturbation.speech import VocalTics
+from harbor_voice.perturbation.world import LatencyProfile
+from harbor_voice.perturbation.world import Outage
+from harbor_voice.perturbation.world import ToolFailure
+from harbor_voice.perturbation.world import ToolOutcome
+from harbor_voice.perturbation.world import WorldError
+from harbor_voice.perturbation.world import WorldPlan
 
 __all__ = [
     "PROFILES",
@@ -69,12 +79,18 @@ __all__ = [
     "CleanStore",
     "ConversationError",
     "ConversationPlan",
+    "Distribution",
     "DynamicMuffling",
+    "FramePerturbation",
     "Gender",
     "GilbertElliottLoss",
     "Landing",
+    "Jitter",
+    "JitterError",
+    "LatencyProfile",
     "Loudness",
     "MuLawCodec",
+    "Outage",
     "Perturbation",
     "PerturbationPipeline",
     "PersonaError",
@@ -92,8 +108,12 @@ __all__ = [
     "SeedSet",
     "injector_for",
     "TextPerturbation",
+    "ToolFailure",
+    "ToolOutcome",
     "VocalTics",
     "VoiceSelectable",
     "VoiceSelection",
+    "WorldError",
+    "WorldPlan",
     "synthetic_bed",
 ]

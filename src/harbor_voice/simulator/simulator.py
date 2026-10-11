@@ -168,6 +168,18 @@ class UniversalSimulator:
         return self._party
 
     @property
+    def clock(self) -> SessionClock:
+        """The clock this simulator stamps ``t_produced`` with.
+
+        Exposed because anything that transmits these frames has to share it.
+        Two ``SessionClock`` instances start at different instants, so a
+        driver with its own clock reads a *smaller* ``now()`` than the
+        simulator did a moment earlier, and the frame's monotonic guard
+        rejects a transmit that appears to precede its own synthesis.
+        """
+        return self._clock
+
+    @property
     def pipeline(self) -> PerturbationPipeline:
         return self._pipeline
 

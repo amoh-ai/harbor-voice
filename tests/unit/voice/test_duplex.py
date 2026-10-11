@@ -603,6 +603,14 @@ class TestTheMetricsFinallyReport:
         driver, turn, sim = await _run(
             TalkativeAgent(yield_after=40), plan=_plan(ProbeKind.INTERRUPTION)
         )
+        # Assert the preconditions as themselves. A drain that timed out
+        # reports reply_total_s=None, which reads as *never yielded* -- so
+        # without this the next assertion fails as a wrong verdict about the
+        # agent rather than as the harness running out of patience.
+        assert turn.is_complete, f"the reply did not finish: {turn.stop}"
+        (fired,) = turn.probes
+        assert fired.is_measurable, fired.landing
+
         result = _value(
             _trajectory(turn, sim, floor=driver.floor), "turns.barge_in_success_rate"
         )

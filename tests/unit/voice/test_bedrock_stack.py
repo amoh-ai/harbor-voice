@@ -234,3 +234,99 @@ class TestTheVerbatimGuardDoesNotCryWolf:
             requested_text="I'll reschedule it for Tuesday.",
         )
         assert not spoken.is_verbatim
+
+
+# ----------------------------------------------- the second recogniser
+
+
+class TestTwoVendorsInOneAccount:
+    """The reference stack needs an independent recogniser. We have two."""
+
+    def test_nova_stt_is_registered_as_its_own_provider(self) -> None:
+        from harbor_voice.providers.aws import register_all
+
+        registry = default_registry()
+        register_all(registry)
+        entry, _ = registry.resolve("aws.nova-stt")
+        assert entry.spec.modality is Modality.STT
+        assert entry.is_implemented
+
+    def test_a_cascade_agent_can_be_measured_by_the_other_vendor(self) -> None:
+        from harbor_voice.providers.measurement import ReferenceStack
+
+        ReferenceStack(reference_stt="aws.nova-stt").check_independence(
+            agent_stt="aws.voxtral"
+        )
+
+    def test_an_s2s_agent_has_no_stt_to_collide_with(self) -> None:
+        from harbor_voice.providers.measurement import ReferenceStack
+
+        ReferenceStack(reference_stt="aws.voxtral").check_independence(agent_stt=None)
+
+    def test_one_vendor_on_both_sides_is_still_refused(self) -> None:
+        """The rule is what makes the second recogniser worth having."""
+        from harbor_voice.providers.measurement import MeasurementIndependenceError
+        from harbor_voice.providers.measurement import ReferenceStack
+
+        with pytest.raises(MeasurementIndependenceError, match="against itself"):
+            ReferenceStack(reference_stt="aws.nova-stt").check_independence(
+                agent_stt="aws.nova-stt"
+            )
+
+    def test_it_declares_no_streaming(self) -> None:
+        """A reference transcriber runs offline over stored audio, where a
+        first-byte mark would be a fiction."""
+        assert bedrock.NOVA_STT_SPEC.capabilities.streams is False
+
+
+# ------------------------------------------------------------- L1 voice
+
+
+class TestNovaSonicVoiceSelection:
+    def test_it_declares_the_optional_protocol(self) -> None:
+        from harbor_voice.perturbation import VoiceSelectable
+
+        assert isinstance(bedrock.NovaSonicTTS(), VoiceSelectable)
+
+    def test_gender_is_servable(self) -> None:
+        from harbor_voice.perturbation import Gender
+        from harbor_voice.perturbation import VoiceSelection
+
+        tts = bedrock.NovaSonicTTS()
+        assert tts.select_voice(VoiceSelection(gender=Gender.FEMALE)) is True
+        assert tts.voice == "tiffany"
+
+    def test_an_accent_is_refused_rather_than_faked(self) -> None:
+        """EVA condition A varies accented English. A voice catalogue indexed
+        by language cannot express that, and pretending otherwise would put a
+        condition's name on a default voice."""
+        from harbor_voice.perturbation import Accent
+        from harbor_voice.perturbation import VoiceSelection
+
+        tts = bedrock.NovaSonicTTS()
+        assert tts.select_voice(VoiceSelection(accent=Accent.INDIAN)) is False
+
+    def test_an_unconfirmed_language_is_refused_not_guessed(self) -> None:
+        """Naming a voice the service lacks fails at session open, mid-run."""
+        from harbor_voice.perturbation import VoiceSelection
+
+        assert (
+            bedrock.NovaSonicTTS().select_voice(VoiceSelection(language="ja")) is False
+        )
+
+    def test_a_pinned_voice_id_is_taken_at_face_value(self) -> None:
+        from harbor_voice.perturbation import VoiceSelection
+
+        tts = bedrock.NovaSonicTTS()
+        assert tts.select_voice(VoiceSelection(voice_id="amy")) is True
+        assert tts.voice == "amy"
+
+    def test_eva_a_through_this_tts_records_that_it_missed(self) -> None:
+        """The honest outcome: the run happens and does not claim condition A."""
+        from harbor_voice.perturbation import SeedSet
+        from harbor_voice.perturbation import get_profile
+
+        pipeline = get_profile("eva_a").pipeline(SeedSet.derive(1))
+        pipeline.persona.apply_to_tts(bedrock.NovaSonicTTS())
+        record = pipeline.as_record().as_dict()["layers"]
+        assert record["L1.accent"]["achieved"] == {"voice_honoured": 0.0}

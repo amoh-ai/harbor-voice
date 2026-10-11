@@ -188,8 +188,16 @@ class DuplexDriver:
             were answered is only making the audio harder.
         conversation: L5 layers. Defaults to the simulator's, which is where a
             profile puts them.
-        clock: Session clock. Share it with the transport if the transport
-            stamps its own frames.
+        clock: Session clock. Defaults to the **simulator's**, which is
+            almost always what you want: two ``SessionClock`` instances start
+            at different instants, so a driver with its own reads a smaller
+            ``now()`` than the simulator did when it stamped ``t_produced``,
+            and the frame's monotonic guard then rejects a transmit that
+            looks like it preceded its own synthesis. That failure is
+            timing-dependent -- it only appears when synthesis is quicker
+            than the gap between the two constructors -- so it surfaces under
+            load and nowhere else. Share it with the transport too, if the
+            transport stamps its own frames.
         idle_s: Quiet period that ends the agent's turn.
         turn_timeout_s: Hard ceiling. A turn that hits it is a reply we gave
             up on, so any yield aimed at it stays unresolved rather than being
@@ -213,7 +221,7 @@ class DuplexDriver:
         self._party = party
         self._floor = floor or BargeInFloor()
         self._conversation = conversation or simulator.pipeline.conversation
-        self._clock = clock or SessionClock()
+        self._clock = clock or simulator.clock
         self._idle_s = idle_s
         self._turn_timeout_s = turn_timeout_s
         self._pump = InboundPump(transport)

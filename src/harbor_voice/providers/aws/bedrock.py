@@ -54,6 +54,8 @@ from harbor_voice.providers.aws.nova_sonic import NovaSonicTransport
 from harbor_voice.providers.aws.nova_sonic import _classify
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
+from harbor_voice.perturbation.persona import Gender
+from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
 from harbor_voice.providers.capabilities import Modality
@@ -327,6 +329,37 @@ class NovaSonicTTS:
     def audio_format(self) -> AudioFormat:
         return NOVA_OUTPUT_FORMAT
 
+    # ---------------------------------------------------------- L1 voice
+
+    def select_voice(self, selection: VoiceSelection) -> bool:
+        """Adopt an L1 voice selection, or report that it cannot be served.
+
+        Implements :class:`~harbor_voice.perturbation.persona.VoiceSelectable`.
+        Nova Sonic takes a ``voiceId``, which covers gender and language, and
+        the transport has always passed one. What it has **no** notion of is
+        an *accent* as a separate axis — EVA's condition A varies french,
+        indian, spanish and chinese accented English, and a voice catalogue
+        indexed by language cannot express that.
+
+        So an accent request returns ``False`` and the run records
+        ``voice_honoured: 0``. That is the whole reason this returns a bool
+        rather than raising: the run is still worth having, it simply may not
+        claim the condition.
+
+        An explicit ``voice_id`` is taken at face value — a task that pins a
+        provider-specific voice has already decided this question.
+        """
+        if selection.voice_id is not None:
+            self.voice = selection.voice_id
+            return True
+        if selection.accent is not None:
+            return False
+        voice = _VOICES.get((selection.language, selection.gender))
+        if voice is None:
+            return False
+        self.voice = voice
+        return True
+
     async def synthesize_checked(self, text: str) -> SpokenAudio:
         """Speak ``text`` and report what was actually said."""
         transport = NovaSonicTransport(
@@ -409,6 +442,144 @@ class NovaSonicTTS:
             yield spoken.pcm[start : start + size]
 
 
+# ----------------------------------------------- the second recogniser
+
+
+class NovaSonicSTT:
+    """Speech to text from Nova Sonic's transcript of its **own input**.
+
+    Nova Sonic reports what it heard (``textOutput`` with ``role: USER``)
+    alongside what it said, and
+    :class:`~harbor_voice.providers.aws.nova_sonic.NovaSonicTransport` has
+    been collecting it since bring-up — that is why ``Stage.ASR_FINAL`` is an
+    S2S-optional stage. This exposes it as an ordinary
+    :class:`~harbor_voice.providers.protocols.STTProvider`.
+
+    **Why it earns its place: it is a second vendor.**
+    :meth:`~harbor_voice.providers.measurement.ReferenceStack.check_independence`
+    refuses a reference transcriber that shares a provider with the agent's,
+    because two recognisers from one vendor share an acoustic frontend and
+    their errors cancel instead of revealing anything. With Voxtral (Mistral)
+    and this (Amazon), both reachable through one Bedrock account, the
+    reference stack is satisfiable in both directions:
+
+    - a **cascade** agent on ``aws.voxtral``, measured by ``aws.nova-stt``
+    - an **S2S** agent on ``aws.nova-sonic``, measured by ``aws.voxtral``
+
+    An S2S agent measured by this would be refused, correctly, since it would
+    be the same model grading its own hearing.
+
+    Note:
+        A full conversational session per transcript is an expensive way to
+        run an ASR, and the model may answer the audio as well as transcribe
+        it. Neither matters for the job this does: the reference transcriber
+        runs offline over stored audio, where latency is meaningless, and the
+        reply is discarded. ``streams=False`` says the first is not available
+        rather than inventing a mark for it.
+    """
+
+    def __init__(
+        self,
+        *,
+        model: str = NOVA_TTS_MODEL,
+        region: str | None = None,
+        party: PartyId = PartyId("reference"),
+        settle_s: float = 4.0,
+        fmt: AudioFormat = CANONICAL,
+    ) -> None:
+        self.model = model
+        self.region = region
+        self.party = party
+        self.settle_s = settle_s
+        self.fmt = fmt
+        self.name = "aws.nova-stt"
+        self.usage: Usage = Usage()
+
+    async def transcribe(
+        self, frames: Sequence[AudioFrame]
+    ) -> AsyncIterator[Transcript]:
+        """Yield exactly one final transcript. Never a partial."""
+        duration = sum(f.duration_s for f in frames)
+        if not frames:
+            yield Transcript(text="", is_final=True, audio_duration_s=0.0)
+            return
+
+        text = await self._listen(frames)
+        yield Transcript(text=text, is_final=True, audio_duration_s=duration)
+
+    async def _listen(self, frames: Sequence[AudioFrame]) -> str:
+        transport = NovaSonicTransport(
+            party=self.party,
+            model=self.model,
+            region=self.region,
+            system_prompt=LISTEN_PROMPT,
+            temperature=0.0,
+        )
+        await transport.open(SessionConfig(party=self.party))
+
+        async def drain() -> None:
+            async for _frame in transport.rx():
+                pass  # the reply is not wanted; only the input transcript is
+
+        pump = asyncio.create_task(drain())
+        try:
+            for frame in frames:
+                await transport.tx(frame)
+                await asyncio.sleep(0.016)
+            # Silence commits the turn, exactly as it does for the TTS path:
+            # endpointing is driven by the audio stream, so a stream that
+            # simply stops leaves the model waiting for more.
+            await self._flush_silence(transport, start=len(frames))
+            await asyncio.sleep(self.settle_s)
+        finally:
+            await transport.close()
+            try:
+                await asyncio.wait_for(pump, timeout=5.0)
+            except TimeoutError:
+                pump.cancel()
+
+        self.usage = transport.usage
+        return " ".join(transport.heard).strip()
+
+    async def _flush_silence(
+        self, transport: NovaSonicTransport, *, start: int
+    ) -> None:
+        size = CANONICAL.frame_bytes()
+        for offset in range(40):
+            seq = start + offset
+            await transport.tx(
+                AudioFrame(
+                    pcm=bytes(size),
+                    party=self.party,
+                    seq=seq,
+                    t_produced=seq * 0.02,
+                )
+            )
+            await asyncio.sleep(0.016)
+
+
+_VOICES: dict[tuple[str, Gender], str] = {
+    ("en", Gender.UNSPECIFIED): "matthew",
+    ("en", Gender.MALE): "matthew",
+    ("en", Gender.FEMALE): "tiffany",
+}
+"""Nova Sonic voice ids by (language, gender).
+
+Deliberately short and **verified** rather than transcribed from memory. A
+mapping that names a voice the service does not have fails at session open,
+mid-run, with a vendor error — far worse than :meth:`select_voice` returning
+``False`` and the plan recording that the request went unserved. Entries are
+added as they are confirmed against the live service.
+"""
+
+
+LISTEN_PROMPT = (
+    "You are a transcription service. Listen and say nothing. Do not answer, "
+    "acknowledge, or comment on what you hear."
+)
+"""The reply is discarded either way; this just keeps the session cheap."""
+
+
 # -------------------------------------------------------------- registry
 
 
@@ -435,6 +606,28 @@ BEDROCK_LLM_SPEC = ProviderSpec(
     requires_extra=_AWS_EXTRA,
     default_model=DEFAULT_LLM,
 )
+
+NOVA_STT_SPEC = ProviderSpec(
+    name="aws.nova-stt",
+    modality=Modality.STT,
+    capabilities=ProviderCapabilities(
+        modality=Modality.STT,
+        streams=False,
+        emits_partials=False,
+        word_timings=False,
+        diarizes=False,
+    ),
+    credential_provider="aws",
+    requires_extra=_AWS_EXTRA,
+    default_model=NOVA_TTS_MODEL,
+)
+"""Registered under its own name, which is the point.
+
+``check_independence`` compares provider names, so ``aws.nova-stt`` and
+``aws.voxtral`` are independent while two models under one name are not. That
+is also right on the merits: Voxtral is Mistral's recogniser and this is
+Amazon's.
+"""
 
 NOVA_TTS_SPEC = ProviderSpec(
     name="aws.nova-tts",
@@ -465,10 +658,15 @@ def build_tts(*, model: str = NOVA_TTS_MODEL, **config: Any) -> NovaSonicTTS:
     return NovaSonicTTS(model=model, **config)
 
 
+def build_nova_stt(*, model: str = NOVA_TTS_MODEL, **config: Any) -> NovaSonicSTT:
+    return NovaSonicSTT(model=model, **config)
+
+
 REGISTRATIONS: tuple[tuple[ProviderSpec, Any], ...] = (
     (VOXTRAL_SPEC, build_stt),
     (BEDROCK_LLM_SPEC, build_llm),
     (NOVA_TTS_SPEC, build_tts),
+    (NOVA_STT_SPEC, build_nova_stt),
 )
 
 MAX_TTS_SESSION_S = MAX_SESSION_S
