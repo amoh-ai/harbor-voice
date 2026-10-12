@@ -240,6 +240,27 @@ class CascadeTransport(VoiceTransport):
         if emitted:
             self._mark(Stage.RESPONSE_DONE, done_at)
 
+    @property
+    def heard(self) -> list[str]:
+        """What this cascade's STT made of the caller's audio, per turn.
+
+        The HEARD side of said-vs-heard. A cascade is the only
+        pipeline that can serve this from the agent itself — an S2S model
+        exposes no seam — so a cascade that kept its own transcript private
+        would make the one metric it is uniquely able to support
+        unavailable.
+
+        Distinct from the reference STT, which answers a different question:
+        not "what did this agent hear" but "what would a competent recogniser
+        have got from the same degraded audio".
+        """
+        return self._history[0::2]
+
+    @property
+    def said(self) -> list[str]:
+        """What the LLM produced and the TTS was asked to speak, per turn."""
+        return self._history[1::2]
+
     def _mark(self, stage: Stage, t: float, **meta: object) -> None:
         self._stages.append(
             StageMark(

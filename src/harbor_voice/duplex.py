@@ -492,7 +492,21 @@ class DuplexDriver:
     # -------------------------------------------------------------- stages
 
     def _mark_stages(self, received: Sequence[AudioFrame]) -> tuple[StageMark, ...]:
-        """The two stages every pipeline has."""
+        """The transport's own seams if it has any, else the two from frames.
+
+        A cascade knows when ASR finished and when the first token arrived;
+        inferring two marks from frame arrivals would throw five of
+        them away, and running a cascade full-duplex would silently lose the
+        observability that made it the control condition in the first place.
+        ``take_stages`` is the same seam
+        :class:`~harbor_voice.cascade.adapter.CascadeAdapter` reads.
+        """
+        take = getattr(self._transport, "take_stages", None)
+        if take is not None:
+            own = tuple(take())
+            if own:
+                return own
+
         marks: list[StageMark] = []
         first = next((f.at(Clock.RX) for f in received if f.at(Clock.RX)), None)
         last = next(
