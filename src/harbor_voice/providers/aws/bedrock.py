@@ -58,6 +58,8 @@ from harbor_voice.perturbation.persona import Gender
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
@@ -90,6 +92,22 @@ VERBATIM_PROMPT = (
 _AWS_EXTRA = "aws"
 
 
+def resolve_region(region: str | None) -> str | None:
+    """Fall back to ``AWS_REGION``, which is the variable we ask for.
+
+    boto3 reads ``AWS_DEFAULT_REGION`` and, depending on its version, not
+    ``AWS_REGION``. Our credential table declares ``AWS_REGION``
+    (`providers/credentials.py`), so without this a run passes `doctor` --
+    every declared variable is set -- and then dies at the first call with
+    `NoRegionError`. A preflight that says ready and a run that cannot start
+    is the exact failure `doctor` exists to prevent, so the two are reconciled
+    here rather than by asking people to set the variable twice.
+    """
+    import os
+
+    return region or os.environ.get("AWS_REGION") or None
+
+
 def _runtime(region: str | None) -> Any:
     """A ``bedrock-runtime`` client, imported lazily."""
     try:
@@ -100,7 +118,7 @@ def _runtime(region: str | None) -> Any:
             f"needs boto3. Install:  pip install 'harbor-voice[{_AWS_EXTRA}]'",
             provider="aws.bedrock",
         ) from exc
-    return boto3.client("bedrock-runtime", region_name=region)
+    return boto3.client("bedrock-runtime", region_name=resolve_region(region))
 
 
 def _wav(pcm: bytes, fmt: AudioFormat) -> bytes:
@@ -208,6 +226,13 @@ class BedrockLLM:
     temperature: float = 0.2
     max_tokens: int = 512
     name: str = "aws.bedrock-llm"
+    max_tool_rounds: int = 6
+    """Cap on consecutive tool rounds before giving up.
+
+    A model that keeps asking is a prompt or tool problem, and an uncapped
+    loop turns it into a bill.
+    """
+
     usage: Usage = field(default_factory=Usage)
     _client: Any = None
 
@@ -257,6 +282,249 @@ class BedrockLLM:
                     yield text
             elif "metadata" in event:
                 self.usage = _usage_from_converse(event["metadata"].get("usage", {}))
+
+    # ------------------------------------------------------------- tools
+
+    async def respond_with_tools(
+        self,
+        prompt: str,
+        history: Sequence[str],
+        *,
+        router: ToolRouter,
+    ) -> AsyncIterator[str]:
+        """Yield the reply as it streams, running tool rounds on the way.
+
+        Implements :class:`~harbor_voice.providers.tools.ToolCallingLLM`. The
+        loop lives here rather than in the transport so a cascade and an S2S
+        model present the same shape upward: *the provider owns the loop, the
+        harness owns the executor*.
+
+        **Text streams out as it arrives, not at the end of a round.** The
+        obvious implementation awaits a whole round and then yields, which
+        makes ``llm_first_token`` mark the moment the round *finished*: a
+        full-response latency under a first-token name. A model that
+        says "let me check that" before calling a tool has to be heard saying
+        it, both because that is what the caller hears and because the mark is
+        meant to be a real flow point.
+        """
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+        messages: list[dict[str, Any]] = [
+            {"role": "user" if i % 2 == 0 else "assistant", "content": [{"text": h}]}
+            for i, h in enumerate(history)
+        ]
+        messages.append({"role": "user", "content": [{"text": prompt}]})
+        tools = [spec.as_bedrock() for spec in router.specs]
+        failure: list[BaseException] = []
+
+        def emit(chunk: str) -> None:
+            asyncio.run_coroutine_threadsafe(queue.put(chunk), loop).result()
+
+        def pump() -> None:
+            try:
+                for _ in range(self.max_tool_rounds):
+                    text, blocks, stop = self._collect(messages, tools, emit)
+                    if stop != "tool_use" or not blocks:
+                        return
+                    messages.append(
+                        {"role": "assistant", "content": _assistant(text, blocks)}
+                    )
+                    results = [
+                        asyncio.run_coroutine_threadsafe(
+                            router.invoke(block), loop
+                        ).result()
+                        for block in blocks
+                    ]
+                    messages.append(
+                        {"role": "user", "content": [r.as_bedrock() for r in results]}
+                    )
+                failure.append(
+                    ProviderError(
+                        ProviderFailure.MALFORMED,
+                        f"the model asked for tools {self.max_tool_rounds} rounds "
+                        f"running without producing a reply; a loop that long is "
+                        f"a prompt or tool problem, not a slow backend",
+                        provider=self.name,
+                        model=self.model,
+                    )
+                )
+            except BaseException as exc:  # noqa: BLE001 - re-raised to the caller
+                failure.append(exc)
+            finally:
+                asyncio.run_coroutine_threadsafe(queue.put(None), loop).result()
+
+        worker = asyncio.create_task(asyncio.to_thread(pump))
+        try:
+            while (chunk := await queue.get()) is not None:
+                yield chunk
+        finally:
+            await worker
+        if failure:
+            raise failure[0]
+
+    def _collect(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        emit: Any,
+    ) -> tuple[list[str], list[ToolInvocation], str]:
+        """One ConverseStream pass: text out through ``emit``, calls returned.
+
+        ``ToolUseBlockDelta.input`` is typed **String** in the API reference:
+        a *fragment* of JSON, not an object. Accumulating per
+        ``contentBlockIndex`` and parsing once the stream ends is the whole
+        subtlety — parsing a delta as it arrives works until a set of
+        arguments is long enough to split, which is to say it works in
+        testing and fails in use.
+        """
+        if self._client is None:
+            self._client = _runtime(self.region)
+        request: dict[str, Any] = {
+            "modelId": self.model,
+            "messages": messages,
+            "system": [{"text": self.system}],
+            "inferenceConfig": {
+                "maxTokens": self.max_tokens,
+                "temperature": self.temperature,
+            },
+        }
+        if tools:
+            request["toolConfig"] = {"tools": tools, "toolChoice": {"auto": {}}}
+        try:
+            response = self._client.converse_stream(**request)
+        except Exception as exc:
+            raise _classify(exc, self.model, self.name) from exc
+
+        text: list[str] = []
+        spoken = _ReasoningFilter()
+        pending: dict[int, dict[str, str]] = {}
+        stop = "end_turn"
+        for event in response["stream"]:
+            if "contentBlockStart" in event:
+                start = event["contentBlockStart"]
+                use = start.get("start", {}).get("toolUse")
+                if use:
+                    pending[start["contentBlockIndex"]] = {
+                        "id": use["toolUseId"],
+                        "name": use["name"],
+                        "input": "",
+                    }
+            elif "contentBlockDelta" in event:
+                delta = event["contentBlockDelta"]
+                index = delta["contentBlockIndex"]
+                body = delta["delta"]
+                if body.get("text"):
+                    text.append(body["text"])
+                    visible = spoken.feed(body["text"])
+                    if visible:
+                        emit(visible)
+                elif "toolUse" in body and index in pending:
+                    pending[index]["input"] += body["toolUse"].get("input", "")
+            elif "messageStop" in event:
+                stop = event["messageStop"].get("stopReason", stop)
+            elif "metadata" in event:
+                self.usage = _usage_from_converse(event["metadata"].get("usage", {}))
+
+        tail = spoken.flush()
+        if tail:
+            emit(tail)
+
+        calls = [
+            ToolInvocation.from_json(
+                tool_use_id=block["id"], name=block["name"], raw=block["input"]
+            )
+            for _, block in sorted(pending.items())
+        ]
+        return text, calls, stop
+
+
+class _ReasoningFilter:
+    """Drops ``<thinking>`` blocks from text on its way to being spoken.
+
+    Observed live: ``amazon.nova-pro`` inlines chain-of-thought as plain text
+    when tools are configured — *"<thinking> I need to use the
+    lookup_reservation tool..."* — and only then, which is why no earlier run
+    saw it. Bedrock has a proper ``reasoningContent`` delta that we already
+    ignore; this model does not use it.
+
+    Spoken aloud that is an agent reading its own notes to the caller. Worse
+    for us, it lands in ``said``, the reference side of said-vs-heard,
+    so every WER in the run would be scored against text the agent
+    never meant to utter.
+
+    Stateful because a tag can split across deltas — ``"<think"`` then
+    ``"ing>"``. Text is withheld only while a partial tag is still possible,
+    so the common case still streams a character at a time.
+    """
+
+    _OPEN = "<thinking>"
+    _CLOSE = "</thinking>"
+
+    def __init__(self) -> None:
+        self._buffer = ""
+        self._inside = False
+
+    def feed(self, chunk: str) -> str:
+        self._buffer += chunk
+        out: list[str] = []
+        while self._buffer:
+            if self._inside:
+                end = self._buffer.find(self._CLOSE)
+                if end < 0:
+                    self._buffer = _keep_tail(self._buffer, self._CLOSE)
+                    break
+                self._buffer = self._buffer[end + len(self._CLOSE) :]
+                self._inside = False
+                continue
+            start = self._buffer.find(self._OPEN)
+            if start < 0:
+                safe = _keep_tail(self._buffer, self._OPEN)
+                out.append(self._buffer[: len(self._buffer) - len(safe)])
+                self._buffer = safe
+                break
+            out.append(self._buffer[:start])
+            self._buffer = self._buffer[start + len(self._OPEN) :]
+            self._inside = True
+        return "".join(out)
+
+    def flush(self) -> str:
+        """Whatever is left once the stream ends.
+
+        A buffer held back here was a partial tag that never completed, so it
+        was ordinary text all along and must not be swallowed.
+        """
+        tail = "" if self._inside else self._buffer
+        self._buffer = ""
+        return tail
+
+
+def _keep_tail(text: str, tag: str) -> str:
+    """The suffix of ``text`` that could still turn into ``tag``."""
+    for size in range(min(len(tag) - 1, len(text)), 0, -1):
+        if tag.startswith(text[-size:]):
+            return text[-size:]
+    return ""
+
+
+def _assistant(
+    text: Sequence[str], blocks: Sequence[ToolInvocation]
+) -> list[dict[str, Any]]:
+    """Rebuild the assistant turn Bedrock expects to see echoed back."""
+    content: list[dict[str, Any]] = []
+    joined = "".join(text).strip()
+    if joined:
+        content.append({"text": joined})
+    content.extend(
+        {
+            "toolUse": {
+                "toolUseId": call.tool_use_id,
+                "name": call.name,
+                "input": call.arguments,
+            }
+        }
+        for call in blocks
+    )
+    return content
 
 
 # ------------------------------------------------------------------- TTS

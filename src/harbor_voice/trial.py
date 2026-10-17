@@ -65,6 +65,8 @@ from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.registry import ProviderRegistry
 from harbor_voice.providers.registry import default_registry
+from harbor_voice.providers.tools import ToolExecutor
+from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.trajectory.model import VoiceTrajectory
@@ -236,6 +238,7 @@ class VoiceTrial:
         *,
         registry: ProviderRegistry | None = None,
         out_dir: Path | None = None,
+        tools: ToolExecutor | None = None,
         caller: PartyId = DEFAULT_CALLER,
         agent: PartyId = DEFAULT_AGENT,
     ) -> None:
@@ -245,10 +248,24 @@ class VoiceTrial:
         self._caller = caller
         self._agent = agent
         self._clock = SessionClock()
+        self._router = (
+            None if tools is None else ToolRouter(tools, world=self.pipeline().world)
+        )
 
     @property
     def config(self) -> VoiceTaskConfig:
         return self._config
+
+    @property
+    def tools(self) -> ToolRouter | None:
+        """The tool router, when the task supplied an executor.
+
+        Supplied by the caller rather than named in ``voice.toml``: a
+        benchmark's tools are its own, and an import-path string in
+        a config file would be a second, weaker way to say what an adapter
+        already says in Python.
+        """
+        return self._router
 
     # --------------------------------------------------------------- build
 
@@ -299,11 +316,13 @@ class VoiceTrial:
                 modality=Modality.S2S,
                 party=self._agent,
                 clock=self._clock,
+                tools=self._router,
                 **spec.config.get("s2s", {}),
             )
         from harbor_voice.cascade import CascadeTransport
 
         return CascadeTransport(
+            tools=self._router,
             stt=self._registry.create(
                 str(spec.stt), modality=Modality.STT, **spec.config.get("stt", {})
             ),
@@ -454,6 +473,16 @@ class VoiceTrial:
                 utterance=_utterance_for(simulator, index),
                 heard=heard[index] if index < len(heard) else None,
             )
+
+        # Tool calls, with the L6 latency separated from the tool's own, so a
+        # trajectory can tell a slow backend from one we made slow.
+        if self._router is not None:
+            for call in self._router.records:
+                recorder.tool_call(
+                    self._clock.now(),
+                    call.name,
+                    injected_latency_ms=call.injected_latency_ms,
+                )
 
         # The driver already reported every probe, so the floor must not write
         # a second BARGE_IN for the same interruption.

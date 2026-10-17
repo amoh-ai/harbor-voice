@@ -450,8 +450,13 @@ class TestRegistryDescribesWithoutConstructing:
 
     def test_the_offline_set_is_registered(self) -> None:
         registry = default_registry()
-        assert len(registry) == 4
-        assert "offline.tone-tts" in registry
+        assert {e.spec.name for e in registry} == {
+            "offline.scripted-stt",
+            "offline.echo-llm",
+            "offline.scripted-llm",
+            "offline.tool-echo-llm",
+            "offline.tone-tts",
+        }
 
     def test_capabilities_come_from_the_name_alone(self) -> None:
         registry = default_registry()
@@ -495,6 +500,7 @@ class TestRegistryDescribesWithoutConstructing:
         assert [e.spec.name for e in registry.for_modality(Modality.LLM)] == [
             "offline.echo-llm",
             "offline.scripted-llm",
+            "offline.tool-echo-llm",
         ]
         assert registry.for_modality(Modality.S2S) == []
 

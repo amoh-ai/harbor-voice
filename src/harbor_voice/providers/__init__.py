@@ -26,6 +26,16 @@ from harbor_voice.providers.offline import EchoLLM
 from harbor_voice.providers.offline import ScriptedLLM
 from harbor_voice.providers.offline import ScriptedSTT
 from harbor_voice.providers.offline import ToneTTS
+from harbor_voice.providers.offline import ToolCallingEchoLLM
+from harbor_voice.providers.tools import MappingExecutor
+from harbor_voice.providers.tools import ToolCallingLLM
+from harbor_voice.providers.tools import ToolError
+from harbor_voice.providers.tools import ToolExecutor
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolRecord
+from harbor_voice.providers.tools import ToolResult
+from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.providers.tools import ToolSpec
 from harbor_voice.providers.protocols import LLMProvider
 from harbor_voice.providers.protocols import STTProvider
 from harbor_voice.providers.protocols import Transcript
@@ -60,6 +70,16 @@ __all__ = [
     "ScriptedSTT",
     "STTProvider",
     "ToneTTS",
+    "ToolCallingEchoLLM",
+    "ToolCallingLLM",
+    "ToolError",
+    "ToolExecutor",
+    "ToolInvocation",
+    "ToolRecord",
+    "ToolResult",
+    "ToolRouter",
+    "ToolSpec",
+    "MappingExecutor",
     "Transcript",
     "TTSProvider",
     "UnknownProvider",

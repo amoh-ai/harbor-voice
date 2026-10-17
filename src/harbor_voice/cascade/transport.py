@@ -27,6 +27,8 @@ from harbor_voice.providers import LLMProvider
 from harbor_voice.providers import STTProvider
 from harbor_voice.providers import Transcript
 from harbor_voice.providers import TTSProvider
+from harbor_voice.providers.tools import ToolCallingLLM
+from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.capabilities import Capabilities
 from harbor_voice.capabilities import Duplex
 from harbor_voice.capabilities import Pipeline
@@ -36,6 +38,10 @@ from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.base import VoiceTransport
 
 DEFAULT_INPUT_IDLE_S = 0.08
+
+
+class CascadeError(RuntimeError):
+    """The cascade was composed in a way that cannot serve the task."""
 
 
 class CascadeTransport(VoiceTransport):
@@ -62,6 +68,7 @@ class CascadeTransport(VoiceTransport):
         clock: SessionClock | None = None,
         input_idle_s: float = DEFAULT_INPUT_IDLE_S,
         emit_partials: bool = False,
+        tools: ToolRouter | None = None,
     ) -> None:
         self._stt = stt
         self._llm = llm
@@ -70,6 +77,7 @@ class CascadeTransport(VoiceTransport):
         self._clock = clock or SessionClock()
         self._input_idle_s = input_idle_s
         self._emit_partials = emit_partials
+        self._tools = tools
 
         self._open = False
         self._inbound: list[AudioFrame] = []
@@ -202,7 +210,7 @@ class CascadeTransport(VoiceTransport):
 
         said_parts: list[str] = []
         first_token = True
-        async for chunk in self._llm.respond(heard, self._history):
+        async for chunk in self._reply(heard):
             if first_token:
                 self._mark(Stage.LLM_FIRST_TOKEN, self._clock.now())
                 first_token = False
@@ -239,6 +247,33 @@ class CascadeTransport(VoiceTransport):
         self._mark(Stage.TTS_DONE, done_at)
         if emitted:
             self._mark(Stage.RESPONSE_DONE, done_at)
+
+    def _reply(self, heard: str) -> AsyncIterator[str]:
+        """The LLM's answer, with a tool loop when the task configured one.
+
+        Routed here rather than branched inline so the stage marks above
+        stay identical either way: ``llm_first_token`` means the first token
+        of the reply, whether or not a tool ran on the way to it.
+
+        A provider that cannot call tools is not silently given a tool-free
+        turn. An undeclared optional raises rather than degrading,
+        because a benchmark that is *entirely* tool-calling scored against an
+        agent that was never offered its tools is a number about nothing.
+        """
+        if self._tools is None:
+            return self._llm.respond(heard, self._history)
+        if not isinstance(self._llm, ToolCallingLLM):
+            raise CascadeError(
+                f"this task configured tools but the llm slot "
+                f"{self._llm.name!r} does not implement ToolCallingLLM; it "
+                f"would answer without ever being offered them"
+            )
+        return self._llm.respond_with_tools(heard, self._history, router=self._tools)
+
+    @property
+    def tools(self) -> ToolRouter | None:
+        """The tool router, if the task configured one."""
+        return self._tools
 
     @property
     def heard(self) -> list[str]:

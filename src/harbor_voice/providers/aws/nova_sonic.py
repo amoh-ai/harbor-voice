@@ -39,6 +39,7 @@ demanding a longer call fails at load rather than mid-measurement.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import base64
 import json
 import uuid
@@ -64,6 +65,8 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolRouter
 from harbor.models.metric import UsageInfo
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
@@ -116,6 +119,31 @@ def _require_sdk() -> Any:
     return _client, _config, _models, AWSCRTHTTPClient
 
 
+def _resolve_region(region: str | None) -> str | None:
+    """Same fallback as the Bedrock client — see `bedrock.resolve_region`."""
+    import os
+
+    return region or os.environ.get("AWS_REGION") or None
+
+
+def _tool_config(router: ToolRouter | None) -> dict[str, Any]:
+    """The `promptStart` tool fields, or nothing when no tools are configured.
+
+    Omitted entirely rather than sent empty: a `toolConfiguration` with no
+    tools is a different declaration from no declaration at all, and there is
+    no reason to find out which way this provider reads it.
+    """
+    if router is None or not router.specs:
+        return {}
+    return {
+        "toolUseOutputConfiguration": {"mediaType": "application/json"},
+        "toolConfiguration": {
+            "tools": [spec.as_nova() for spec in router.specs],
+            "toolChoice": {"auto": {}},
+        },
+    }
+
+
 def _event(payload: dict[str, Any]) -> str:
     return json.dumps({"event": payload})
 
@@ -154,6 +182,7 @@ class NovaSonicTransport(VoiceTransport):
         top_p: float = 0.9,
         max_tokens: int = 1024,
         endpointing_sensitivity: str = "HIGH",
+        tools: ToolRouter | None = None,
     ) -> None:
         self._party = party
         self._model = model
@@ -164,6 +193,7 @@ class NovaSonicTransport(VoiceTransport):
         self._top_p = top_p
         self._max_tokens = max_tokens
         self._endpointing = endpointing_sensitivity
+        self._tools = tools
 
         self._client: Any = None
         self._stream: Any = None
@@ -171,6 +201,7 @@ class NovaSonicTransport(VoiceTransport):
         self._inbox: asyncio.Queue[AudioFrame | None] = asyncio.Queue()
         self._open = False
         self._audio_content_open = False
+        self._tool_tasks: list[asyncio.Task[None]] = []
         self._seq = 0
 
         self._prompt_name = str(uuid.uuid4())
@@ -271,7 +302,7 @@ class NovaSonicTransport(VoiceTransport):
 
         try:
             resolved = await config_mod.AsyncBedrockRuntimeConfig.resolve(
-                region=self._region, transport=crt()
+                region=_resolve_region(self._region), transport=crt()
             )
             self._client = client_mod.AsyncBedrockRuntimeClient(config=resolved)
             self._stream = await self._client.invoke_model_with_bidirectional_stream(
@@ -309,6 +340,7 @@ class NovaSonicTransport(VoiceTransport):
                     "promptStart": {
                         "promptName": self._prompt_name,
                         "textOutputConfiguration": {"mediaType": "text/plain"},
+                        **_tool_config(self._tools),
                         "audioOutputConfiguration": {
                             "mediaType": "audio/lpcm",
                             "sampleRateHertz": NOVA_OUTPUT_FORMAT.sample_rate_hz,
@@ -471,6 +503,15 @@ class NovaSonicTransport(VoiceTransport):
                 elif "audioOutput" in data:
                     self._saw_audio = True
                     await self._emit(base64.b64decode(data["audioOutput"]["content"]))
+                elif "toolUse" in data:
+                    # Nova Sonic drives its own loop: it asks mid-stream and
+                    # keeps speaking while we work. Handled in a task so the
+                    # pump keeps draining audio -- awaiting here would stall
+                    # the very speech that makes asynchronous tool calling
+                    # worth having.
+                    self._tool_tasks.append(
+                        asyncio.create_task(self._answer_tool(data["toolUse"]))
+                    )
                 elif "usageEvent" in data:
                     self._usage = data["usageEvent"]
                 elif "contentEnd" in data:
@@ -554,12 +595,88 @@ class NovaSonicTransport(VoiceTransport):
         ):
             await self._send(_event(payload))
 
+    async def _answer_tool(self, event: dict[str, Any]) -> None:
+        """Run one tool and send the three-part reply.
+
+        **Always sends a result.** The docs are explicit that Nova Sonic
+        waits for one after every ``toolUse``, and that failing to answer --
+        *even on error* -- leaves the model in a waiting state. So an
+        exception here becomes an error payload rather than silence: a hung
+        agent would be our bug wearing the agent's score.
+        """
+        content_name = str(uuid.uuid4())
+        invocation = ToolInvocation.from_json(
+            tool_use_id=event.get("toolUseId", ""),
+            name=event.get("toolName", ""),
+            raw=event.get("content", "") or "",
+        )
+        try:
+            if self._tools is None:
+                result_json = json.dumps(
+                    {"error": "no_tools", "message": "no tool router configured"}
+                )
+            else:
+                result_json = (await self._tools.invoke(invocation)).as_nova_content()
+        except Exception as exc:  # noqa: BLE001 - silence would hang the model
+            result_json = json.dumps({"error": type(exc).__name__, "message": str(exc)})
+
+        await self._send(
+            _event(
+                {
+                    "contentStart": {
+                        "promptName": self._prompt_name,
+                        "contentName": content_name,
+                        "interactive": False,
+                        "type": "TOOL",
+                        "role": "TOOL",
+                        "toolResultInputConfiguration": {
+                            "toolUseId": invocation.tool_use_id,
+                            "type": "TEXT",
+                            "textInputConfiguration": {"mediaType": "text/plain"},
+                        },
+                    }
+                }
+            )
+        )
+        await self._send(
+            _event(
+                {
+                    "toolResult": {
+                        "promptName": self._prompt_name,
+                        "contentName": content_name,
+                        "content": result_json,
+                    }
+                }
+            )
+        )
+        await self._send(
+            _event(
+                {
+                    "contentEnd": {
+                        "promptName": self._prompt_name,
+                        "contentName": content_name,
+                    }
+                }
+            )
+        )
+
     @override
     async def close(self) -> None:
         """End the session. Idempotent, and tolerant of a half-dead stream."""
         if not self._open:
             return
         self._open = False
+
+        # Let any tool reply finish before the stream goes. A result
+        # cancelled mid-send leaves the model waiting for something that
+        # will never arrive, which is the one failure the docs warn about.
+        if self._tool_tasks:
+            pending, self._tool_tasks = self._tool_tasks, []
+            with contextlib.suppress(TimeoutError, asyncio.CancelledError):
+                await asyncio.wait_for(
+                    asyncio.gather(*pending, return_exceptions=True),
+                    timeout=_PUMP_DRAIN_S,
+                )
         try:
             if self._audio_content_open:
                 await self._send(

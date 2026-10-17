@@ -103,6 +103,61 @@ class ScriptedLLM:
 
 
 @dataclass(slots=True)
+class ToolCallingEchoLLM:
+    """Calls one named tool, then reports what it got back.
+
+    Deterministic by construction, like everything else in this module, and
+    it exists so the whole tool path -- declaration, invocation, L6, the
+    result round trip, recording -- is exercised offline. A path that can
+    only be tested against a live model is a path that is tested rarely.
+
+    Implements :class:`~harbor_voice.providers.tools.ToolCallingLLM`, so
+    :class:`~harbor_voice.cascade.transport.CascadeTransport` routes to it
+    exactly as it would to a real provider.
+    """
+
+    tool: str
+    arguments: dict[str, object] = field(default_factory=dict)
+    prefix: str = "the tool said: "
+    rounds: int = 1
+    """How many times to call before answering. >1 exercises the loop cap."""
+
+    name: str = "offline.tool-echo-llm"
+
+    async def respond(self, prompt: str, history: Sequence[str]) -> AsyncIterator[str]:
+        """The plain path, for a task that configured no tools."""
+        del history
+        yield prompt
+
+    async def respond_with_tools(
+        self,
+        prompt: str,
+        history: Sequence[str],
+        *,
+        router: object,
+    ) -> AsyncIterator[str]:
+        del prompt, history
+        from harbor_voice.providers.tools import ToolInvocation
+        from harbor_voice.providers.tools import ToolRouter
+
+        if not isinstance(router, ToolRouter):  # pragma: no cover - typing guard
+            raise TypeError("respond_with_tools needs a ToolRouter")
+
+        last: object = None
+        for turn in range(self.rounds):
+            result = await router.invoke(
+                ToolInvocation(
+                    tool_use_id=f"call-{turn}",
+                    name=self.tool,
+                    arguments=dict(self.arguments),
+                )
+            )
+            last = result.content
+        for index, piece in enumerate(f"{self.prefix}{last}".split()):
+            yield piece if index == 0 else f" {piece}"
+
+
+@dataclass(slots=True)
 class ToneTTS:
     """Synthesises a tone whose length is proportional to the text.
 
@@ -209,6 +264,32 @@ def _build_echo_llm(*, model: str, prefix: str = "") -> EchoLLM:
     return EchoLLM(prefix=prefix)
 
 
+TOOL_ECHO_LLM_SPEC = ProviderSpec(
+    name="offline.tool-echo-llm",
+    modality=Modality.LLM,
+    capabilities=ProviderCapabilities(
+        modality=Modality.LLM,
+        streams=True,
+        attested=frozenset({ProviderCapability.STREAMS}),
+    ),
+    default_model="tool-echo",
+)
+
+
+def _build_tool_echo_llm(
+    *,
+    model: str,
+    tool: str = "noop",
+    arguments: dict[str, object] | None = None,
+    prefix: str = "the tool said: ",
+    rounds: int = 1,
+) -> ToolCallingEchoLLM:
+    del model
+    return ToolCallingEchoLLM(
+        tool=tool, arguments=dict(arguments or {}), prefix=prefix, rounds=rounds
+    )
+
+
 def _build_scripted_llm(*, model: str, replies: Sequence[str] = ()) -> ScriptedLLM:
     del model
     return ScriptedLLM(replies=tuple(replies))
@@ -222,6 +303,7 @@ def _build_tone_tts(*, model: str, hz: float = 220.0) -> ToneTTS:
 REGISTRATIONS: tuple[tuple[ProviderSpec, Callable[..., object]], ...] = (
     (SCRIPTED_STT_SPEC, _build_scripted_stt),
     (ECHO_LLM_SPEC, _build_echo_llm),
+    (TOOL_ECHO_LLM_SPEC, _build_tool_echo_llm),
     (SCRIPTED_LLM_SPEC, _build_scripted_llm),
     (TONE_TTS_SPEC, _build_tone_tts),
 )
