@@ -1,0 +1,25 @@
+[project]
+name = "harbor-voice-tau-voice-adapter"
+version = "0.1.0"
+description = "harbor-voice adapter for tau-voice (tau2-bench's full-duplex voice mode)."
+requires-python = ">=3.12"
+# harbor-voice itself is the host environment, not a declared dependency, the
+# same arrangement as harbor's own adapters. These are what this adapter adds.
+dependencies = [
+    # tau2's phone line filters with a scipy Butterworth band-pass.
+    "scipy>=1.10",
+    "audioop-lts>=0.2; python_version >= '3.13'",
+]
+
+[project.scripts]
+tau-voice = "tau_voice.main:main"
+
+[build-system]
+requires = ["hatchling>=1,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tau_voice"]
+
+[tool.uv]
+package = true

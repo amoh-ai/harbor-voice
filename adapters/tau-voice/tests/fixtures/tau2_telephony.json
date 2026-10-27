@@ -1,0 +1,42 @@
+{
+ "source": "tau2-bench@2174a60 StreamingTelephonyConverter",
+ "input_sha256": "2bb4a076d764c4dbe6e85456d44049896b3ac86a70cdd554331d64ccd6d6bd4d",
+ "seed": 7,
+ "chunks": [
+  {
+   "in_len": 6400,
+   "out_len": 1600,
+   "sha256": "e5913f8e639820979b13fa90a285d7f579c6cb5bb66164dbc7b29a11d56bf485"
+  },
+  {
+   "in_len": 3200,
+   "out_len": 800,
+   "sha256": "f32e3c5f81330ede4c4a89d0d64fbb8cdd2bce8e202ae97b53802ad03938edc4"
+  },
+  {
+   "in_len": 0,
+   "out_len": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "in_len": 6398,
+   "out_len": 1600,
+   "sha256": "2521f94e8252b548bf9096a6f1f0615319f2fe3e4d688c941f252e3d4b8f4b6c"
+  },
+  {
+   "in_len": 12800,
+   "out_len": 3200,
+   "sha256": "38348a8238b5c203d74fc022ef59ca26f03572365d54c3ae155b149cd55855b8"
+  },
+  {
+   "in_len": 0,
+   "out_len": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+   "in_len": 35200,
+   "out_len": 8800,
+   "sha256": "5022dce25aa50dfa18b6a3f0de57b42c6a790c000857b5703a903a5ba0f9f84d"
+  }
+ ]
+}

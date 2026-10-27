@@ -1,0 +1,1822 @@
+{
+ "source": "tau2-bench@2174a60 VoiceStreamingUserSimulator (control, scripted LLM + synthesis)",
+ "replies": [
+  {
+   "text": "I need to change the date of my flight, please."
+  },
+  {
+   "tool": "check_status",
+   "text": null
+  },
+  {
+   "text": "Okay, it says it is confirmed now."
+  },
+  {
+   "text": "Can you also tell me the new departure time for that flight?"
+  },
+  {
+   "text": "Great, thank you so much. ###STOP###"
+  }
+ ],
+ "agent": [
+  [
+   null,
+   false
+  ],
+  [
+   "Hi! How can I help you today?",
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   "Sure, ",
+   true
+  ],
+  [
+   "let me ",
+   true
+  ],
+  [
+   "check.",
+   true
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   "Your new ",
+   true
+  ],
+  [
+   "departure ",
+   true
+  ],
+  [
+   "is at ",
+   true
+  ],
+  [
+   "nine ",
+   true
+  ],
+  [
+   "in the ",
+   true
+  ],
+  [
+   "morning ",
+   true
+  ],
+  [
+   "on ",
+   true
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ],
+  [
+   null,
+   false
+  ]
+ ],
+ "tool_result": "status: confirmed",
+ "expected": [
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "I ne",
+   "tool_calls": [],
+   "audio_sha256": "bcc27e65fc0de4e903e6b8bea9f4960d8cd333654c73e47c340ecec2a75317c0",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ed t",
+   "tool_calls": [],
+   "audio_sha256": "543266cbef2330afde20639de7ecb11e1f6048434ea572c70f9029887d8ac8b1",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "o ch",
+   "tool_calls": [],
+   "audio_sha256": "64323f9114265f3d24f000eea3822a91c1f102c01e59fbc74f44a96f9a5864ce",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ange",
+   "tool_calls": [],
+   "audio_sha256": "f43016e9c98586320c3aa316453be9b3be2ca33a4926c9719235048477e3065e",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " the",
+   "tool_calls": [],
+   "audio_sha256": "a42cc6ac808d72a8353f37e21c25637aace4127244db05b90867e4c158a3e6cd",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " dat",
+   "tool_calls": [],
+   "audio_sha256": "f5fecde3fdaf5682c06bbd2b226a99274db67ea8ddd6dbc96281ce429cbe9c90",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "e of",
+   "tool_calls": [],
+   "audio_sha256": "543266cbef2330afde20639de7ecb11e1f6048434ea572c70f9029887d8ac8b1",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " my ",
+   "tool_calls": [],
+   "audio_sha256": "64323f9114265f3d24f000eea3822a91c1f102c01e59fbc74f44a96f9a5864ce",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "flig",
+   "tool_calls": [],
+   "audio_sha256": "f43016e9c98586320c3aa316453be9b3be2ca33a4926c9719235048477e3065e",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ht, ",
+   "tool_calls": [],
+   "audio_sha256": "a42cc6ac808d72a8353f37e21c25637aace4127244db05b90867e4c158a3e6cd",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "plea",
+   "tool_calls": [],
+   "audio_sha256": "f5fecde3fdaf5682c06bbd2b226a99274db67ea8ddd6dbc96281ce429cbe9c90",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "se.",
+   "tool_calls": [],
+   "audio_sha256": "b6f8d9f11b674a22ec1accfc71bfc64561d46c15727b9e19c9c544fca6d4a2d7",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "generate_message",
+   "speech": false,
+   "text": null,
+   "tool_calls": [
+    "check_status"
+   ],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": null,
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "Okay",
+   "tool_calls": [],
+   "audio_sha256": "2f65bf39d90d8f4a5f0e22f8389c2fac591f102c9818f9a398b0411e3a9ce60e",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": ", it",
+   "tool_calls": [],
+   "audio_sha256": "fbc33df2ecf6a3a0ba88110a7ef5ef973aacddd6d35c1ed8fd4108f502413796",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " say",
+   "tool_calls": [],
+   "audio_sha256": "6dfede68e7a17178c5872ba6f45481d050dff567dcd6e204df55f9c7a4fdcdb3",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "s it",
+   "tool_calls": [],
+   "audio_sha256": "79bb77a9e5abd4d0782d86274f430dc7b18d977fb4f53827c26635dffabfccd9",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " is",
+   "tool_calls": [],
+   "audio_sha256": "4ab4a919177bdc61d9592b32f5ca86a2bff249acca4a42dab775ca0947237cf9",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " con",
+   "tool_calls": [],
+   "audio_sha256": "4af42e7982a887c0d8cd0176f3d49df044f542d8e0f059716b3c960d640f9a02",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "firm",
+   "tool_calls": [],
+   "audio_sha256": "fbc33df2ecf6a3a0ba88110a7ef5ef973aacddd6d35c1ed8fd4108f502413796",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ed n",
+   "tool_calls": [],
+   "audio_sha256": "6dfede68e7a17178c5872ba6f45481d050dff567dcd6e204df55f9c7a4fdcdb3",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ow.",
+   "tool_calls": [],
+   "audio_sha256": "c225cc57cb72081c11ee3f3187c2909cfd6a017ed7239bdf60b03fd5748ba49c",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "Can ",
+   "tool_calls": [],
+   "audio_sha256": "ec5fdf496222d0148922dc7587814f040f7241fdda97174ffd3e6ccbafdaa05a",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "you ",
+   "tool_calls": [],
+   "audio_sha256": "93a55f036b7dd8d3b9adb1c04fdaf91dd3a0d8260f4a7a3855fb36454c38312f",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "also",
+   "tool_calls": [],
+   "audio_sha256": "ff225ceb5a4a2bcefcfd6a1ee6a782b4060cc3c319665200e10d2ceea9ed7f33",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " tel",
+   "tool_calls": [],
+   "audio_sha256": "d778a1d483b142aacfe698bc5d91ea4ce57a1d1913684f897e2b6066ae1617d5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "l me",
+   "tool_calls": [],
+   "audio_sha256": "7a626e9ddf08d070586f8e83fa38eb6bb19e818afe4053472e07426620504062",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " the",
+   "tool_calls": [],
+   "audio_sha256": "6ad1911b5d96ff9b9b6f5acd7e6142a446d1634cdbd8ddd5f6090056dad5e812",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " new",
+   "tool_calls": [],
+   "audio_sha256": "93a55f036b7dd8d3b9adb1c04fdaf91dd3a0d8260f4a7a3855fb36454c38312f",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " dep",
+   "tool_calls": [],
+   "audio_sha256": "ff225ceb5a4a2bcefcfd6a1ee6a782b4060cc3c319665200e10d2ceea9ed7f33",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "artu",
+   "tool_calls": [],
+   "audio_sha256": "d778a1d483b142aacfe698bc5d91ea4ce57a1d1913684f897e2b6066ae1617d5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "re t",
+   "tool_calls": [],
+   "audio_sha256": "7a626e9ddf08d070586f8e83fa38eb6bb19e818afe4053472e07426620504062",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "stop_talking",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "6cdc3f7c8233bd878173086dc0f4ee7acdd4dd56fc62e7964405925ecdec939b",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "Great, thank you so much. ###STOP###",
+   "tool_calls": [],
+   "audio_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "audio_len": 0,
+   "stop": true
+  }
+ ]
+}
