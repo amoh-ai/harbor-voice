@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 COPY server.py evaluate.py ./
-COPY test.sh /tests/test.sh
 
 EXPOSE 8000
 HEALTHCHECK --interval=2s --timeout=5s --retries=30 --start-period=5s \

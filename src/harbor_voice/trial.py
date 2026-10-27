@@ -69,7 +69,6 @@ from harbor_voice.providers.registry import default_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
 from harbor.models.task.config import EnvironmentConfig
-from harbor.models.task.config import VerifierCollectConfig
 from harbor.models.task.config import VerifierConfig
 from harbor_voice.driver import VerifierResult
 from harbor_voice.simulator.simulator import UniversalSimulator
@@ -183,25 +182,6 @@ class CallSpec(BaseModel):
     """The call phase's limit — harbor's ``[agent].timeout_sec`` for a voice call."""
 
 
-class VerifierSpec(VerifierConfig):
-    """``[verifier]``: harbor's ``VerifierConfig``, plus where it runs.
-
-    A benchmark's grader often needs the benchmark's own runtime, which lives
-    in a sidecar rather than in ``main`` — tau-voice's needs tau2. ``service``
-    names the compose service to run it in; ``main`` is harbor's default.
-    """
-
-    service: str = "main"
-    command: tuple[str, ...] = ("bash", "/tests/test.sh")
-
-
-# VerifierConfig names VerifierCollectConfig as a forward reference, resolved
-# in harbor's module; a subclass defined here has to be told where it is.
-VerifierSpec.model_rebuild(
-    _types_namespace={"VerifierCollectConfig": VerifierCollectConfig}
-)
-
-
 class VoiceTaskConfig(BaseModel):
     """What a voice task declares. Parsed from ``voice.toml`` beside the task.
 
@@ -214,8 +194,8 @@ class VoiceTaskConfig(BaseModel):
 
     agent: AgentSpec | None = None
     """The agent under test. Optional, as in harbor, where the task never names
-    its agent: the run supplies it (``harbor-voice run --agent``, a job's
-    ``agents:``). A task may keep one as a default for convenience."""
+    its agent: the run supplies it (``-m`` on ``harbor-voice trials start``, a
+    job's ``agents:``). A task may keep one as a default for convenience."""
     caller: CallerSpec | None = None
     """Required unless ``[call]`` names a driver, which brings its own caller."""
     profile: str = "clean"
@@ -241,7 +221,8 @@ class VoiceTaskConfig(BaseModel):
     environment: EnvironmentConfig | None = None
     """Harbor's ``EnvironmentConfig`` — the task's ``environment/`` folder is
     built and run by harbor's environment layer, on any of its backends."""
-    verifier: VerifierSpec | None = None
+    verifier: VerifierConfig | None = None
+    """Harbor's ``VerifierConfig``; harbor runs ``tests/test.sh`` in ``main``."""
 
     @model_validator(mode="after")
     def _caller_unless_driven(self) -> VoiceTaskConfig:
@@ -259,6 +240,19 @@ class VoiceTaskConfig(BaseModel):
                 "a [verifier] runs inside the task's environment; declare one"
             )
         return self
+
+    def with_seed(self, seed: int) -> VoiceTaskConfig:
+        """This task under another seed — the task's and its driver's.
+
+        A job runs one task under several seeds (tau2 gives trial k its own);
+        the driver reads ``[call.config].seed`` when it has one.
+        """
+        update: dict[str, Any] = {"seed": seed}
+        if self.call is not None and "seed" in self.call.config:
+            update["call"] = self.call.model_copy(
+                update={"config": {**self.call.config, "seed": seed}}
+            )
+        return self.model_copy(update=update)
 
     @classmethod
     def from_toml(cls, path: Path) -> VoiceTaskConfig:
@@ -322,14 +316,10 @@ class VoiceTrial:
         agent: PartyId = DEFAULT_AGENT,
         task_dir: Path | None = None,
         agent_spec: AgentSpec | None = None,
-        environment_type: str = "docker",
-        environment_kwargs: dict[str, Any] | None = None,
     ) -> None:
         self._config = config
         self._task_dir = task_dir
         self._agent_spec_override = agent_spec
-        self._environment_type = environment_type
-        self._environment_kwargs = environment_kwargs
         self._registry = registry if registry is not None else _registry()
         self._out_dir = out_dir
         self._caller = caller
@@ -525,13 +515,18 @@ class VoiceTrial:
         spec = self._agent_spec_override or self._config.agent
         if spec is None:
             raise TrialConfigError(
-                "no agent under test: pass one for this run (--agent), as a "
-                "harbor job names its agents; the task does not"
+                "no agent under test: pass one for this run (-m), as a harbor "
+                "job names its agents; the task does not"
             )
         return spec
 
     async def _run_driven(self, call: CallSpec) -> DrivenOutcome:
-        """A benchmark's own call loop — in the task's environment, or here."""
+        """A benchmark's own call loop, here.
+
+        Inside an environment this is what ``harbor-voice drive`` runs in
+        ``main``; harbor's trial (with ``VoiceCallAgent``) does the environment,
+        the install and the verifier around it.
+        """
         import json
 
         from harbor_voice import driven
@@ -542,29 +537,13 @@ class VoiceTrial:
         out_dir.mkdir(parents=True, exist_ok=True)
         agent = self.agent_spec()
 
-        installed: tuple[dict[str, str], ...] = ()
-        if self._config.environment is not None:
-            result = await driven.drive_in_environment(
-                self._config,
-                task_dir=self._task_dir,
-                out_dir=out_dir,
-                agent=agent,
-                environment_type=self._environment_type,
-                environment_kwargs=self._environment_kwargs,
-            )
-            outcome, verified, installed = (
-                result.outcome,
-                result.verified,
-                result.installed,
-            )
-        else:
-            outcome = await driven.drive_here(
-                self._config,
-                task_dir=self._task_dir,
-                out_dir=out_dir,
-                build_agent=self.build_agent,
-            )
-            verified = outcome.verified
+        outcome = await driven.drive_here(
+            self._config,
+            task_dir=self._task_dir,
+            out_dir=out_dir,
+            build_agent=self.build_agent,
+        )
+        verified = outcome.verified
         del call
 
         written: list[Path] = []
@@ -582,12 +561,6 @@ class VoiceTrial:
                     "trial_id": self._config.trial_id,
                     "driver": self._config.call.driver if self._config.call else None,
                     "agent": agent.model_dump(mode="json"),
-                    "environment": (
-                        self._environment_type
-                        if self._config.environment is not None
-                        else "in-process"
-                    ),
-                    "installed": list(installed),
                     "reward": reward,
                     "verifier": dict(verified.result) if verified else None,
                     "summary": outcome.summary,

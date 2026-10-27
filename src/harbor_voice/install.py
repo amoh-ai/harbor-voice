@@ -18,10 +18,12 @@ from __future__ import annotations
 import importlib.metadata
 import importlib.util
 import json
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from urllib.parse import unquote
 from urllib.parse import urlparse
 
@@ -124,3 +126,31 @@ def build_wheels(modules: list[str], out_dir: Path) -> list[Wheel]:
             )
         )
     return wheels
+
+
+WHEELS_IN_ENV = "/installed-agent/wheels"
+
+
+async def install_into(environment: Any, wheels: list[Wheel]) -> None:
+    """Upload the wheels into ``main`` and ``uv pip install`` them as root.
+
+    harbor-voice's own wheel brings its ``voice`` extra, whichever
+    distribution ships it.
+    """
+    voice = distribution_of("harbor_voice")
+    await environment.exec(f"mkdir -p {WHEELS_IN_ENV}", user="root")
+    targets = []
+    for wheel in wheels:
+        target = f"{WHEELS_IN_ENV}/{wheel.path.name}"
+        await environment.upload_file(wheel.path, target)
+        extra = "[voice]" if wheel.distribution == voice else ""
+        targets.append(shlex.quote(target + extra))
+    result = await environment.exec(
+        "uv pip install --system --quiet " + " ".join(targets),
+        user="root",
+        timeout_sec=1800,
+    )
+    if result.return_code != 0:
+        raise InstallError(
+            f"installing the call runner failed: {(result.stderr or '')[-800:]}"
+        )

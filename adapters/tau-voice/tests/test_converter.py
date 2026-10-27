@@ -19,7 +19,7 @@ def test_a_task_is_harbor_shaped_and_agent_free(tmp_path: Path) -> None:
     assert config.agent is None  # the run picks it
     assert config.call is not None and config.call.driver == "tau_voice.trial:drive"
     assert config.call.config["seed"] == 626729
-    assert config.verifier is not None and config.verifier.service == "tau2"
+    assert config.verifier is not None and config.verifier.timeout_sec == 900
     assert config.environment is not None
     # Templates only: no value is written into a task.
     assert config.environment.env["OPENAI_API_KEY"] == "${OPENAI_API_KEY}"
@@ -36,9 +36,28 @@ def test_a_task_is_harbor_shaped_and_agent_free(tmp_path: Path) -> None:
     assert config.environment.docker_image is None
     for name in images.SIDECAR_FILES:
         assert (task / "environment" / "sidecar" / name).exists()
-    assert (task / "tests" / "test.sh").read_bytes() == (
-        images.SIDECAR / "test.sh"
-    ).read_bytes()
+    test_sh = (task / "tests" / "test.sh").read_bytes()
+    assert b"http://tau2:8000/grade" in test_sh and b"\r\n" not in test_sh
+
+
+def test_a_task_is_also_a_harbor_task(tmp_path: Path) -> None:
+    from harbor.models.task.config import TaskConfig
+
+    from harbor_voice.harbor_agent import call_spec
+
+    task = write_task(tmp_path, "airline", "7", complexity="control", seed=626729)
+    harbor = TaskConfig.model_validate_toml(
+        (task / "task.toml").read_text(encoding="utf-8")
+    )
+    assert harbor.task is not None and harbor.task.name == f"tau-voice/{task.name}"
+    assert harbor.agent.timeout_sec == 3600
+    assert harbor.environment.env["ELEVENLABS_API_KEY"] == "${ELEVENLABS_API_KEY}"
+    # Harbor hands the agent only the instruction; it carries the call spec.
+    instruction = (task / "instruction.md").read_text(encoding="utf-8")
+    assert (
+        call_spec(instruction)
+        == (task / "voice.toml").read_text(encoding="utf-8").rstrip()
+    )
 
 
 def test_a_prebuilt_task_names_its_images(tmp_path: Path) -> None:

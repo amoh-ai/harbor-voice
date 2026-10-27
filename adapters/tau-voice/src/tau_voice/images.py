@@ -20,7 +20,7 @@ from pathlib import Path
 
 TAU2_COMMIT = "2174a60"
 SIDECAR = Path(__file__).resolve().parents[2] / "sidecar"
-SIDECAR_FILES = ("Dockerfile", "server.py", "evaluate.py", "test.sh")
+SIDECAR_FILES = ("Dockerfile", "server.py", "evaluate.py")
 
 MAIN_DOCKERFILE = """\
 # main: harbor-voice and the adapter are installed here at trial start, from

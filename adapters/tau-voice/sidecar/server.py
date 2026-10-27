@@ -32,6 +32,7 @@ hallucination retry reopens it after ``/close``.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import threading
@@ -553,12 +554,27 @@ def grade_last(request: GradeRequest) -> dict[str, Any]:
         )
     from evaluate import grade
 
-    state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    return grade(
-        state,
-        review_model=request.review_model or os.environ.get("TAU_VOICE_REVIEW_MODEL"),
-        hallucination_check=request.hallucination_check,
+    raw = STATE_PATH.read_text(encoding="utf-8")
+    review_model = request.review_model or os.environ.get("TAU_VOICE_REVIEW_MODEL")
+    # The driver grades the final attempt, then the task's verifier asks
+    # again: one state, one grade. The review is an LLM call — a second one
+    # would cost twice and could disagree with the first.
+    key = (
+        hashlib.sha256(raw.encode()).hexdigest(),
+        review_model,
+        request.hallucination_check,
     )
+    if key not in _GRADES:
+        _GRADES.clear()
+        _GRADES[key] = grade(
+            json.loads(raw),
+            review_model=review_model,
+            hallucination_check=request.hallucination_check,
+        )
+    return _GRADES[key]
+
+
+_GRADES: dict[tuple[str, str | None, bool], dict[str, Any]] = {}
 
 
 if __name__ == "__main__":

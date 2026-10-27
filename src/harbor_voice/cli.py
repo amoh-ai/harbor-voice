@@ -1,19 +1,18 @@
 """The voice commands.
 
-**Extend harbor's CLI; do not invent a parallel one.** This is a Typer
-sub-app, so harbor's ``main.py`` mounts it with one line::
+**Extend harbor's CLI; do not invent a parallel one.** Running is harbor's:
+``harbor-voice jobs`` and ``harbor-voice trials`` *are* harbor's job and trial
+commands, mounted here — the same code as ``harbor jobs`` / ``harbor trials``
+— with one convenience: with no agent given, the agent is the voice call
+runner (``harbor_voice.harbor_agent:VoiceCallAgent``)::
 
-    from harbor_voice.cli import voice_app
-    app.add_typer(voice_app, name="voice")
+    harbor-voice trials start -p <task> -m openai.realtime/gpt-realtime-1.5
+    harbor-voice jobs start -c job.yaml
 
-and everything harbor already does — telemetry, auth, job management — keeps
-working. Until that line lands upstream it also runs standalone via
-``python -m harbor_voice.cli``, which is how it is tested.
-
-The commands here are the ones that need no job to exist yet: inspect a
-configuration, list what is available, render something you already have.
-``run`` is deliberately absent — it belongs to harbor's job machinery, not to
-a parallel implementation of it.
+Mounting harbor's commands into ours needs no harbor edit. The commands of our
+own are the ones that need no job: inspect a configuration, list what is
+available, render something you already have — plus ``drive``, which is what
+runs inside ``main``.
 """
 
 from __future__ import annotations
@@ -63,65 +62,10 @@ def _registry():  # noqa: ANN202 - typer-facing helper
 # ----------------------------------------------------------------- doctor
 
 
-def _agent_spec(agent: str | None, agent_json: str | None):  # noqa: ANN202
-    """``--agent provider/model`` (an S2S agent) or ``--agent-json`` (any shape)."""
-    from harbor_voice.capabilities import Pipeline
+def _agent_spec(agent_json: str):  # noqa: ANN202 - typer-facing helper
     from harbor_voice.trial import AgentSpec
 
-    if agent_json:
-        return AgentSpec.model_validate_json(agent_json)
-    if agent:
-        return AgentSpec(pipeline=Pipeline.S2S, s2s=agent)
-    return None
-
-
-@voice_app.command()
-def run(
-    task_dir: Annotated[Path, typer.Argument(help="Task directory with voice.toml.")],
-    out: Annotated[Path, typer.Option(help="Where this trial's files go.")],
-    agent: Annotated[
-        str | None,
-        typer.Option(
-            help="Agent under test (S2S spec), e.g. openai.realtime/gpt-realtime-1.5."
-        ),
-    ] = None,
-    agent_json: Annotated[
-        str | None,
-        typer.Option(help="Agent under test as AgentSpec JSON (any pipeline)."),
-    ] = None,
-    env: Annotated[
-        str,
-        typer.Option(
-            help="harbor environment backend: docker, ec2, modal, daytona, ..."
-        ),
-    ] = "docker",
-    trial_id: Annotated[
-        str | None, typer.Option(help="Trial id; also names its environment.")
-    ] = None,
-) -> None:
-    """Run one trial of a task directory and print its reward.
-
-    The agent under test is the run's choice, as in a harbor job; a task's own
-    ``[agent]`` is only a default.
-    """
-    import asyncio
-
-    from harbor_voice.trial import VoiceTaskConfig
-    from harbor_voice.trial import VoiceTrial
-
-    config = VoiceTaskConfig.from_toml(task_dir / "voice.toml")
-    if trial_id is not None:
-        config = config.model_copy(update={"trial_id": trial_id})
-    trial = VoiceTrial(
-        config,
-        registry=_registry(),
-        out_dir=out,
-        task_dir=task_dir,
-        agent_spec=_agent_spec(agent, agent_json),
-        environment_type=env,
-    )
-    outcome = asyncio.run(trial.run())
-    typer.echo(json.dumps({"reward": outcome.reward, "out": str(out)}))
+    return AgentSpec.model_validate_json(agent_json)
 
 
 @voice_app.command()
@@ -132,12 +76,16 @@ def drive(
         str, typer.Option(help="Agent under test as AgentSpec JSON.")
     ],
     trial_id: Annotated[str | None, typer.Option(help="Trial id.")] = None,
+    seed: Annotated[
+        int | None,
+        typer.Option(help="Override the task's seed (a job's per-trial seed)."),
+    ] = None,
 ) -> None:
     """Run a task's call driver here — what ``main`` runs inside an environment.
 
-    Not usually called by hand: ``run`` starts the task's environment, installs
-    harbor-voice into ``main`` and calls this there. It writes ``outcome.json``
-    for the orchestrator to collect.
+    Not called by hand: harbor's trial starts the task's environment and
+    ``VoiceCallAgent`` installs harbor-voice into ``main`` and calls this there. It writes ``outcome.json`` for the
+    orchestrator to collect.
     """
     import asyncio
 
@@ -148,12 +96,14 @@ def drive(
     config = VoiceTaskConfig.from_toml(task_dir / "voice.toml")
     if trial_id is not None:
         config = config.model_copy(update={"trial_id": trial_id})
+    if seed is not None:
+        config = config.with_seed(seed)
     trial = VoiceTrial(
         config,
         registry=_registry(),
         out_dir=out,
         task_dir=task_dir,
-        agent_spec=_agent_spec(None, agent_json),
+        agent_spec=_agent_spec(agent_json),
     )
     outcome = asyncio.run(
         drive_here(
@@ -438,8 +388,42 @@ def show(
     typer.echo(f"comparable : {json.dumps(traj.comparable_on, sort_keys=True)}")
 
 
+CALL_AGENT = "harbor_voice.harbor_agent:VoiceCallAgent"
+_RUNNERS = ("jobs", "job", "trials", "trial")
+_CHOOSES_AGENT = ("-a", "--agent", "-c", "--config")
+
+
+def with_default_agent(argv: list[str]) -> list[str]:
+    """``jobs start`` / ``trials start`` with no agent run the voice call agent.
+
+    A job config (``-c``) names its own agents, so it is left alone.
+    """
+    if len(argv) < 2 or argv[0] not in _RUNNERS or argv[1] != "start":
+        return argv
+    rest = argv[2:]
+    if any(
+        arg in _CHOOSES_AGENT or arg.startswith(("--agent=", "--config="))
+        for arg in rest
+    ):
+        return argv
+    return [*argv[:2], "--agent", CALL_AGENT, *rest]
+
+
+def _mount_harbor() -> None:
+    from harbor.cli.jobs import jobs_app
+    from harbor.cli.trials import trials_app
+
+    voice_app.add_typer(jobs_app, name="jobs", help="harbor's job runner.")
+    voice_app.add_typer(trials_app, name="trials", help="harbor's single trials.")
+    voice_app.add_typer(jobs_app, name="job", hidden=True)
+    voice_app.add_typer(trials_app, name="trial", hidden=True)
+
+
 def main() -> None:  # pragma: no cover - entry point
-    voice_app()
+    import sys
+
+    _mount_harbor()
+    voice_app(args=with_default_agent(sys.argv[1:]))
 
 
 if __name__ == "__main__":  # pragma: no cover - entry point
