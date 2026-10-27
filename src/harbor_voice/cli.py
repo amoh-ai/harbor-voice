@@ -375,6 +375,23 @@ def listen(
 # ----------------------------------------------------------------- inspect
 
 
+@voice_app.command()
+def status(
+    job: Annotated[Path, typer.Argument(help="A harbor job folder.")],
+    watch: Annotated[
+        float | None,
+        typer.Option(help="Refresh every N seconds until the job finishes."),
+    ] = None,
+) -> None:
+    """What a running job is doing: counts, reward so far, each trial's phase."""
+    from harbor_voice import status as job_status
+
+    if watch:
+        job_status.watch(job, watch)
+    else:
+        typer.echo(job_status.render(job))
+
+
 @voice_app.command("show")
 def show(
     trajectory: Annotated[Path, typer.Argument(help="Recorded ATIF-voice run.")],

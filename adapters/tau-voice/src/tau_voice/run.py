@@ -322,6 +322,7 @@ async def run_trial(
     seed: int = 42,
     hallucination_retries: int = HALLUCINATION_RETRIES,
     attempt: Callable[..., Awaitable[dict[str, Any]]] | None = None,
+    on_progress: Callable[[str], None] | None = None,
     **task: Any,
 ) -> dict[str, Any]:
     """One trial with tau2's hallucination retry (``runner/batch.py::run_unit``).
@@ -336,8 +337,10 @@ async def run_trial(
     feedback: str | None = None
     attempts: list[dict[str, Any]] = []
     graded: Mapping[str, Any] = {}
+    report = on_progress or (lambda message: None)
     for n in range(hallucination_retries + 1):
         attempt_dir = out_dir / f"attempt-{n}"
+        report(f"attempt {n}: started, seed {seed + n * 1000}")
         summary = await run(
             out_dir=attempt_dir,
             seed=seed + n * 1000,
@@ -356,6 +359,13 @@ async def run_trial(
                 "termination": summary.get("termination"),
                 "call_s": summary.get("call_s"),
             }
+        )
+        call_s = summary.get("call_s")
+        report(
+            f"attempt {n}: reward {graded.get('reward')} · "
+            f"hallucination {'yes' if found else 'no'} · "
+            f"{summary.get('termination')} · "
+            + (f"{call_s:.0f} s audio" if call_s is not None else "no audio")
         )
         if not found or n == hallucination_retries:
             break

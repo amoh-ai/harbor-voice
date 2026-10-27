@@ -77,6 +77,7 @@ async def drive(ctx: DriverContext) -> DriverOutcome:
         speech_complexity=str(config.get("speech_complexity", "control")),
         agent_factory=agent,
         synthesis_cache=synthesis_cache(),
+        on_progress=ctx.progress,
     )
     final = ctx.out_dir / "tau_voice" / f"attempt-{trial['final_attempt']}"
     graded = final / "result.json"

@@ -25,6 +25,9 @@ def ticks_of(result: CallResult) -> tuple[list[Tick], list[ToolEvent]]:
     """Both parties per step, and the caller's own tool calls."""
     ticks: list[Tick] = []
     tools: list[ToolEvent] = []
+    # tau2 answers a caller's tool call at a later step than the call, so
+    # results are matched by id across the whole call.
+    results = {r.id: r for log in result.steps for r in log.user_tool_results}
     for log in result.steps:
         user = log.user
         if user.speech or (user.text and not user.tool_calls):
@@ -41,7 +44,6 @@ def ticks_of(result: CallResult) -> tuple[list[Tick], list[ToolEvent]]:
                     cut_off=bool(log.agent and log.agent.was_truncated),
                 )
             )
-        results = {r.id: r for r in log.user_tool_results}
         for call in user.tool_calls:
             answer = results.get(call.id)
             tools.append(

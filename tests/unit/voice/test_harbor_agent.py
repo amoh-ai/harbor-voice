@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import logging
 import types
 from pathlib import Path
 
@@ -34,20 +36,44 @@ INSTRUCTION = f"# fake task\n\nSome prose.\n\n```toml\n{SPEC}```\n"
 
 
 class _Exec:
-    def __init__(self, return_code: int = 0, stderr: str = "") -> None:
-        self.return_code, self.stdout, self.stderr = return_code, "", stderr
+    def __init__(
+        self, return_code: int = 0, stderr: str = "", stdout: str = ""
+    ) -> None:
+        self.return_code, self.stdout, self.stderr = return_code, stdout, stderr
+
+
+DRIVE_OUTPUT = (
+    "harbor-voice: attempt 0: started, seed 7\n"
+    "some other line\n"
+    "harbor-voice: attempt 0: reward 1.0 · hallucination no · agent_stop · 120 s audio\n"
+    '{"reward": 1.0}\n'
+)
 
 
 class _Environment:
-    def __init__(self, drive_code: int = 0) -> None:
+    def __init__(self, drive_code: int = 0, streams: bool = False) -> None:
         self.calls: list[tuple] = []
         self.uploaded: dict[str, str] = {}
         self._drive_code = drive_code
+        self._streams = streams
+        self._callback = None
+
+    @contextlib.contextmanager
+    def scoped_output_callback(self, callback):  # noqa: ANN001, ANN201 - harbor's hook
+        self._callback = callback
+        try:
+            yield
+        finally:
+            self._callback = None
 
     async def exec(self, command: str, **kw: object) -> _Exec:
         self.calls.append(("exec", command))
         if command.startswith("harbor-voice drive"):
-            return _Exec(self._drive_code, stderr="provider down")
+            if self._streams and self._callback is not None:
+                # Docker/EC2 stream output in chunks that split lines anywhere.
+                for i in range(0, len(DRIVE_OUTPUT), 7):
+                    await self._callback(DRIVE_OUTPUT[i : i + 7], "stdout")
+            return _Exec(self._drive_code, stderr="provider down", stdout=DRIVE_OUTPUT)
         return _Exec()
 
     async def upload_file(self, source: Path, target: str) -> None:
@@ -149,3 +175,18 @@ def test_with_seed_moves_the_task_and_its_driver() -> None:
     config = VoiceTaskConfig.model_validate(tomllib.loads(SPEC)).with_seed(9)
     assert config.seed == 9
     assert config.call is not None and config.call.config["seed"] == 9
+
+
+@pytest.mark.parametrize("streams", [True, False], ids=["docker-ec2", "daytona"])
+async def test_driver_progress_reaches_the_trial_log(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, streams: bool
+) -> None:
+    caplog.set_level(logging.INFO)
+    agent = _agent(tmp_path, model_name="offline.echo-s2s")
+    await agent.run(INSTRUCTION, _Environment(streams=streams), context=None)  # type: ignore[arg-type]
+    lines = [r.getMessage() for r in caplog.records]
+    assert "attempt 0: started, seed 7" in lines
+    assert any(line.startswith("attempt 0: reward 1.0") for line in lines)
+    assert not any("some other line" in line for line in lines)
+    assert sum(line.startswith("attempt 0: started") for line in lines) == 1
+    assert any(line.startswith("call: fake/1 · seed 7") for line in lines)

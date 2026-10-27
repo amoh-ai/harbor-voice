@@ -29,10 +29,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import re
 import shlex
 import tempfile
 import threading
+import time
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -47,6 +49,7 @@ from pydantic import Field
 
 from harbor_voice import install
 from harbor_voice.capabilities import Pipeline
+from harbor_voice.driver import PROGRESS_PREFIX
 
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
@@ -89,6 +92,32 @@ def call_spec(instruction: str) -> str:
             "the instruction carries no ```toml block: not a voice task"
         )
     return found.group(1)
+
+
+class _ProgressRelay:
+    """Driver progress lines (:data:`PROGRESS_PREFIX`) into the trial's log."""
+
+    def __init__(self, logger: logging.Logger) -> None:
+        self._logger = logger
+        self._partial = ""
+        self.relayed = False
+
+    async def feed(self, text: str, stream: Any) -> None:
+        del stream
+        *complete, self._partial = (self._partial + text).split("\n")
+        for line in complete:
+            if self._log(line):
+                self.relayed = True
+
+    def lines(self, text: str) -> None:
+        for line in text.splitlines():
+            self._log(line)
+
+    def _log(self, line: str) -> bool:
+        if not line.startswith(PROGRESS_PREFIX):
+            return False
+        self._logger.info(line.removeprefix(PROGRESS_PREFIX).strip())
+        return True
 
 
 class _Wheels:
@@ -139,8 +168,13 @@ class VoiceCallAgent(BaseInstalledAgent):
 
     @override
     async def install(self, environment: BaseEnvironment) -> None:
+        started = time.monotonic()
         wheel = await asyncio.to_thread(_wheels.get, "harbor_voice")
         await install.install_into(environment, [wheel])
+        self.logger.info(
+            f"install: {wheel.distribution} {wheel.version} into main "
+            f"({time.monotonic() - started:.0f} s)"
+        )
 
     @override
     async def run(
@@ -169,13 +203,24 @@ class VoiceCallAgent(BaseInstalledAgent):
 
         options = self.options
         seed = options.seed if isinstance(options, VoiceCallOptions) else None
+        self.logger.info(
+            f"call: {config.task or 'task'} · seed {seed if seed is not None else config.seed}"
+            f" · agent {self.model_name or 'agent_json'}"
+        )
         command = (
             f"harbor-voice drive {TASK_IN_ENV} --out {CALL_OUT_IN_ENV} "
             f"--trajectory {TRAJECTORY_IN_ENV} "
             f"--agent-json {shlex.quote(agent)}"
             + (f" --seed {seed}" if seed is not None else "")
         )
-        result = await environment.exec(command)
+        started = time.monotonic()
+        relay = _ProgressRelay(self.logger)
+        with environment.scoped_output_callback(relay.feed):
+            result = await environment.exec(command)
+        if not relay.relayed:
+            # Backends that cannot stream (Daytona) return the output at the end.
+            relay.lines(result.stdout or "")
+        self.logger.info(f"call: done in {(time.monotonic() - started) / 60:.1f} min")
         if result.return_code != 0:
             raise VoiceInfrastructureError(
                 f"the call did not run ({result.return_code}): "

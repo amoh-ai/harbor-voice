@@ -35,10 +35,10 @@ def test_a_call_with_both_sides_tools_becomes_a_trajectory() -> None:
             _step(2, CallerChunk(audio=b"", speech=True, text="is offline.")),
             _step(3, quiet, "Let me ", True),
             _step(4, quiet, "check.", True),
+            _step(5, CallerChunk(audio=b"", speech=False, tool_calls=(toggle,))),
+            # tau2 answers the caller's tool call at the next step.
             _step(
-                5,
-                CallerChunk(audio=b"", speech=False, tool_calls=(toggle,)),
-                user_tool_results=(CallerToolResult(id="u1", content="done"),),
+                6, quiet, user_tool_results=(CallerToolResult(id="u1", content="done"),)
             ),
         ]
     )
@@ -77,4 +77,4 @@ def test_a_call_with_both_sides_tools_becomes_a_trajectory() -> None:
     assert voice.config_matrix.floor_policy == "tau2-patient"
     assert voice.config_matrix.seed_root == 626729
     (close,) = voice.events_of(EventType.SESSION_CLOSE)
-    assert close.t == pytest.approx(1.2)  # six steps of 0.2 s
+    assert close.t == pytest.approx(1.4)  # seven steps of 0.2 s

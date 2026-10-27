@@ -65,6 +65,9 @@ class DriverContext:
         verify: Runs the task's verifier; ``None`` if the task declares none.
             A driver may call it more than once — tau-voice grades every
             attempt to decide on a retry.
+        progress: Reports a line of progress (an attempt started, graded).
+            Printed with :data:`PROGRESS_PREFIX`; ``VoiceCallAgent`` relays
+            such lines into harbor's ``trial.log``.
     """
 
     config: VoiceTaskConfig
@@ -74,6 +77,15 @@ class DriverContext:
     services: Mapping[str, str]
     build_agent: Callable[..., VoiceTransport]
     verify: Callable[[], Awaitable[VerifierResult]] | None = None
+    progress: Callable[[str], None] = field(default_factory=lambda: print_progress)
+
+
+PROGRESS_PREFIX = "harbor-voice: "
+"""Marks a progress line in a driver's output, so a runner can pick it out."""
+
+
+def print_progress(message: str) -> None:
+    print(f"{PROGRESS_PREFIX}{message}", flush=True)
 
 
 @dataclass(slots=True)
