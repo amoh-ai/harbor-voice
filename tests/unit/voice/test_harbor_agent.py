@@ -91,13 +91,28 @@ def test_the_model_is_the_agent_under_test(tmp_path: Path) -> None:
         _agent(tmp_path).agent_spec_json()
 
 
-async def test_install_puts_harbor_voice_into_main(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("declared", "with_extra"),
+    [
+        (["voice"], True),  # internal: harbor[voice]
+        ([], False),  # public: voice deps are core, no extra
+    ],
+)
+async def test_install_puts_harbor_voice_into_main(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    declared: list[str],
+    with_extra: bool,
+) -> None:
+    metadata = types.SimpleNamespace(get_all=lambda key: declared)
+    monkeypatch.setattr(install.importlib.metadata, "metadata", lambda dist: metadata)
     environment = _Environment()
     await _agent(tmp_path, model_name="offline.echo-s2s").install(environment)  # type: ignore[arg-type]
     (command,) = [
         c[1] for c in environment.calls if c[0] == "exec" and "uv pip" in c[1]
     ]
-    assert "harbor-0.0.whl[voice]" in command
+    assert "harbor-0.0.whl" in command
+    assert ("harbor-0.0.whl[voice]" in command) is with_extra
 
 
 async def test_run_installs_the_driver_and_drives_the_call(tmp_path: Path) -> None:

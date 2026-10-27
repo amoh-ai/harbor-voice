@@ -249,9 +249,13 @@ def write_task(
     return task
 
 
+def _first_line(doc: str | None) -> str:
+    return doc.strip().splitlines()[0] if doc else ""
+
+
 def build_image(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
-        prog="tau-voice build-image", description=images.__doc__.splitlines()[0]
+        prog="tau-voice build-image", description=_first_line(images.__doc__)
     )
     parser.add_argument("--force", action="store_true", help="rebuild both")
     args = parser.parse_args(argv)
@@ -265,7 +269,7 @@ def write_job_config(argv: list[str]) -> None:
     from tau_voice import job
 
     parser = argparse.ArgumentParser(
-        prog="tau-voice job-config", description=job.__doc__.splitlines()[0]
+        prog="tau-voice job-config", description=_first_line(job.__doc__)
     )
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--model", required=True, help="the S2S agent under test")
@@ -299,7 +303,7 @@ def main(argv: list[str] | None = None) -> None:
     if argv[:1] == ["job-config"]:
         write_job_config(argv[1:])
         return
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=_first_line(__doc__))
     parser.add_argument("--tau2-root", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--domains", nargs="+", default=list(DOMAINS), choices=DOMAINS)

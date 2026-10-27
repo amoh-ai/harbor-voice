@@ -13,6 +13,7 @@ finished them, partial (``truncated``) when it yielded.
 
 from __future__ import annotations
 
+from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.simulator import PreparedLine
 from harbor_voice.simulator import UniversalSimulator
 
@@ -30,7 +31,7 @@ class SimulatorVoice:
                 f"a {step_s} s step is not a whole number of "
                 f"{fmt.frame_bytes()}-byte frames"
             )
-        self._sent: dict[int, list] = {}
+        self._sent: dict[int, list[AudioFrame]] = {}
 
     async def prepare(self, text: str) -> PreparedLine:
         return await self.simulator.prepare(text)

@@ -1,15 +1,14 @@
 """Which environment variables a provider needs.
 
-Harbor already ships a 95-provider declarative table in
-``harbor.agents.model_connection``, and it already knows the one we need::
+Harbor already ships a ~95-provider declarative table (``PROVIDERS``) of the
+environment variables each provider reads. We consult that table rather than
+rebuild it, and add voice-only entries in a **local overlay consulted first**.
 
-    "amazon-bedrock": ProviderAccess(
-        ("AWS_ACCESS_KEY_ID",),
-        extra_envs=("AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_REGION"),
-    ),
-
-We consult that table rather than rebuild it, and add voice-only entries in a
-**local overlay consulted first**. The overlay rather than an in-place edit
+Harbor has moved and reshaped that table between releases
+(``harbor.agents.model_connection`` with ``api_key_envs`` tuples, then
+``harbor.agents.agent_auth_resolution`` with ``api_key_candidate_names``
+lists). We read either into our own :class:`CredentialAccess`, so this module
+works across those versions and nothing else here depends on harbor's shape. The overlay rather than an in-place edit
 because harbor-voice is a fork that may take upstream merges: a table we have
 rewritten conflicts on every upstream change to it, and an overlay conflicts
 never.
@@ -19,22 +18,62 @@ What this module does *not* do is resolve connections the way harbor's
 names for CLI agents running inside containers, which is a different problem
 from ours — we need to know **whether the credentials are present** so
 ``doctor`` can say so before a container starts, and we need to never print
-them. So we reuse harbor's *table* and its ``ProviderAccess`` type, and the
-~60 lines of policy here are ours.
+them. So we reuse harbor's *table*, and the policy here is ours.
 """
 
 from __future__ import annotations
 
+import importlib
 import os
 from collections.abc import Callable
 from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
 
-from harbor.agents.model_connection import PROVIDERS as HARBOR_PROVIDERS
-from harbor.agents.model_connection import ProviderAccess
 
-_AWS_ACCESS = ProviderAccess(
+@dataclass(frozen=True, slots=True)
+class CredentialAccess:
+    """The environment variables one provider reads."""
+
+    api_key_envs: tuple[str, ...]
+    """Alternatives: exactly one must be set."""
+    extra_envs: tuple[str, ...] = ()
+    base_url_envs: tuple[str, ...] = ()
+
+    @classmethod
+    def from_harbor(cls, access: Any) -> CredentialAccess:
+        """Read a harbor ``ProviderAccess`` of either shape."""
+
+        def names(new: str, old: str) -> tuple[str, ...]:
+            return tuple(getattr(access, new, None) or getattr(access, old, ()) or ())
+
+        return cls(
+            api_key_envs=names("api_key_candidate_names", "api_key_envs"),
+            extra_envs=names("extra_env_names", "extra_envs"),
+            base_url_envs=names("base_url_candidate_names", "base_url_envs"),
+        )
+
+
+def _harbor_providers() -> dict[str, CredentialAccess]:
+    for module in (
+        "harbor.agents.agent_auth_resolution",  # harbor >= 0.25
+        "harbor.agents.model_connection",  # earlier
+    ):
+        try:
+            table = importlib.import_module(module).PROVIDERS
+        except (ImportError, AttributeError):
+            continue
+        return {
+            slug: CredentialAccess.from_harbor(access) for slug, access in table.items()
+        }
+    return {}
+
+
+HARBOR_PROVIDERS: dict[str, CredentialAccess] = _harbor_providers()
+"""Harbor's provider table, in our shape."""
+
+_AWS_ACCESS = CredentialAccess(
     ("AWS_ACCESS_KEY_ID",),
     extra_envs=("AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_REGION"),
 )
@@ -44,14 +83,14 @@ One entry rather than three, because three identical entries would invite them
 to drift apart for no reason.
 """
 
-VOICE_PROVIDER_ACCESS: dict[str, ProviderAccess] = {
+VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "aws": _AWS_ACCESS,
-    "elevenlabs": ProviderAccess(("ELEVENLABS_API_KEY",)),
+    "elevenlabs": CredentialAccess(("ELEVENLABS_API_KEY",)),
 }
 """Voice-only providers, consulted before harbor's table."""
 
 
-def access_for(slug: str | None) -> ProviderAccess | None:
+def access_for(slug: str | None) -> CredentialAccess | None:
     """Find a provider's credential requirements. Overlay first, then harbor."""
     if slug is None:
         return None

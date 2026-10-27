@@ -261,8 +261,9 @@ async def run_task(
             "seed": seed,
             "persona": user_info["persona_name"],
             "agent": {
-                "provider": getattr(transport.ref, "provider", None),
-                "model": getattr(transport.ref, "model", None),
+                # ``ref`` is a provider transport's, not every transport's.
+                "provider": getattr(getattr(transport, "ref", None), "provider", None),
+                "model": getattr(getattr(transport, "ref", None), "model", None),
                 "session_id": getattr(transport, "session_id", None),
                 "errors": list(getattr(transport, "errors", [])),
             },
