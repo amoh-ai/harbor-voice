@@ -24,6 +24,9 @@ aws = [
     "aws-sdk-bedrock-runtime[awscrt]>=0.0.2",
     "boto3>=1.40",
 ]
+# Cloud backends are harbor's; these pass its extras through.
+daytona = ["harbor[daytona]==0.25.0"]
+ec2 = ["harbor[ec2]==0.25.0"]
 
 [project.scripts]
 harbor-voice = "harbor_voice.cli:main"
@@ -40,7 +43,7 @@ harbor-voice-tau-voice-adapter = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "harbor-voice[aws]",
+    "harbor-voice[aws,daytona,ec2]",
     "harbor-voice-tau-voice-adapter",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",

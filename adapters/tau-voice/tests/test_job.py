@@ -32,6 +32,13 @@ def test_one_agent_entry_per_tau2_seed(tmp_path: Path) -> None:
     assert config.retry.include_exceptions == {"VoiceInfrastructureError"}
 
 
+def test_the_backend_is_named_and_nothing_account_specific(tmp_path: Path) -> None:
+    raw = job_config(dataset=tmp_path, model="m", environment="daytona")
+    assert raw["environment"] == {"type": "daytona"}
+    assert JobConfig.model_validate(raw).environment.type == "daytona"
+    assert "environment" not in job_config(dataset=tmp_path, model="m")
+
+
 def test_the_mean_leaves_errored_trials_out(tmp_path: Path) -> None:
     rewards = tmp_path / "rewards.jsonl"
     rewards.write_text('{"reward": 1.0}\nnull\n{"reward": 0.0}\n{"reward": 1.0}\n')

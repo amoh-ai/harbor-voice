@@ -102,3 +102,22 @@ def test_test_sh_is_lf_even_from_a_crlf_checkout(
     task = write_task(tmp_path / "out", "airline", "7", complexity="control", seed=1)
     written = (task / "tests" / "test.sh").read_bytes()
     assert b"\r\n" not in written and written.startswith(b"#!/bin/bash\n")
+
+
+def test_every_compose_variable_reaches_a_remote_backend(tmp_path: Path) -> None:
+    """Remote backends run compose with the task's env only, not this host's."""
+    import re
+
+    from harbor.models.task.config import TaskConfig
+
+    task = write_task(tmp_path, "airline", "7", complexity="control", seed=1)
+    compose = (task / "environment" / "docker-compose.yaml").read_text(encoding="utf-8")
+    passed = set(re.findall(r"^\s+- ([A-Z0-9_]+)$", compose, re.MULTILINE))
+    templated = set(re.findall(r"\$\{([A-Z0-9_]+)", compose))
+    host_only = {"HARBOR_VOICE_CACHE_DIR", "HOME"}  # local cache mounts; optional
+    declared = set(
+        TaskConfig.model_validate_toml(
+            (task / "task.toml").read_text(encoding="utf-8")
+        ).environment.env
+    )
+    assert passed | (templated - host_only) <= declared

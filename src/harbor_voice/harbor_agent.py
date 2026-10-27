@@ -56,6 +56,19 @@ TRAJECTORY_IN_ENV = "/logs/agent/trajectory.json"
 _SPEC = re.compile(r"```toml\n(.*?)\n```", re.DOTALL)
 
 
+def harbor_parses_model_names() -> bool:
+    """Whether harbor resolves ``-m`` through litellm (and has the switch off).
+
+    Our model names are harbor-voice provider specs
+    (``openai.realtime/gpt-realtime-1.5``), not litellm ids; harbor 0.25+
+    warns about each one unless the agent config sets ``skip_model_parsing``.
+    Earlier harbor neither parses nor has the field.
+    """
+    from harbor.models.trial.config import AgentConfig
+
+    return "skip_model_parsing" in AgentConfig.model_fields
+
+
 class VoiceInfrastructureError(RuntimeError):
     """The call could not run; retryable, and not a graded result."""
 

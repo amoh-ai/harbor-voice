@@ -8,8 +8,12 @@ from typer.testing import CliRunner
 from harbor_voice import cli
 from harbor_voice.cli import CALL_AGENT
 from harbor_voice.cli import with_default_agent
+from harbor_voice.harbor_agent import harbor_parses_model_names
 
 pytestmark = pytest.mark.unit
+
+# harbor 0.25+ resolves -m through litellm; our provider specs skip that.
+SKIP = ["--skip-model-parsing"] if harbor_parses_model_names() else []
 
 
 @pytest.mark.parametrize("runner", ["jobs", "job", "trials", "trial"])
@@ -20,6 +24,7 @@ def test_start_without_an_agent_runs_the_call_agent(runner: str) -> None:
         "start",
         "--agent",
         CALL_AGENT,
+        *SKIP,
         "-p",
         "task",
         "-m",

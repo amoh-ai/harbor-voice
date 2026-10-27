@@ -414,7 +414,10 @@ def with_default_agent(argv: list[str]) -> list[str]:
         for arg in rest
     ):
         return argv
-    return [*argv[:2], "--agent", CALL_AGENT, *rest]
+    from harbor_voice.harbor_agent import harbor_parses_model_names
+
+    skip = ["--skip-model-parsing"] if harbor_parses_model_names() else []
+    return [*argv[:2], "--agent", CALL_AGENT, *skip, *rest]
 
 
 def _mount_harbor() -> None:
