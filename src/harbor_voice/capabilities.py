@@ -84,6 +84,10 @@ class OptionalOp(StrEnum):
     SEND_DTMF = "send_dtmf"
     CONTROL_STREAM = "control_stream"
     RECONNECT = "reconnect"
+    EVENT_STREAM = "event_stream"
+    """Agent audio, its own transcript and provider VAD as one ordered stream."""
+    TRUNCATE = "truncate"
+    """Tell the provider how much of an utterance was heard before a barge-in."""
 
 
 class Layer(StrEnum):

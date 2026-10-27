@@ -38,6 +38,7 @@ from harbor_voice.capabilities import Capabilities
 from harbor_voice.capabilities import OptionalOp
 from harbor_voice.ids import PartyId
 from harbor_voice.transport.events import ControlEvent
+from harbor_voice.transport.stream import StreamEvent
 
 DEFAULT_GAP_BUDGET_S = 1.0
 """Cumulative transport downtime before a run stops being evidence."""
@@ -161,6 +162,18 @@ class VoiceTransport(ABC):
         """Yield non-audio events: provider VAD, barge-in, gaps, errors."""
         self._unsupported(OptionalOp.CONTROL_STREAM)
 
+    def events(self) -> AsyncIterator[StreamEvent]:
+        """Yield agent audio, transcript and provider VAD in arrival order.
+
+        See :mod:`harbor_voice.transport.stream`. Shares an inbox with
+        :meth:`rx`; consume one or the other.
+        """
+        self._unsupported(OptionalOp.EVENT_STREAM)
+
+    async def truncate(self, utterance: str, audio_end_ms: int) -> None:
+        """Tell the provider only ``audio_end_ms`` of ``utterance`` was heard."""
+        self._unsupported(OptionalOp.TRUNCATE)
+
     # ----------------------------------------------------------------- guards
 
     def _unsupported(self, op: OptionalOp) -> NoReturn:
@@ -241,5 +254,7 @@ _OPTIONAL_METHODS: dict[OptionalOp, str] = {
     OptionalOp.SEND_TEXT: "send_text",
     OptionalOp.SEND_DTMF: "send_dtmf",
     OptionalOp.CONTROL_STREAM: "control",
+    OptionalOp.EVENT_STREAM: "events",
+    OptionalOp.TRUNCATE: "truncate",
 }
 """Optional ops that correspond to a method. ``RECONNECT`` is behavioural."""

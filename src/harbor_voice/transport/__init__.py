@@ -14,6 +14,10 @@ from harbor_voice.transport.events import ControlEvent
 from harbor_voice.transport.events import ControlEventKind
 from harbor_voice.transport.events import GapBudgetExceeded
 from harbor_voice.transport.events import GapTracker
+from harbor_voice.transport.stream import InputSpeech
+from harbor_voice.transport.stream import OutputAudio
+from harbor_voice.transport.stream import OutputTranscript
+from harbor_voice.transport.stream import StreamEvent
 
 __all__ = [
     "DEFAULT_GAP_BUDGET_S",
@@ -22,7 +26,11 @@ __all__ = [
     "ControlEventKind",
     "GapBudgetExceeded",
     "GapTracker",
+    "InputSpeech",
+    "OutputAudio",
+    "OutputTranscript",
     "SessionConfig",
+    "StreamEvent",
     "TransportClosedError",
     "TransportError",
     "TransportNotConnectedError",
