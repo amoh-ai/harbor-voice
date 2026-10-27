@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 from tau2.data_model.simulation import SimulationRun
 from tau2.data_model.simulation import VoiceRunConfig
@@ -26,20 +27,13 @@ from tau2.runner.build import _build_env_kwargs
 from tau2.runner.helpers import get_tasks
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--state", type=Path, required=True)
-    parser.add_argument("--reward", type=Path, required=True)
-    parser.add_argument("--result", type=Path, required=True)
-    parser.add_argument(
-        "--review-model",
-        default=None,
-        help="hallucination reviewer; defaults to tau2's (VoiceRunConfig.review_model)",
-    )
-    parser.add_argument("--skip-hallucination-check", action="store_true")
-    args = parser.parse_args()
-
-    state = json.loads(args.state.read_text(encoding="utf-8"))
+def grade(
+    state: dict[str, Any],
+    *,
+    review_model: str | None = None,
+    hallucination_check: bool = True,
+) -> dict[str, Any]:
+    """Grade one call from the sidecar's state; the shared core of CLI and /grade."""
     opened = state["open"]
     simulation = SimulationRun.model_validate(state["simulation"])
     task = get_tasks(opened["domain"], task_ids=[opened["task_id"]])[0]
@@ -65,9 +59,9 @@ def main() -> None:
     simulation.reward_info = reward_info
 
     hallucination = None
-    if not args.skip_hallucination_check:
+    if hallucination_check:
         check = check_hallucination(
-            simulation, task, review_model=args.review_model or config.review_model
+            simulation, task, review_model=review_model or config.review_model
         )
         hallucination = {
             "found": check.hallucination_found,
@@ -75,23 +69,38 @@ def main() -> None:
             "feedback": format_hallucination_feedback(check),
             "detail": check.model_dump(mode="json"),
         }
+    return {
+        "task_id": task.id,
+        "domain": opened["domain"],
+        "termination": simulation.termination_reason.value,
+        "reward": reward_info.reward,
+        "reward_info": reward_info.model_dump(mode="json"),
+        "hallucination": hallucination,
+    }
 
-    args.reward.parent.mkdir(parents=True, exist_ok=True)
-    args.reward.write_text(f"{reward_info.reward}\n", encoding="utf-8")
-    args.result.write_text(
-        json.dumps(
-            {
-                "task_id": task.id,
-                "domain": opened["domain"],
-                "termination": simulation.termination_reason.value,
-                "reward": reward_info.reward,
-                "reward_info": reward_info.model_dump(mode="json"),
-                "hallucination": hallucination,
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--reward", type=Path, required=True)
+    parser.add_argument("--result", type=Path, required=True)
+    parser.add_argument(
+        "--review-model",
+        default=None,
+        help="hallucination reviewer; defaults to tau2's (VoiceRunConfig.review_model)",
     )
+    parser.add_argument("--skip-hallucination-check", action="store_true")
+    args = parser.parse_args()
+
+    state = json.loads(args.state.read_text(encoding="utf-8"))
+    result = grade(
+        state,
+        review_model=args.review_model,
+        hallucination_check=not args.skip_hallucination_check,
+    )
+    args.reward.parent.mkdir(parents=True, exist_ok=True)
+    args.reward.write_text(f"{result['reward']}\n", encoding="utf-8")
+    args.result.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -1,32 +1,36 @@
 """The tau-voice call driver — what a converted task's ``voice.toml`` names.
 
-``[call] driver = "tau_voice.trial:drive"``. Core has already brought the
-task's sidecar up and hands over its URL, a builder for the agent under test
-(from the task's ``[agent]``), and the verifier. This runs tau2's trial: the
-call, the grade, and tau2's hallucination retry.
+``[call] driver = "tau_voice.trial:drive"``. It runs inside the task's
+``main`` container (harbor-voice installs it there at trial start), next to
+the ``tau2`` sidecar service on the environment's own network. It runs tau2's
+trial: the call, a grade of every attempt, and tau2's hallucination retry.
+
+Each attempt is graded by the sidecar's ``/grade`` — the same code as the
+task's ``tests/test.sh`` — because ``main`` cannot exec into a sibling
+container. The orchestrator's ``tests/test.sh`` run afterwards remains the
+official grade.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from harbor_voice.driver import DriverContext
-from harbor_voice.driver import DriverError
 from harbor_voice.driver import DriverOutcome
+from harbor_voice.driver import VerifierResult
 from harbor_voice.providers.tools import ToolRouter
-from harbor_voice.services import VerifierResult
 from harbor_voice.transport.base import VoiceTransport
 
+from tau_voice.client import Sidecar
 from tau_voice.run import HALLUCINATION_RETRIES
 from tau_voice.run import run_trial
 
-SERVICE = "tau2"
-"""The sidecar's service name in the task's compose file."""
+SIDECAR_URL = "http://tau2:8000"
+"""The sidecar by compose service name, inside the environment's network."""
 
 CACHE_ENV = "HARBOR_VOICE_TTS_CACHE"
 
@@ -41,29 +45,19 @@ def synthesis_cache() -> Path:
 
 async def drive(ctx: DriverContext) -> DriverOutcome:
     config = ctx.driver_config
-    url = ctx.services.get(SERVICE)
-    if url is None:
-        raise DriverError(
-            f"tau-voice needs the {SERVICE!r} service; the task did not declare it"
-        )
-    if ctx.verify is None:
-        raise DriverError(
-            "tau-voice grades every attempt; the task declares no [verifier]"
-        )
-    verify = ctx.verify
-    logs = ctx.out_dir / "logs"
+    url = str(config.get("sidecar_url", SIDECAR_URL))
 
     async def grade(attempt_dir: Path) -> Mapping[str, Any]:
-        verified = await verify()
-        # The verifier writes into the shared logs mount; keep each attempt's.
-        for source in (
-            logs / "agent" / "tau_voice_state.json",
-            logs / "verifier" / "result.json",
-            logs / "verifier" / "reward.txt",
-        ):
-            if source.exists():
-                shutil.copy2(source, attempt_dir / source.name)
-        return {**verified.result, "reward": verified.reward}
+        sidecar = Sidecar(url, timeout_s=600.0)
+        try:
+            result = await sidecar.grade()
+        finally:
+            await sidecar.aclose()
+        attempt_dir.mkdir(parents=True, exist_ok=True)
+        (attempt_dir / "result.json").write_text(
+            json.dumps(result, indent=2), encoding="utf-8"
+        )
+        return result
 
     def agent(router: ToolRouter, system_prompt: str) -> VoiceTransport:
         return ctx.build_agent(tools=router, system_prompt=system_prompt)

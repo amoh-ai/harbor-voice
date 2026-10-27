@@ -19,6 +19,8 @@ benchmark:
   ``VoiceStreamingUserSimulator._generate_full_duplex_voice_message`` does,
   returned as the request body. Pure computation, and the step most likely to
   break parity if ported, so it is not ported.
+- ``POST /grade`` — grade the call last closed (same code as
+  ``tests/test.sh``), for the driver's per-attempt hallucination retry.
 - ``POST /close`` — turn harbor-voice's step log plus the tool calls recorded
   here into tau2 ``Tick`` records and write a ``SimulationRun`` to the state
   log. Grading is **not** done here; ``tests/evaluate.py`` does it, so a call
@@ -529,6 +531,34 @@ def close(request: CloseRequest) -> dict[str, Any]:
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, indent=2), encoding="utf-8")
     return {"state_path": str(STATE_PATH), "ticks": len(run.ticks or [])}
+
+
+class GradeRequest(BaseModel):
+    hallucination_check: bool = True
+    review_model: str | None = None
+
+
+@app.post("/grade")
+def grade_last(request: GradeRequest) -> dict[str, Any]:
+    """Grade the call last closed — the same code as ``tests/test.sh``.
+
+    The driver grades every attempt to decide on tau2's hallucination retry.
+    It runs in the ``main`` container and cannot exec into this one, so it
+    asks over the environment's internal network. The orchestrator's final
+    ``tests/test.sh`` remains the official grade.
+    """
+    if not STATE_PATH.exists():
+        raise HTTPException(
+            status_code=409, detail="nothing to grade; POST /close first"
+        )
+    from evaluate import grade
+
+    state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    return grade(
+        state,
+        review_model=request.review_model or os.environ.get("TAU_VOICE_REVIEW_MODEL"),
+        hallucination_check=request.hallucination_check,
+    )
 
 
 if __name__ == "__main__":

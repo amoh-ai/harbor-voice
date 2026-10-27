@@ -10,7 +10,9 @@ ARG TAU2_BENCH_COMMIT="2174a603f6d014ef94473ffa95957f6ce27100db"
 ENV TAU2_BENCH_ROOT=/opt/tau2-bench \
     TAU2_DATA_DIR=/opt/tau2-bench/data \
     PYTHONUNBUFFERED=1 \
-    PYTHONUTF8=1
+    PYTHONUTF8=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10
 
 # portaudio + a compiler: tau2[voice] pulls pyaudio, which has no Linux wheel.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 COPY server.py evaluate.py ./
+COPY test.sh /tests/test.sh
 
 EXPOSE 8000
 HEALTHCHECK --interval=2s --timeout=5s --retries=30 --start-period=5s \

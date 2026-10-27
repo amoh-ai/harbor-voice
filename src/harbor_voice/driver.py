@@ -27,11 +27,20 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
-from harbor_voice.services import VerifierResult
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from harbor_voice.trial import VoiceTaskConfig
     from harbor_voice.transport.base import VoiceTransport
+
+
+@dataclass(frozen=True, slots=True)
+class VerifierResult:
+    """What a task's verifier concluded."""
+
+    reward: float | None
+    """``logs/verifier/reward.txt`` — harbor's scalar reward."""
+    result: Mapping[str, Any] = field(default_factory=dict)
+    """``logs/verifier/result.json``, if the verifier wrote one."""
 
 
 class DriverError(RuntimeError):

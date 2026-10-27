@@ -63,15 +63,47 @@ def _registry():  # noqa: ANN202 - typer-facing helper
 # ----------------------------------------------------------------- doctor
 
 
+def _agent_spec(agent: str | None, agent_json: str | None):  # noqa: ANN202
+    """``--agent provider/model`` (an S2S agent) or ``--agent-json`` (any shape)."""
+    from harbor_voice.capabilities import Pipeline
+    from harbor_voice.trial import AgentSpec
+
+    if agent_json:
+        return AgentSpec.model_validate_json(agent_json)
+    if agent:
+        return AgentSpec(pipeline=Pipeline.S2S, s2s=agent)
+    return None
+
+
 @voice_app.command()
 def run(
     task_dir: Annotated[Path, typer.Argument(help="Task directory with voice.toml.")],
     out: Annotated[Path, typer.Option(help="Where this trial's files go.")],
+    agent: Annotated[
+        str | None,
+        typer.Option(
+            help="Agent under test (S2S spec), e.g. openai.realtime/gpt-realtime-1.5."
+        ),
+    ] = None,
+    agent_json: Annotated[
+        str | None,
+        typer.Option(help="Agent under test as AgentSpec JSON (any pipeline)."),
+    ] = None,
+    env: Annotated[
+        str,
+        typer.Option(
+            help="harbor environment backend: docker, ec2, modal, daytona, ..."
+        ),
+    ] = "docker",
     trial_id: Annotated[
-        str | None, typer.Option(help="Trial id; also names its services.")
+        str | None, typer.Option(help="Trial id; also names its environment.")
     ] = None,
 ) -> None:
-    """Run one trial of a task directory and print its reward."""
+    """Run one trial of a task directory and print its reward.
+
+    The agent under test is the run's choice, as in a harbor job; a task's own
+    ``[agent]`` is only a default.
+    """
     import asyncio
 
     from harbor_voice.trial import VoiceTaskConfig
@@ -80,9 +112,56 @@ def run(
     config = VoiceTaskConfig.from_toml(task_dir / "voice.toml")
     if trial_id is not None:
         config = config.model_copy(update={"trial_id": trial_id})
-    trial = VoiceTrial(config, registry=_registry(), out_dir=out, task_dir=task_dir)
+    trial = VoiceTrial(
+        config,
+        registry=_registry(),
+        out_dir=out,
+        task_dir=task_dir,
+        agent_spec=_agent_spec(agent, agent_json),
+        environment_type=env,
+    )
     outcome = asyncio.run(trial.run())
     typer.echo(json.dumps({"reward": outcome.reward, "out": str(out)}))
+
+
+@voice_app.command()
+def drive(
+    task_dir: Annotated[Path, typer.Argument(help="Task directory with voice.toml.")],
+    out: Annotated[Path, typer.Option(help="Where the driver's files go.")],
+    agent_json: Annotated[
+        str, typer.Option(help="Agent under test as AgentSpec JSON.")
+    ],
+    trial_id: Annotated[str | None, typer.Option(help="Trial id.")] = None,
+) -> None:
+    """Run a task's call driver here — what ``main`` runs inside an environment.
+
+    Not usually called by hand: ``run`` starts the task's environment, installs
+    harbor-voice into ``main`` and calls this there. It writes ``outcome.json``
+    for the orchestrator to collect.
+    """
+    import asyncio
+
+    from harbor_voice.driven import drive_here
+    from harbor_voice.trial import VoiceTaskConfig
+    from harbor_voice.trial import VoiceTrial
+
+    config = VoiceTaskConfig.from_toml(task_dir / "voice.toml")
+    if trial_id is not None:
+        config = config.model_copy(update={"trial_id": trial_id})
+    trial = VoiceTrial(
+        config,
+        registry=_registry(),
+        out_dir=out,
+        task_dir=task_dir,
+        agent_spec=_agent_spec(None, agent_json),
+    )
+    outcome = asyncio.run(
+        drive_here(
+            config, task_dir=task_dir, out_dir=out, build_agent=trial.build_agent
+        )
+    )
+    reward = outcome.verified.reward if outcome.verified else None
+    typer.echo(json.dumps({"reward": reward, "out": str(out)}))
 
 
 @voice_app.command()

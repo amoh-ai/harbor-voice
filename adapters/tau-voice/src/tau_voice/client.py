@@ -134,6 +134,10 @@ class Sidecar:
     async def close(self, body: Mapping[str, Any]) -> dict[str, Any]:
         return await self._post("/close", body)
 
+    async def grade(self, *, hallucination_check: bool = True) -> dict[str, Any]:
+        """Grade the call last closed — the verifier's code, run in the sidecar."""
+        return await self._post("/grade", {"hallucination_check": hallucination_check})
+
 
 def _heard(heard: Heard | None) -> dict[str, Any] | None:
     if heard is None:
