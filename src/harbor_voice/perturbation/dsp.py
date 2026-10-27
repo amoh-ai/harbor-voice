@@ -136,7 +136,12 @@ def tile_to(source: np.ndarray, length: int, offset: int = 0) -> np.ndarray:
 
 
 def linear_to_mulaw(samples: np.ndarray) -> np.ndarray:
-    """G.711 mu-law encode: sign bit plus 7-bit compressed magnitude.
+    """Simplified mu-law, for simulating the codec's sound: sign bit plus a
+    7-bit compressed magnitude.
+
+    **Not G.711 wire format** — real G.711 inverts the bits, so silence is
+    ``0xFF``, while this encodes silence as ``0x00``. For audio that goes on
+    a wire, use :mod:`harbor_voice.audio.g711`.
 
     Sign and magnitude are kept separate rather than affine-mapping [-1, 1]
     onto [0, 255]. The affine form puts zero at code 127.5, which is not an
