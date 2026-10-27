@@ -181,6 +181,18 @@ class ToolResult:
             }
         }
 
+    def as_text(self) -> str:
+        """The result as a string, for providers whose tool output is text.
+
+        A payload of exactly ``{"text": ...}`` is sent as that text, verbatim:
+        benchmarks whose tools return strings (tau2's do) must reach the model
+        unchanged, not wrapped in a JSON object the original never sent.
+        Anything else is JSON.
+        """
+        if set(self.content) == {"text"} and isinstance(self.content["text"], str):
+            return self.content["text"]
+        return json.dumps(self.content)
+
     def as_nova_content(self) -> str:
         """Nova Sonic's `toolResult.content`: a stringified JSON object."""
         return json.dumps(self.content)

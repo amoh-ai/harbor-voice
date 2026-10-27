@@ -46,6 +46,7 @@ to drift apart for no reason.
 
 VOICE_PROVIDER_ACCESS: dict[str, ProviderAccess] = {
     "aws": _AWS_ACCESS,
+    "elevenlabs": ProviderAccess(("ELEVENLABS_API_KEY",)),
 }
 """Voice-only providers, consulted before harbor's table."""
 
