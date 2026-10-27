@@ -19,6 +19,7 @@ htmlcov/
 /datasets/
 /jobs/
 /trials/
+/parity-runs/
 
 # Editors and OS
 .vscode/

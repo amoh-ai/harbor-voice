@@ -105,7 +105,7 @@ for s in json.loads(sys.argv[1]):
 which tau2 rewrites as every simulation finishes."""
 
 
-def _progress(sandbox: Any, specs: list[dict[str, Any]]) -> list[str]:
+def progress_lines(sandbox: Any, specs: list[dict[str, Any]]) -> list[str]:
     command = (
         f"python -c {shlex.quote(PROGRESS_SCRIPT)} {shlex.quote(json.dumps(specs))}"
     )
@@ -144,7 +144,7 @@ def unpack(data: bytes, out: Path) -> None:
         archive.extractall(out, members=members, filter="data")
 
 
-def _env() -> dict[str, str]:
+def sandbox_env() -> dict[str, str]:
     missing = [name for name in ENV_NAMES if not os.environ.get(name)]
     if missing:
         raise SystemExit(f"set these first: {', '.join(missing)}")
@@ -181,7 +181,7 @@ def run(
         CreateSandboxFromImageParams(
             image=Image.from_dockerfile(SIDECAR / "Dockerfile"),
             resources=Resources(cpu=4, memory=8, disk=10),
-            env_vars=_env(),
+            env_vars=sandbox_env(),
             labels={"purpose": "tau-voice-parity-original", "label": label},
             auto_stop_interval=0,  # a run is hours of activity Daytona may not see
         ),
@@ -236,7 +236,7 @@ def run(
                     print(f"{domain} finished: exit {status.exit_code}", flush=True)
             minutes = (time.monotonic() - started) / 60
             print(f"--- {minutes:.0f} min", flush=True)
-            for line in _progress(sandbox, specs):
+            for line in progress_lines(sandbox, specs):
                 print(f"  {line}", flush=True)
 
         for domain, cmd_id in running.items():
