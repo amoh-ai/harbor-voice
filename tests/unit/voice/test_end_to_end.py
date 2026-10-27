@@ -82,14 +82,25 @@ async def _run_call(
         pipeline=pipeline,
         seeds=SeedSet.derive(seed),
     )
+    # One clock for the whole call. The simulator stamps t_produced and the
+    # adapter stamps t_tx; with two SessionClocks the later-started one reads
+    # lower, and on the clean profile (no processing between the two stamps)
+    # a send can appear to precede its own synthesis by microseconds.
     transport = CascadeTransport(
         stt=ScriptedSTT(turns=TURNS),
         llm=EchoLLM(prefix="understood: "),
         tts=ToneTTS(),
         party=AGENT,
         input_idle_s=0.05,
+        clock=simulator.clock,
     )
-    adapter = CascadeAdapter(transport, party=AGENT, idle_s=0.1, turn_timeout_s=3.0)
+    adapter = CascadeAdapter(
+        transport,
+        party=AGENT,
+        idle_s=0.1,
+        turn_timeout_s=3.0,
+        clock=simulator.clock,
+    )
     await adapter.open(SessionConfig(party=AGENT))
 
     turns = []
