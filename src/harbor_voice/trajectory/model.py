@@ -172,6 +172,10 @@ class VoiceTurn(BaseModel):
 
     said: str | None = None
     heard: str | None = None
+    reply: str | None = None
+    """The agent's own words in this exchange, when the call recorded them
+    (driven calls do). ``heard`` is the agent's transcription of ``said``;
+    this is what it said back."""
 
     audio_clean: AudioRef | None = None
     audio_transmitted: AudioRef | None = None
@@ -364,7 +368,13 @@ class VoiceTrajectory(BaseModel):
                 Step(
                     step_id=len(steps) + 1,  # ATIF step_id is 1-indexed
                     source="agent",
-                    message=turn.heard if turn.heard is not None else "",
+                    message=(
+                        turn.reply
+                        if turn.reply is not None
+                        else turn.heard
+                        if turn.heard is not None
+                        else ""
+                    ),
                     metrics=metrics,
                     extra={"voice_turn": turn.idx, "party": turn.party},
                 )

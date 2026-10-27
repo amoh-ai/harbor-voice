@@ -134,6 +134,20 @@ class Sidecar:
     async def close(self, body: Mapping[str, Any]) -> dict[str, Any]:
         return await self._post("/close", body)
 
+    async def state(self) -> dict[str, Any]:
+        """tau2's own state of the call last closed (its message log)."""
+        try:
+            response = await self._client.get(f"{self._base}/state")
+        except httpx.HTTPError as exc:
+            raise SidecarError(
+                f"sidecar unreachable at {self._base}/state: {exc}"
+            ) from exc
+        if response.status_code != 200:
+            raise SidecarError(
+                f"sidecar /state returned {response.status_code}: {response.text[:300]}"
+            )
+        return response.json()
+
     async def grade(self, *, hallucination_check: bool = True) -> dict[str, Any]:
         """Grade the call last closed — the verifier's code, run in the sidecar."""
         return await self._post("/grade", {"hallucination_check": hallucination_check})

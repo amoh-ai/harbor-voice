@@ -29,6 +29,7 @@ from typing import Any
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    from harbor_voice.trajectory.model import VoiceTrajectory
     from harbor_voice.trial import VoiceTaskConfig
     from harbor_voice.transport.base import VoiceTransport
 
@@ -83,10 +84,13 @@ class DriverOutcome:
         verified: The verifier result that counts. ``None`` lets core run the
             verifier once itself after the driver returns.
         summary: Driver-specific record of the call, written to ``trial.json``.
+        trajectory: The call as ATIF-voice — the attempt that counts. Written
+            as ATIF where harbor reads an agent's trajectory.
     """
 
     verified: VerifierResult | None = None
     summary: dict[str, Any] = field(default_factory=dict)
+    trajectory: VoiceTrajectory | None = None
 
 
 CallDriver = Callable[[DriverContext], Awaitable[DriverOutcome]]

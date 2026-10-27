@@ -17,12 +17,14 @@ from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from typing import Any
 
 from harbor_voice.audio.format import AudioFormat
 from tau_voice.content import Tau2Content
 from tau_voice.client import Sidecar
+from tau_voice.client import SidecarError
 from tau_voice.telephony import Tau2Telephony
 from tau_voice.telephony import ulaw_to_pcm16
 from harbor_voice.ids import PartyId
@@ -47,6 +49,7 @@ from tau_voice.caller import ReactiveCaller
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
 from tau_voice.stepped_call import CallResult
+from tau_voice.trajectory import build as build_trajectory
 from tau_voice.stepped_call import SteppedCall
 from tau_voice.stepped_call import Termination
 from harbor_voice.transport.base import SessionConfig
@@ -99,11 +102,21 @@ class SidecarToolExecutor:
     sidecar: Sidecar
     specs: Sequence[ToolSpec]
     call: SteppedCall | None = None
+    log: list[dict[str, Any]] = field(default_factory=list)
+    """Every agent tool call, in order: step, name, arguments, result or error."""
 
     async def execute(self, invocation: ToolInvocation) -> Mapping[str, Any]:
         if self.call is None:
             raise RuntimeError("executor used before the call was attached")
         step = await self.call.tool_window()
+        entry: dict[str, Any] = {
+            "step": step,
+            "party": "agent",
+            "call_id": invocation.tool_use_id,
+            "name": invocation.name,
+            "arguments": dict(invocation.arguments),
+        }
+        self.log.append(entry)
         try:
             outcome = await self.sidecar.tool(
                 side="agent",
@@ -112,8 +125,12 @@ class SidecarToolExecutor:
                 name=invocation.name,
                 arguments=invocation.arguments,
             )
+        except Exception as exc:
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+            raise
         finally:
             await self.call.tool_done(step)
+        entry["result"] = outcome.content
         if outcome.stop:
             self.call.request_stop(Termination.AGENT_STOP)
         if outcome.too_many_errors:
@@ -151,6 +168,7 @@ async def run_task(
     synthesis_cache: Path | None = None,
     hallucination_feedback: str | None = None,
     max_steps: int | None = None,
+    attempt_index: int = 0,
 ) -> dict[str, Any]:
     """Run one task end to end; returns the run summary written to ``out_dir``.
 
@@ -261,6 +279,25 @@ async def run_task(
             "sidecar_state": closed,
         }
         _write(out_dir, result, summary)
+        # tau2's own record of the call, beside ours; then the call as ATIF.
+        try:
+            state = await sidecar.state()
+        except SidecarError as exc:
+            state = {"unavailable": str(exc)}
+        (out_dir / "tau2_state.json").write_text(
+            json.dumps(state, indent=1), encoding="utf-8"
+        )
+        trajectory = build_trajectory(
+            result,
+            tick_s=turns["tick_duration_s"],
+            agent_tool_log=executor.log,
+            summary=summary,
+            audio=out_dir / "both.wav",
+            attempt=attempt_index,
+        )
+        (out_dir / "trajectory.json").write_text(
+            trajectory.to_atif().model_dump_json(indent=2), encoding="utf-8"
+        )
         return summary
     finally:
         await sidecar.aclose()
@@ -304,6 +341,7 @@ async def run_trial(
             out_dir=attempt_dir,
             seed=seed + n * 1000,
             hallucination_feedback=feedback,
+            attempt_index=n,
             **task,
         )
         graded = await grade(attempt_dir)

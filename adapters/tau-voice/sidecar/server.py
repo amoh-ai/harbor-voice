@@ -494,6 +494,14 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/state")
+def state() -> dict[str, Any]:
+    """tau2's state of the call last closed — kept beside our own record."""
+    if not STATE_PATH.exists():
+        raise HTTPException(status_code=409, detail="no call closed yet")
+    return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+
+
 @app.post("/open")
 def open_session(request: OpenRequest) -> dict[str, Any]:
     global _session

@@ -80,6 +80,10 @@ def drive(
         int | None,
         typer.Option(help="Override the task's seed (a job's per-trial seed)."),
     ] = None,
+    trajectory: Annotated[
+        Path | None,
+        typer.Option(help="Where the call's ATIF trajectory goes."),
+    ] = None,
 ) -> None:
     """Run a task's call driver here — what ``main`` runs inside an environment.
 
@@ -107,7 +111,11 @@ def drive(
     )
     outcome = asyncio.run(
         drive_here(
-            config, task_dir=task_dir, out_dir=out, build_agent=trial.build_agent
+            config,
+            task_dir=task_dir,
+            out_dir=out,
+            build_agent=trial.build_agent,
+            trajectory_path=trajectory,
         )
     )
     reward = outcome.verified.reward if outcome.verified else None

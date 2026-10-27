@@ -40,8 +40,14 @@ async def drive_here(
     task_dir: Path,
     out_dir: Path,
     build_agent: Callable[..., VoiceTransport],
+    trajectory_path: Path | None = None,
 ) -> DriverOutcome:
-    """Run the task's driver in this process and write ``outcome.json``."""
+    """Run the task's driver in this process and write ``outcome.json``.
+
+    The driver's trajectory, if it returns one, is written as ATIF to
+    ``trajectory_path`` (default ``out_dir/trajectory.json``) — harbor reads
+    an agent's from ``/logs/agent/trajectory.json``.
+    """
     if config.call is None:
         raise DrivenTrialError("the task names no [call] driver")
     driver = load_driver(config.call.driver)
@@ -74,4 +80,10 @@ async def drive_here(
         ),
         encoding="utf-8",
     )
+    if outcome.trajectory is not None:
+        path = trajectory_path or out_dir / "trajectory.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            outcome.trajectory.to_atif().model_dump_json(indent=2), encoding="utf-8"
+        )
     return outcome

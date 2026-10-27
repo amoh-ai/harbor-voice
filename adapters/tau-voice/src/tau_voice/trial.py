@@ -21,8 +21,10 @@ from typing import Any
 
 from harbor_voice.driver import DriverContext
 from harbor_voice.driver import DriverOutcome
+from harbor.models.trajectories.trajectory import Trajectory
 from harbor_voice.driver import VerifierResult
 from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.trajectory.model import VoiceTrajectory
 from harbor_voice.transport.base import VoiceTransport
 
 from tau_voice.client import Sidecar
@@ -76,11 +78,19 @@ async def drive(ctx: DriverContext) -> DriverOutcome:
         agent_factory=agent,
         synthesis_cache=synthesis_cache(),
     )
-    final = (
-        ctx.out_dir / "tau_voice" / f"attempt-{trial['final_attempt']}" / "result.json"
-    )
-    result = json.loads(final.read_text(encoding="utf-8")) if final.exists() else {}
+    final = ctx.out_dir / "tau_voice" / f"attempt-{trial['final_attempt']}"
+    graded = final / "result.json"
+    result = json.loads(graded.read_text(encoding="utf-8")) if graded.exists() else {}
+    atif = final / "trajectory.json"
     return DriverOutcome(
         verified=VerifierResult(reward=trial["reward"], result=result),
         summary=trial,
+        # The attempt that counts; every attempt keeps its own beside it.
+        trajectory=(
+            VoiceTrajectory.from_atif(
+                Trajectory.model_validate_json(atif.read_text(encoding="utf-8"))
+            )
+            if atif.exists()
+            else None
+        ),
     )

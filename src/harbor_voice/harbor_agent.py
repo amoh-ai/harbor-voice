@@ -49,6 +49,8 @@ from harbor_voice.capabilities import Pipeline
 
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
+TRAJECTORY_IN_ENV = "/logs/agent/trajectory.json"
+"""Where harbor reads an agent's ATIF trajectory."""
 
 _SPEC = re.compile(r"```toml\n(.*?)\n```", re.DOTALL)
 
@@ -96,6 +98,7 @@ _wheels = _Wheels()
 
 class VoiceCallAgent(BaseInstalledAgent):
     options_model = VoiceCallOptions
+    SUPPORTS_ATIF = True
 
     @staticmethod
     @override
@@ -154,6 +157,7 @@ class VoiceCallAgent(BaseInstalledAgent):
         seed = options.seed if isinstance(options, VoiceCallOptions) else None
         command = (
             f"harbor-voice drive {TASK_IN_ENV} --out {CALL_OUT_IN_ENV} "
+            f"--trajectory {TRAJECTORY_IN_ENV} "
             f"--agent-json {shlex.quote(agent)}"
             + (f" --seed {seed}" if seed is not None else "")
         )

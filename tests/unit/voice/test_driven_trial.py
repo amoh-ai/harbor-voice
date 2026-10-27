@@ -117,3 +117,32 @@ async def test_a_driven_trial_needs_its_directories() -> None:
     )
     with pytest.raises(TrialConfigError, match="task_dir and out_dir"):
         await VoiceTrial(config).run()
+
+
+async def test_drive_writes_the_trajectory_where_harbor_reads_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from harbor.models.trajectories.trajectory import Trajectory
+
+    from harbor_voice.driven import drive_here
+    from harbor_voice.trajectory.model import VoiceTrajectory
+
+    voice = VoiceTrajectory(task="fake/1")
+
+    async def with_trajectory(ctx: DriverContext) -> DriverOutcome:
+        return DriverOutcome(summary={}, trajectory=voice)
+
+    monkeypatch.setattr(sys.modules["fake_bench"], "drive", with_trajectory)
+    config = VoiceTaskConfig.model_validate(
+        {"agent": AGENT, "call": {"driver": "fake_bench:drive"}}
+    )
+    target = tmp_path / "agent" / "trajectory.json"
+    await drive_here(
+        config,
+        task_dir=tmp_path,
+        out_dir=tmp_path / "agent" / "call",
+        build_agent=lambda **kw: None,  # type: ignore[arg-type,return-value]
+        trajectory_path=target,
+    )
+    written = Trajectory.model_validate_json(target.read_text(encoding="utf-8"))
+    assert VoiceTrajectory.from_atif(written) == voice
