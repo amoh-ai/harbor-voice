@@ -42,6 +42,7 @@ from harbor_voice.perturbation.base import ApplyContext
 from harbor_voice.perturbation.base import Perturbation
 from harbor_voice.perturbation.base import SeedSet
 from harbor_voice.perturbation.conversation import ConversationPlan
+from harbor_voice.perturbation.encoder import WireEncoder
 from harbor_voice.perturbation.jitter import FramePerturbation
 from harbor_voice.perturbation.persona import PersonaPlan
 from harbor_voice.perturbation.speech import SpeechPlan
@@ -129,6 +130,9 @@ class PerturbationPipeline:
             source, both of which happen before there is audio.
         speech: L2's **text** half. Its signal half (loudness, speaking rate,
             muffling) are ordinary perturbations and go in ``perturbations``.
+        encoder: The wire format, applied last — see
+            :mod:`~harbor_voice.perturbation.encoder`. The only stage allowed to
+            change rate and encoding; clean and transmitted then align by time.
 
     Four insertion points, because the six layers genuinely have four:
     content and voice (L1, L2 text), the signal chain (L2 signal, L3, L4),
@@ -149,6 +153,7 @@ class PerturbationPipeline:
         persona: PersonaPlan | None = None,
         speech: SpeechPlan | None = None,
         world: WorldPlan | None = None,
+        encoder: WireEncoder | None = None,
     ) -> None:
         ordered = sorted(perturbations, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
         # Split by shape rather than asking the caller to. A frame-stream
@@ -166,6 +171,9 @@ class PerturbationPipeline:
         self._persona = persona or PersonaPlan()
         self._speech = speech or SpeechPlan()
         self._world = world or WorldPlan()
+        self._encoder = encoder
+        if encoder is not None and not encoder.accepts(fmt):
+            raise ValueError(f"encoder {encoder.name} cannot take {fmt} frames")
         self._ctx = ApplyContext(fmt=fmt)
         self._frames = 0
         self.reset()
@@ -230,12 +238,32 @@ class PerturbationPipeline:
         store a redundant copy of every frame and then verify it against
         itself.
         """
-        return not self._perturbations and not self._stream
+        return not self._perturbations and not self._stream and self._encoder is None
 
     @property
     def is_unperturbed(self) -> bool:
         """Whether *no* layer of any kind is active — the ``clean`` profile."""
         return not self.active_layers
+
+    @property
+    def encoder(self) -> WireEncoder | None:
+        return self._encoder
+
+    @property
+    def output_format(self) -> AudioFormat:
+        """What :meth:`process` returns: the encoder's format, if there is one."""
+        return self._encoder.output_format if self._encoder else self._fmt
+
+    @property
+    def can_stream(self) -> bool:
+        """Whether frames can be processed one at a time.
+
+        A frame-stream layer (jitter) schedules delays across a whole stream
+        and reorders by arrival; streaming it needs a playout-buffer model
+        that does not exist yet. Until then a pipeline with one refuses to
+        stream rather than silently skipping the stage.
+        """
+        return not self._stream
 
     @property
     def clean_store(self) -> CleanStore:
@@ -253,6 +281,8 @@ class PerturbationPipeline:
         self._frames = 0
         for perturbation in (*self._perturbations, *self._stream):
             perturbation.reset(self._seeds)
+        if self._encoder is not None:
+            self._encoder.reset(self._seeds)
         self._conversation.reset(self._seeds)
         self._world.reset(self._seeds)
         self._persona.reset()
@@ -288,13 +318,16 @@ class PerturbationPipeline:
 
         self._ctx.advance(frame.duration_s)
         self._frames += 1
-
+        fmt = frame.fmt
+        if self._encoder is not None:
+            pcm = self._encoder.encode(pcm, frame.fmt)
+            fmt = self._encoder.output_format
         degraded = AudioFrame(
             pcm=pcm,
             seq=frame.seq,
             party=frame.party,
             t_produced=frame.t_produced,
-            fmt=frame.fmt,
+            fmt=fmt,
             t_tx=frame.t_tx,
             t_rx=frame.t_rx,
             t_voiced=frame.t_voiced,
@@ -336,6 +369,16 @@ class PerturbationPipeline:
                     str(p.key): {"params": p.params(), "achieved": p.achieved()}
                     for p in self._stream
                 },
+                **(
+                    {
+                        str(self._encoder.key): {
+                            "params": self._encoder.params(),
+                            "achieved": self._encoder.achieved(),
+                        }
+                    }
+                    if self._encoder is not None
+                    else {}
+                ),
             },
             frames_processed=self._frames,
         )
@@ -354,10 +397,22 @@ class PerturbationPipeline:
                 f"frame seq={frame.seq} was perturbed but carries no clean_ref"
             )
         clean = self._clean.get(frame.clean_ref)
-        if len(clean) != len(frame.pcm):
+        if self._encoder is None:
+            if len(clean) != len(frame.pcm):
+                raise CleanReferenceError(
+                    f"frame seq={frame.seq}: clean is {len(clean)} bytes, "
+                    f"transmitted is {len(frame.pcm)}"
+                )
+            return
+        # Across an encoder the formats differ, so alignment is by time. A
+        # streamed resampler may land a sample early or late on any one frame
+        # and settles across the stream, hence one output sample of slack.
+        clean_s = self._fmt.duration_s(len(clean))
+        slack = 1.0 / frame.fmt.sample_rate_hz
+        if abs(frame.duration_s - clean_s) > slack + 1e-9:
             raise CleanReferenceError(
-                f"frame seq={frame.seq}: clean is {len(clean)} bytes, "
-                f"transmitted is {len(frame.pcm)}"
+                f"frame seq={frame.seq}: clean is {clean_s * 1000:.3f} ms, "
+                f"transmitted is {frame.duration_s * 1000:.3f} ms"
             )
 
     @override

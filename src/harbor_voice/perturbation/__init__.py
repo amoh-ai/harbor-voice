@@ -24,6 +24,9 @@ from harbor_voice.perturbation.conversation import ProbeSpec
 from harbor_voice.perturbation.conversation import injector_for
 from harbor_voice.perturbation.environment import BackgroundBed
 from harbor_voice.perturbation.environment import synthetic_bed
+from harbor_voice.perturbation.encoder import G711Encoder
+from harbor_voice.perturbation.encoder import WireEncoder
+from harbor_voice.perturbation.encoder import WireEncoderError
 from harbor_voice.perturbation.jitter import Distribution
 from harbor_voice.perturbation.jitter import FramePerturbation
 from harbor_voice.perturbation.jitter import Jitter
@@ -82,6 +85,7 @@ __all__ = [
     "Distribution",
     "DynamicMuffling",
     "FramePerturbation",
+    "G711Encoder",
     "Gender",
     "GilbertElliottLoss",
     "Landing",
@@ -116,4 +120,6 @@ __all__ = [
     "WorldError",
     "WorldPlan",
     "synthetic_bed",
+    "WireEncoder",
+    "WireEncoderError",
 ]

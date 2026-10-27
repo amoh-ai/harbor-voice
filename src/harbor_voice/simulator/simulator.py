@@ -86,6 +86,9 @@ class Utterance:
     """
 
     metadata: dict[str, object] = field(default_factory=dict)
+    truncated: bool = False
+    """The caller stopped mid-line (a streamed caller yielded): ``frames`` holds
+    only what went out, and ``said`` is still the whole line it meant to say."""
 
     @property
     def audio_duration_s(self) -> float:
@@ -99,6 +102,24 @@ class Utterance:
     @property
     def is_probe(self) -> bool:
         return self.probe is not None
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedLine:
+    """A line synthesised and not yet sent — the streaming half of a turn.
+
+    ``pcm`` is the clean audio in the simulator's format; nothing has degraded
+    it. A streamed caller emits it frame by frame through :meth:`
+    UniversalSimulator.emit`, and may stop part way.
+    """
+
+    said: str
+    pcm: bytes
+    clean_digest: Digest | None
+    intent: str | None = None
+    prerecorded: bool = False
+    probe: ProbeKind | None = None
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,27 +150,35 @@ class UniversalSimulator:
 
     Args:
         party: Who this simulator speaks as.
-        content: Where the words come from.
+        content: Where the words come from. Optional for a caller
+            streamed through :meth:`prepare`/:meth:`emit` that supplies its
+            own words; :meth:`next_utterance` then refuses.
         tts: Synthesis slot. Unused for pre-recorded corpus audio.
         pipeline: Perturbation layers. Defaults to the ``clean`` profile.
         seeds: Layered seeds.
         fmt: Format of produced audio.
         clock: Session clock, for ``t_produced``.
+        source_kind: Recorded on utterances when there is no content source.
     """
 
     def __init__(
         self,
         *,
         party: PartyId,
-        content: ContentSource,
+        content: ContentSource | None = None,
         tts: TTSProvider | None = None,
         pipeline: PerturbationPipeline | None = None,
         seeds: SeedSet | None = None,
         fmt: AudioFormat = CANONICAL,
         clock: SessionClock | None = None,
+        source_kind: SourceKind | None = None,
     ) -> None:
         self._party = party
         self._content = content
+        self._kind = (
+            content.kind if content is not None else (source_kind or SourceKind.LLM)
+        )
+        self._deterministic = content.is_deterministic if content is not None else False
         self._tts = tts
         self._seeds = seeds or SeedSet.derive(0)
         self._pipeline = pipeline or PerturbationPipeline(seeds=self._seeds)
@@ -178,6 +207,11 @@ class UniversalSimulator:
         rejects a transmit that appears to precede its own synthesis.
         """
         return self._clock
+
+    @property
+    def audio_format(self) -> AudioFormat:
+        """The format of synthesised (clean) audio and of frames into the pipeline."""
+        return self._fmt
 
     @property
     def pipeline(self) -> PerturbationPipeline:
@@ -209,14 +243,109 @@ class UniversalSimulator:
 
     def reset(self) -> None:
         """Rewind content, perturbations and counters for a new run."""
-        self._content.reset()
+        if self._content is not None:
+            self._content.reset()
         self._pipeline.reset()
         self._index = 0
         self._seq = 0
         self._utterances.clear()
 
+    # ------------------------------------------------------------ streaming
+
+    async def prepare(
+        self,
+        content: Content | str,
+        *,
+        probe: ProbeKind | None = None,
+    ) -> PreparedLine:
+        """Synthesise a line without sending any of it.
+
+        L1 (the voice) and L2's text half apply here, as in
+        :meth:`next_utterance`; the signal layers wait for :meth:`emit`. A
+        plain string is spoken as given — no L2 rewrite, as for :meth:`say`.
+        """
+        if isinstance(content, str):
+            spoken, clean_pcm = content, await self._synthesize(content)
+            intent, prerecorded, metadata = None, False, {}
+        else:
+            spoken = self._pipeline.speech.apply(content.text)
+            clean_pcm = await self._audio_for(content, text=spoken)
+            intent = content.intent
+            prerecorded = content.is_prerecorded
+            metadata = dict(content.metadata)
+        digest = self._pipeline.clean_store.put(clean_pcm) if clean_pcm else None
+        return PreparedLine(
+            said=spoken,
+            pcm=clean_pcm,
+            clean_digest=digest,
+            intent=intent,
+            prerecorded=prerecorded,
+            probe=probe,
+            metadata=metadata,
+        )
+
+    def emit(self, pcm: bytes, *, is_speech: bool = True) -> AudioFrame:
+        """Send one frame through the signal chain, speech or silence.
+
+        Silence goes through too: a noise bed continues under it, a filter
+        rings on, the call clock advances — all as on a real line. Returns the
+        frame as transmitted, in the pipeline's output format (the encoder's,
+        if there is one).
+
+        Raises:
+            SimulatorError: If the pipeline has a frame-stream layer, which
+                cannot yet be applied one frame at a time.
+        """
+        if not self._pipeline.can_stream:
+            raise SimulatorError(
+                "this pipeline has a frame-stream layer (jitter), which needs a "
+                "whole stream; it cannot be emitted frame by frame yet"
+            )
+        self._fmt.validate_buffer(len(pcm))
+        frame = AudioFrame(
+            pcm=pcm,
+            seq=self._seq,
+            party=self._party,
+            t_produced=self._clock.now(),
+            fmt=self._fmt,
+        )
+        self._seq += 1
+        return self._pipeline.process(frame, is_speech=is_speech)
+
+    def finish(
+        self,
+        line: PreparedLine,
+        frames: Sequence[AudioFrame],
+        *,
+        truncated: bool = False,
+    ) -> Utterance:
+        """Record a streamed line as an utterance — partial if the caller yielded."""
+        utterance = Utterance(
+            index=self._index,
+            party=self._party,
+            said=line.said,
+            frames=tuple(frames),
+            clean_digest=line.clean_digest,
+            intent=line.intent,
+            source_kind=self._kind,
+            prerecorded=line.prerecorded,
+            probe=line.probe,
+            metadata=dict(line.metadata),
+            truncated=truncated,
+        )
+        self._index += 1
+        self._utterances.append(utterance)
+        return utterance
+
+    # ---------------------------------------------------------------- turns
+
     async def next_utterance(self, heard: Sequence[str] = ()) -> Utterance | None:
         """Produce the caller's next turn, or ``None`` when the script ends."""
+        if self._content is None:
+            raise SimulatorError(
+                "no content source: this simulator is streamed by a caller that "
+                "supplies its own words (prepare/emit), not turn by turn"
+            )
         content = await self._content.next(heard)
         if content is None:
             return None
@@ -237,7 +366,7 @@ class UniversalSimulator:
             frames=degraded,
             clean_digest=clean_digest,
             intent=content.intent,
-            source_kind=self._content.kind,
+            source_kind=self._kind,
             prerecorded=content.is_prerecorded,
             metadata=dict(content.metadata),
         )
@@ -282,7 +411,7 @@ class UniversalSimulator:
             frames=degraded,
             clean_digest=clean_digest,
             intent=intent,
-            source_kind=self._content.kind,
+            source_kind=self._kind,
             probe=probe,
         )
         self._index += 1
@@ -309,7 +438,7 @@ class UniversalSimulator:
     async def _synthesize(self, text: str) -> bytes:
         if self._tts is None:
             raise SimulatorError(
-                f"content source {self._content.kind.value!r} yielded text but "
+                f"content source {self._kind.value!r} yielded text but "
                 f"no TTS is configured; supply one or use a corpus source"
             )
         chunks = [
@@ -357,7 +486,7 @@ class UniversalSimulator:
         total = len(self._utterances)
         prerecorded = sum(1 for u in self._utterances if u.prerecorded)
         notes: list[str] = []
-        if not self._content.is_deterministic:
+        if not self._deterministic:
             notes.append(
                 "content source is non-deterministic; this run is not replayable "
                 "from its seed alone"
@@ -366,8 +495,8 @@ class UniversalSimulator:
             notes.append("in_persona has not been measured for this run")
         return SimulatorFidelity(
             utterances=total,
-            deterministic_source=self._content.is_deterministic,
-            source_kind=self._content.kind,
+            deterministic_source=self._deterministic,
+            source_kind=self._kind,
             prerecorded_fraction=(prerecorded / total) if total else 0.0,
             in_persona=in_persona,
             notes=tuple(notes),
@@ -377,7 +506,7 @@ class UniversalSimulator:
     def __repr__(self) -> str:
         return (
             f"UniversalSimulator(party={self._party!r}, "
-            f"source={self._content.kind.value}, "
+            f"source={self._kind.value}, "
             f"layers={len(self._pipeline.perturbations)}, "
             f"utterances={self._index})"
         )

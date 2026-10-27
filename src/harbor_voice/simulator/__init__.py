@@ -9,6 +9,7 @@ from harbor_voice.simulator.content import CorpusContent
 from harbor_voice.simulator.content import PersonaContent
 from harbor_voice.simulator.content import ScriptContent
 from harbor_voice.simulator.content import SourceKind
+from harbor_voice.simulator.simulator import PreparedLine
 from harbor_voice.simulator.simulator import SimulatorError
 from harbor_voice.simulator.simulator import SimulatorFidelity
 from harbor_voice.simulator.simulator import UniversalSimulator
@@ -20,6 +21,7 @@ __all__ = [
     "CorpusClip",
     "CorpusContent",
     "PersonaContent",
+    "PreparedLine",
     "ScriptContent",
     "SimulatorError",
     "SimulatorFidelity",
