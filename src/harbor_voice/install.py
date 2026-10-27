@@ -134,16 +134,17 @@ WHEELS_IN_ENV = "/installed-agent/wheels"
 async def install_into(environment: Any, wheels: list[Wheel]) -> None:
     """Upload the wheels into ``main`` and ``uv pip install`` them as root.
 
-    harbor-voice's own wheel brings its ``voice`` extra, whichever
-    distribution ships it.
+    harbor-voice's own wheel brings its ``voice`` extra when its distribution
+    declares one.
     """
     voice = distribution_of("harbor_voice")
+    extras = importlib.metadata.metadata(voice).get_all("Provides-Extra") or []
     await environment.exec(f"mkdir -p {WHEELS_IN_ENV}", user="root")
     targets = []
     for wheel in wheels:
         target = f"{WHEELS_IN_ENV}/{wheel.path.name}"
         await environment.upload_file(wheel.path, target)
-        extra = "[voice]" if wheel.distribution == voice else ""
+        extra = "[voice]" if wheel.distribution == voice and "voice" in extras else ""
         targets.append(shlex.quote(target + extra))
     result = await environment.exec(
         "uv pip install --system --quiet " + " ".join(targets),

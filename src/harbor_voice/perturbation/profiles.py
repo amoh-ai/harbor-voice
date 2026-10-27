@@ -218,7 +218,7 @@ def _tau_voice_default(seeds: SeedSet) -> PerturbationPipeline:
 
 
 def _noisy_line(seeds: SeedSet) -> PerturbationPipeline:
-    """L3 + L4 together — a noisy room over a bad line."""
+    """L3 + L4 together — a noisy room over a lossy phone line."""
     return PerturbationPipeline(
         [
             BackgroundBed(

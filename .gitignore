@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[codz]
+*.egg-info/
+build/
+dist/
+wheels/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets — never commit.
+.env
+.env.*
+
+# Generated: converted benchmark tasks and run outputs.
+/datasets/
+/jobs/
+/trials/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store

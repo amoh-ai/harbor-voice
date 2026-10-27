@@ -1,0 +1,74 @@
+[project]
+name = "harbor-voice"
+version = "0.1.0"
+description = "Voice-agent evaluation on harbor: calls, callers, the audio layer stack, and ATIF-voice trajectories."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = [
+    # Pinned: harbor-voice uses some of harbor's internal APIs (TrialPaths,
+    # EnvironmentConfig, the installed-agent base); a bump is a deliberate step.
+    "harbor==0.25.0",
+    "numpy>=2.0",
+    "websockets>=13.0",
+    # Real G.711 for telephony wire formats (harbor_voice/audio/g711.py).
+    # audioop left the stdlib in 3.13; audioop-lts is its maintained port.
+    "audioop-lts>=0.2; python_version >= '3.13'",
+]
+
+[project.optional-dependencies]
+aws = [
+    # Bidirectional streaming for Nova Sonic. NOT boto3: boto3's HTTP
+    # transport does not do HTTP/2 bidirectional event streams.
+    "aws-sdk-bedrock-runtime[awscrt]>=0.0.2",
+    "boto3>=1.40",
+]
+
+[project.scripts]
+harbor-voice = "harbor_voice.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.workspace]
+members = ["adapters/tau-voice"]
+
+[tool.uv.sources]
+harbor-voice-tau-voice-adapter = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "harbor-voice[aws]",
+    "harbor-voice-tau-voice-adapter",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "ruff>=0.15.17",
+    "ty>=0.0.49",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["harbor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "adapters/tau-voice/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short", "--strict-markers", "--strict-config"]
+markers = [
+    "asyncio: marks tests as async tests",
+    "unit: marks tests as unit tests (fast, no external dependencies)",
+    "integration: marks tests as integration tests (requires external services, could be mocked)",
+]
+asyncio_mode = "auto"
+
+[tool.ty.environment]
+python = ".venv"
+
+[tool.ty.rules]
+all = "error"
+
+[tool.ty.src]
+include = ["src/harbor_voice", "adapters/tau-voice/src"]

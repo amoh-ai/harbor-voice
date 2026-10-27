@@ -1,6 +1,7 @@
 """Four clock domains, reported side by side and never reconciled silently.
 
-Reports produced / on_wire / rendered / voiced rather than picking one.
+Four domains — produced / on_wire / rendered / voiced — reported side by
+side rather than picking one.
 
 The rule this module exists to enforce:
 

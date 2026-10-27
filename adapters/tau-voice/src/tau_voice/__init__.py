@@ -6,6 +6,7 @@ turn-taking, the per-step handling of agent audio, the phone line, and the
 client for the tau2 sidecar (``sidecar/``). harbor-voice core supplies the
 generic parts — transports, providers, the G.711 codec.
 
+See ``adapters/tau-voice/README.md``.
 """
 
 from __future__ import annotations
