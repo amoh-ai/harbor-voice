@@ -53,7 +53,15 @@ def test_other_commands_pass_through() -> None:
 
 
 def test_harbors_commands_are_mounted() -> None:
+    from harbor.cli.jobs import jobs_app
+    from harbor.cli.trials import trials_app
+
     cli._mount_harbor()
+    # Checked structurally: help text is rich-rendered, and in CI its colour
+    # codes split option names.
+    mounted = {
+        group.name: group.typer_instance for group in cli.voice_app.registered_groups
+    }
+    assert mounted["jobs"] is jobs_app and mounted["trials"] is trials_app
     result = CliRunner().invoke(cli.voice_app, ["jobs", "start", "--help"])
     assert result.exit_code == 0
-    assert "--n-concurrent" in result.output
