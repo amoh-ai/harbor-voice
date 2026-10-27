@@ -31,6 +31,7 @@ from enum import StrEnum
 from typing import Protocol
 
 from harbor_voice._deps import numpy as _numpy
+from harbor_voice.simulator import PreparedLine
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
 from tau_voice.reactive import HangUp
@@ -53,12 +54,14 @@ class Action(StrEnum):
 
 
 class CallerVoice(Protocol):
-    """Turns a line into per-step audio, and any step's audio into the wire format.
+    """Prepares lines and emits steps — a streamed ``UniversalSimulator``.
 
-    ``synthesize`` returns speech at the voice's synthesis rate; ``channel``
-    takes one step of that (speech or silence) and returns what goes on the
-    wire. The channel is stateful — a filter rings on into the next step — so
-    it is called for **every** step, silent ones included, in order.
+    ``prepare`` synthesises a line (clean, nothing sent). ``emit_step`` sends
+    one step of audio — speech or silence — through the signal chain and
+    returns what goes on the wire; the chain is stateful (a filter rings on
+    into the next step), so it is called for **every** step, in order.
+    ``finish`` records a line as spoken, or as cut off.
+    See :class:`tau_voice.voice.SimulatorVoice`.
     """
 
     @property
@@ -66,9 +69,13 @@ class CallerVoice(Protocol):
         """Synthesis-format bytes in one step."""
         ...
 
-    async def synthesize(self, text: str) -> bytes: ...
+    async def prepare(self, text: str) -> PreparedLine: ...
 
-    def channel(self, pcm: bytes) -> bytes: ...
+    def emit_step(
+        self, pcm: bytes, *, is_speech: bool, line: PreparedLine | None = None
+    ) -> bytes: ...
+
+    def finish(self, line: PreparedLine, *, truncated: bool) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +102,8 @@ class CallerChunk:
 class _Queued:
     pcm: bytes
     text: str
+    line: PreparedLine
+    last: bool
 
 
 @dataclass(slots=True)
@@ -275,7 +284,7 @@ class ReactiveCaller:
 
     def _silence(self, *, action: Action | None, text: str | None = "") -> CallerChunk:
         return CallerChunk(
-            audio=self.voice.channel(bytes(self.voice.step_bytes)),
+            audio=self.voice.emit_step(bytes(self.voice.step_bytes), is_speech=False),
             speech=False,
             text=text,
             action=action,
@@ -295,21 +304,21 @@ class ReactiveCaller:
             st.is_backchanneling = False
             st.delivering_tool_result_speech = False
         st.since_self = 0
-        return CallerChunk(
-            audio=self.voice.channel(piece.pcm),
-            speech=True,
-            text=piece.text,
-            action=action,
-        )
+        audio = self.voice.emit_step(piece.pcm, is_speech=True, line=piece.line)
+        if piece.last:
+            self.voice.finish(piece.line, truncated=False)
+        return CallerChunk(audio=audio, speech=True, text=piece.text, action=action)
 
     async def _queue_line(self, text: str) -> None:
-        pcm = await self.voice.synthesize(text)
+        line = await self.voice.prepare(text)
+        pcm = line.pcm
         size = self.voice.step_bytes
-        frames = [pcm[i : i + size] for i in range(0, len(pcm), size)] or [b""]
-        frames = [_pad(f, size) for f in frames]
-        texts = split_text(text, len(frames))
+        steps = [pcm[i : i + size] for i in range(0, len(pcm), size)] or [b""]
+        steps = [_pad(s, size) for s in steps]
+        texts = split_text(text, len(steps))
         self.state.queue.extend(
-            _Queued(p, t) for p, t in zip(frames, texts, strict=True)
+            _Queued(p, t, line, index == len(steps) - 1)
+            for index, (p, t) in enumerate(zip(steps, texts, strict=True))
         )
 
     async def _act(self, action: Action) -> CallerChunk:
@@ -317,6 +326,8 @@ class ReactiveCaller:
         if action is Action.KEEP_TALKING:
             return self._speak_next(action)
         if action is Action.STOP_TALKING:
+            if st.queue:
+                self.voice.finish(st.queue[0].line, truncated=True)
             st.queue.clear()
             st.is_backchanneling = False
             st.since_self += 1
@@ -339,7 +350,9 @@ class ReactiveCaller:
         if isinstance(reply, UseTools):
             # tau2 returns before touching the silence counter here.
             return CallerChunk(
-                audio=self.voice.channel(bytes(self.voice.step_bytes)),
+                audio=self.voice.emit_step(
+                    bytes(self.voice.step_bytes), is_speech=False
+                ),
                 speech=False,
                 text=reply.text,
                 tool_calls=reply.calls,

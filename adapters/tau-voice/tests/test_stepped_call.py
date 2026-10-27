@@ -16,6 +16,7 @@ from harbor_voice.capabilities import OptionalOp
 from harbor_voice.capabilities import Pipeline
 from harbor_voice.capabilities import TurnControl
 from harbor_voice.providers.openai.realtime import TELEPHONY
+from harbor_voice.simulator import PreparedLine
 from tau_voice.caller import PatientPolicy
 from tau_voice.caller import ReactiveCaller
 from harbor_voice.simulator.content import SourceKind
@@ -129,15 +130,24 @@ class Script:
 
 
 class LoudVoice:
-    """One 20 ms step of 'speech' per 5 characters; channel maps PCM to μ-law."""
+    """One 20 ms step of 'speech' per 5 characters; steps map PCM to μ-law."""
 
     step_bytes = 640  # 20 ms at 16 kHz
 
-    async def synthesize(self, text: str) -> bytes:
-        return b"\x01\x01" * (320 * max(1, len(text) // 5))
+    def __init__(self) -> None:
+        self.finished: list[tuple[str, bool]] = []
 
-    def channel(self, pcm: bytes) -> bytes:
+    async def prepare(self, text: str) -> PreparedLine:
+        pcm = b"\x01\x01" * (320 * max(1, len(text) // 5))
+        return PreparedLine(said=text, pcm=pcm, clean_digest=None)
+
+    def emit_step(
+        self, pcm: bytes, *, is_speech: bool, line: PreparedLine | None = None
+    ) -> bytes:
         return (SPEECH if any(pcm) else b"\xff") * (len(pcm) // 4)
+
+    def finish(self, line: PreparedLine, *, truncated: bool) -> None:
+        self.finished.append((line.said, truncated))
 
 
 def _call(script: Script, agent: FakeAgent, **kw) -> SteppedCall:

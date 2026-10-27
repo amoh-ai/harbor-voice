@@ -17,7 +17,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from tau_voice.telephony import TelephonyConverter
+from collections.abc import AsyncIterator
+
+from harbor_voice.ids import PartyId
+from harbor_voice.perturbation.persona import VoiceSelection
+from tau_voice.run import SYNTHESIS
+from tau_voice.run import caller_simulator
+from tau_voice.voice import SimulatorVoice
 from tau_voice.caller import PatientPolicy
 from tau_voice.caller import ReactiveCaller
 from tau_voice.caller import split_text
@@ -83,24 +89,34 @@ class ScriptedContent:
         raise AssertionError("the test delivers tool results itself")
 
 
-class ScriptedVoice:
-    step_bytes = 6400
+class ScriptedTTS:
+    """The generator's scripted synthesis, as a TTS provider."""
 
-    def __init__(self) -> None:
-        self._line = TelephonyConverter(input_rate_hz=16_000)
+    name = "scripted.tts"
+    audio_format = SYNTHESIS
+    selected: str | None = None
 
-    async def synthesize(self, text: str) -> bytes:
-        return line_pcm(text)
+    def select_voice(self, selection: VoiceSelection) -> bool:
+        self.selected = selection.voice_id
+        return selection.voice_id is not None
 
-    def channel(self, pcm: bytes) -> bytes:
-        return self._line.convert(pcm)
+    async def synthesize(self, text: str, *, party: PartyId) -> AsyncIterator[bytes]:
+        yield line_pcm(text)
+
+
+def _voice() -> tuple[SimulatorVoice, ScriptedTTS]:
+    """The real path: UniversalSimulator + L1 voice + tau2's phone line encoder."""
+    tts = ScriptedTTS()
+    simulator = caller_simulator(
+        tts, voice_id="persona-voice", seed=626729, complexity="control"
+    )
+    return SimulatorVoice(simulator, step_s=0.2), tts
 
 
 async def test_matches_tau2_step_for_step() -> None:
     content = ScriptedContent(GOLDEN["replies"])
-    caller = ReactiveCaller(
-        content=content, voice=ScriptedVoice(), policy=PatientPolicy()
-    )
+    voice, tts = _voice()
+    caller = ReactiveCaller(content=content, voice=voice, policy=PatientPolicy())
     pending_tool: str | None = None
     for step, ((text, speech), expected) in enumerate(
         zip(GOLDEN["agent"], GOLDEN["expected"], strict=True)
@@ -127,6 +143,15 @@ async def test_matches_tau2_step_for_step() -> None:
         assert (chunk.hang_up is not None) is expected["stop"], where
 
     assert len(caller.records) == len(GOLDEN["expected"])
+
+    # It really went through the simulator: the L1 voice was selected, every
+    # line is an utterance (the one the agent talked over is marked cut off),
+    # and the phone line is in the plan record as the L4 encoder.
+    simulator = voice.simulator
+    assert tts.selected == "persona-voice"
+    assert [u.truncated for u in simulator.utterances] == [False, False, True]
+    layers = simulator.pipeline.as_record().as_dict()["layers"]
+    assert "L4.tau2-telephony" in layers
 
 
 def test_split_text_is_character_even() -> None:

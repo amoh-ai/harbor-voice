@@ -23,9 +23,17 @@ from typing import Any
 from harbor_voice.audio.format import AudioFormat
 from tau_voice.content import Tau2Content
 from tau_voice.client import Sidecar
-from tau_voice.telephony import TelephonyConverter
+from tau_voice.telephony import Tau2Telephony
 from tau_voice.telephony import ulaw_to_pcm16
 from harbor_voice.ids import PartyId
+from harbor_voice.ids import PlanId
+from harbor_voice.perturbation import PerturbationPipeline
+from harbor_voice.perturbation import SeedSet
+from harbor_voice.perturbation.persona import PersonaPlan
+from harbor_voice.perturbation.persona import VoiceSelection
+from harbor_voice.simulator import SourceKind
+from harbor_voice.simulator import UniversalSimulator
+from tau_voice.voice import SimulatorVoice
 from harbor_voice.providers.cache import BlobCache
 from harbor_voice.providers.elevenlabs import ElevenLabsTTS
 from harbor_voice.providers.openai.llm import OpenAILLM
@@ -51,19 +59,33 @@ SYNTHESIS = AudioFormat(sample_rate_hz=16_000)
 """tau2's ``DEFAULT_PCM_SAMPLE_RATE``: the caller is synthesised at 16 kHz."""
 
 
-class Tau2Voice:
-    """ElevenLabs at 16 kHz, then tau2's phone line. A ``CallerVoice``."""
+def caller_simulator(
+    tts: ElevenLabsTTS, *, voice_id: str, seed: int, complexity: str
+) -> UniversalSimulator:
+    """The caller's voice: a ``UniversalSimulator`` with tau2's phone line.
 
-    def __init__(self, tts: ElevenLabsTTS, *, step_s: float = 0.2) -> None:
-        self.tts = tts
-        self.line = TelephonyConverter(input_rate_hz=SYNTHESIS.sample_rate_hz)
-        self.step_bytes = int(SYNTHESIS.sample_rate_hz * step_s) * 2
-
-    async def synthesize(self, text: str) -> bytes:
-        return await self.tts.synthesize_pcm(text)
-
-    def channel(self, pcm: bytes) -> bytes:
-        return self.line.convert(pcm)
+    16 kHz (tau2's synthesis rate); the persona's ElevenLabs voice through our
+    L1 layer; no signal layers for ``control``; tau2's telephony as the wire
+    encoder. ``regular`` adds tau2's effects as layers here.
+    """
+    if complexity != "control":
+        raise NotImplementedError(f"{complexity!r} effects are not mapped yet")
+    pipeline = PerturbationPipeline(
+        (),
+        seeds=SeedSet.derive(seed),
+        plan_id=PlanId(f"tau-voice-{complexity}"),
+        fmt=SYNTHESIS,
+        persona=PersonaPlan(voice=VoiceSelection(voice_id=voice_id)),
+        encoder=Tau2Telephony(),
+    )
+    return UniversalSimulator(
+        party=PartyId("caller"),
+        tts=tts,
+        pipeline=pipeline,
+        seeds=SeedSet.derive(seed),
+        fmt=SYNTHESIS,
+        source_kind=SourceKind.LLM,
+    )
 
 
 @dataclass(slots=True)
@@ -166,14 +188,17 @@ async def run_task(
                 tools=router,
             )
         content = Tau2Content(sidecar, OpenAILLM(model=user_info["llm"]))
-        voice = Tau2Voice(
-            ElevenLabsTTS(
-                voice_id=user_info["voice_id"],
-                audio_format=SYNTHESIS,
-                cache=BlobCache(synthesis_cache) if synthesis_cache else None,
-            ),
-            step_s=turns["tick_duration_s"],
+        tts = ElevenLabsTTS(
+            audio_format=SYNTHESIS,
+            cache=BlobCache(synthesis_cache) if synthesis_cache else None,
         )
+        simulator = caller_simulator(
+            tts,
+            voice_id=user_info["voice_id"],
+            seed=seed,
+            complexity=speech_complexity,
+        )
+        voice = SimulatorVoice(simulator, step_s=turns["tick_duration_s"])
         caller = ReactiveCaller(
             content=content,
             voice=voice,
@@ -229,7 +254,10 @@ async def run_task(
             "wall_s": round(result.wall_s, 1),
             "truncations": len(result.truncations),
             "caller_llm_calls": len(content.exchanges),
-            "tts_characters_billed": voice.tts.characters_billed,
+            "tts_characters_billed": tts.characters_billed,
+            "caller_plan": simulator.pipeline.as_record().as_dict(),
+            "caller_lines": len(simulator.utterances),
+            "caller_lines_cut_off": sum(1 for u in simulator.utterances if u.truncated),
             "sidecar_state": closed,
         }
         _write(out_dir, result, summary)
