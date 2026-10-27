@@ -42,6 +42,7 @@ it would be machinery with no consumer.
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -67,6 +68,7 @@ from harbor_voice.providers.registry import ProviderRegistry
 from harbor_voice.providers.registry import default_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.services import VerifierResult
 from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.trajectory.model import VoiceTrajectory
@@ -165,6 +167,40 @@ class CallerSpec(BaseModel):
         return self
 
 
+class CallSpec(BaseModel):
+    """``[call]``: a benchmark's own call loop instead of the built-in one."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    driver: str
+    """``"package.module:function"`` - see :mod:`harbor_voice.driver`."""
+    config: dict[str, Any] = Field(default_factory=dict)
+    """Passed to the driver untouched."""
+
+
+class EnvironmentSpec(BaseModel):
+    """``[environment]``: the task's services, as in a harbor task."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    compose: str = "environment/docker-compose.yaml"
+    """Relative to the task directory."""
+    services: dict[str, int] = Field(default_factory=dict)
+    """Service name -> container port a driver reaches it on."""
+    env: tuple[str, ...] = ()
+    """Host variables the services need, checked present before ``up``.
+    Names only; values never pass through the task files."""
+
+
+class VerifierSpec(BaseModel):
+    """``[verifier]``: harbor's verifier, run inside one of the services."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    service: str
+    command: tuple[str, ...] = ("bash", "/tests/test.sh")
+
+
 class VoiceTaskConfig(BaseModel):
     """What a voice task declares. Parsed from ``voice.toml`` beside the task.
 
@@ -176,7 +212,8 @@ class VoiceTaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     agent: AgentSpec
-    caller: CallerSpec = Field(default_factory=CallerSpec)
+    caller: CallerSpec | None = None
+    """Required unless ``[call]`` names a driver, which brings its own caller."""
     profile: str = "clean"
     seed: int = 0
     duplex: Duplex = Duplex.HALF
@@ -196,12 +233,51 @@ class VoiceTaskConfig(BaseModel):
     task_sha: str | None = None
     trial_id: str | None = None
 
+    call: CallSpec | None = None
+    environment: EnvironmentSpec | None = None
+    verifier: VerifierSpec | None = None
+
+    @model_validator(mode="after")
+    def _caller_unless_driven(self) -> VoiceTaskConfig:
+        if self.caller is None and self.call is None:
+            raise TrialConfigError(
+                "a task needs a [caller], unless [call] names a driver that "
+                "brings its own"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _verifier_has_a_service(self) -> VoiceTaskConfig:
+        if self.verifier is not None:
+            declared = self.environment.services if self.environment else {}
+            if self.verifier.service not in declared:
+                raise TrialConfigError(
+                    f"verifier runs in service {self.verifier.service!r}, which "
+                    f"[environment].services does not declare"
+                )
+        return self
+
     @classmethod
     def from_toml(cls, path: Path) -> VoiceTaskConfig:
         """Load ``voice.toml``."""
         import tomllib
 
         return cls.model_validate(tomllib.loads(path.read_text(encoding="utf-8")))
+
+
+@dataclass(frozen=True, slots=True)
+class DrivenOutcome:
+    """A trial whose call a benchmark's driver ran (``[call]``).
+
+    No trajectory yet: a driver's call is not turn-shaped, and recording one
+    as ATIF-voice is its own piece of work. The verifier's reward and the
+    driver's record are what it has.
+    """
+
+    reward: dict[str, float] | None
+    verified: VerifierResult | None
+    summary: dict[str, Any]
+    written: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,8 +317,10 @@ class VoiceTrial:
         tools: ToolExecutor | None = None,
         caller: PartyId = DEFAULT_CALLER,
         agent: PartyId = DEFAULT_AGENT,
+        task_dir: Path | None = None,
     ) -> None:
         self._config = config
+        self._task_dir = task_dir
         self._registry = registry if registry is not None else _registry()
         self._out_dir = out_dir
         self._caller = caller
@@ -283,7 +361,7 @@ class VoiceTrial:
         when it stamped ``t_produced``, and the frame's monotonic guard then
         rejects a transmit that looks like it preceded its own synthesis.
         """
-        spec = self._config.caller
+        spec = self._caller_spec()
         return UniversalSimulator(
             party=self._caller,
             content=self._content(),
@@ -295,11 +373,18 @@ class VoiceTrial:
             clock=self._clock,
         )
 
+    def _caller_spec(self) -> CallerSpec:
+        if self._config.caller is None:
+            raise TrialConfigError(
+                "this task has no [caller]; its driver runs the call"
+            )
+        return self._config.caller
+
     def _content(self) -> Any:
         from harbor_voice.simulator.content import PersonaContent
         from harbor_voice.simulator.content import ScriptContent
 
-        spec = self._config.caller
+        spec = self._caller_spec()
         if spec.source == "script":
             return ScriptContent(turns=list(spec.turns))
         llm = self._registry.create(
@@ -352,8 +437,10 @@ class VoiceTrial:
 
     # ----------------------------------------------------------------- run
 
-    async def run(self) -> TrialOutcome:
+    async def run(self) -> TrialOutcome | DrivenOutcome:
         """Place the call, record it, and score what came back."""
+        if self._config.call is not None:
+            return await self._run_driven(self._config.call)
         pipeline = self.pipeline()
         simulator = self.simulator(pipeline)
         transport = self.transport()
@@ -423,6 +510,119 @@ class VoiceTrial:
         finally:
             await driver.close()
         return turns, probes
+
+    async def _run_driven(self, call: CallSpec) -> DrivenOutcome:
+        """A benchmark's own call loop, between core's services and verifier."""
+        import json
+        import os
+        import uuid
+
+        from harbor_voice.driver import DriverContext
+        from harbor_voice.driver import load_driver
+        from harbor_voice.services import ComposeEnvironment
+
+        if self._task_dir is None or self._out_dir is None:
+            raise TrialConfigError("a driven trial needs task_dir and out_dir")
+        driver = load_driver(call.driver)
+        out_dir = self._out_dir
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        environment = None
+        spec = self._config.environment
+        if spec is not None:
+            missing = [name for name in spec.env if not os.environ.get(name)]
+            if missing:
+                raise TrialConfigError(f"the task's services need {missing} set")
+            raw = f"hv-{(self._config.trial_id or uuid.uuid4().hex)[:40]}".lower()
+            environment = ComposeEnvironment(
+                self._task_dir / spec.compose,
+                project="".join(c if c.isalnum() or c == "-" else "-" for c in raw),
+                logs_dir=out_dir / "logs",
+            )
+
+        verify = None
+        if environment is not None and self._config.verifier is not None:
+            verifier = self._config.verifier
+            env = environment
+
+            async def verify() -> VerifierResult:
+                return await env.verify(verifier.service, verifier.command)
+
+        try:
+            services: dict[str, str] = {}
+            if environment is not None and spec is not None:
+                await environment.up()
+                for name, port in spec.services.items():
+                    services[name] = await environment.url(name, port)
+            context = DriverContext(
+                config=self._config,
+                driver_config=call.config,
+                task_dir=self._task_dir,
+                out_dir=out_dir,
+                services=services,
+                build_agent=self._build_agent,
+                verify=verify,
+            )
+            outcome = await driver(context)
+            verified = outcome.verified
+            if verified is None and verify is not None:
+                verified = await verify()
+        finally:
+            if environment is not None:
+                await environment.down()
+
+        written: list[Path] = []
+        reward = None
+        if verified is not None and verified.reward is not None:
+            reward = {"reward": verified.reward}
+            path = out_dir / "reward.json"
+            path.write_text(json.dumps(reward), encoding="utf-8")
+            written.append(path)
+        path = out_dir / "trial.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "task": self._config.task,
+                    "trial_id": self._config.trial_id,
+                    "driver": call.driver,
+                    "agent": self._agent_name(),
+                    "reward": reward,
+                    "verifier": dict(verified.result) if verified else None,
+                    "summary": outcome.summary,
+                },
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+        written.append(path)
+        return DrivenOutcome(
+            reward=reward,
+            verified=verified,
+            summary=outcome.summary,
+            written=tuple(written),
+        )
+
+    def _build_agent(self, *, tools: ToolRouter | None = None, **overrides: Any) -> Any:
+        """The agent under test from ``[agent]``, for a driver.
+
+        ``overrides`` win over the slot's configured settings: a benchmark
+        supplies its own system prompt, and that is the benchmark's call.
+        """
+        spec = self._config.agent
+        if spec.pipeline is not Pipeline.S2S:
+            raise TrialConfigError(
+                "drivers take an s2s agent for now; a cascade agent needs the "
+                "transport surface the driver uses (EVENT_STREAM, TRUNCATE)"
+            )
+        return self._registry.create(
+            str(spec.s2s),
+            modality=Modality.S2S,
+            party=self._agent,
+            clock=self._clock,
+            tools=tools,
+            **{**spec.config.get("s2s", {}), **overrides},
+        )
 
     # -------------------------------------------------------------- record
 
@@ -550,13 +750,17 @@ def _registry() -> ProviderRegistry:
     because an optional extra is missing is one nobody runs while authoring.
     """
     registry = default_registry()
-    try:
-        from harbor_voice.providers.aws import register_all
-
-        register_all(registry)
-    except Exception:  # noqa: BLE001 - optional extra; the task may not need it
-        pass
+    for vendor in _VENDORS:
+        try:
+            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
+            module.register_all(registry)
+        except Exception:  # noqa: BLE001 - optional extra; the task may not need it
+            pass
     return registry
+
+
+_VENDORS = ("aws", "elevenlabs", "openai")
+"""Provider packages registered lazily; each has a ``register_all``."""
 
 
 def _heard(turns: Sequence[Turn]) -> list[str]:

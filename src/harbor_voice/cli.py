@@ -18,6 +18,7 @@ a parallel implementation of it.
 
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 from typing import Annotated
@@ -48,10 +49,40 @@ def _registry():  # noqa: ANN202 - typer-facing helper
         register_all(registry)
     except Exception as exc:  # noqa: BLE001 - reported below, never fatal
         typer.secho(f"note: AWS providers unavailable ({exc})", fg="yellow", err=True)
+    for vendor in ("elevenlabs", "openai"):
+        try:
+            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
+            module.register_all(registry)
+        except Exception as exc:  # noqa: BLE001 - reported below, never fatal
+            typer.secho(
+                f"note: {vendor} providers unavailable ({exc})", fg="yellow", err=True
+            )
     return registry
 
 
 # ----------------------------------------------------------------- doctor
+
+
+@voice_app.command()
+def run(
+    task_dir: Annotated[Path, typer.Argument(help="Task directory with voice.toml.")],
+    out: Annotated[Path, typer.Option(help="Where this trial's files go.")],
+    trial_id: Annotated[
+        str | None, typer.Option(help="Trial id; also names its services.")
+    ] = None,
+) -> None:
+    """Run one trial of a task directory and print its reward."""
+    import asyncio
+
+    from harbor_voice.trial import VoiceTaskConfig
+    from harbor_voice.trial import VoiceTrial
+
+    config = VoiceTaskConfig.from_toml(task_dir / "voice.toml")
+    if trial_id is not None:
+        config = config.model_copy(update={"trial_id": trial_id})
+    trial = VoiceTrial(config, registry=_registry(), out_dir=out, task_dir=task_dir)
+    outcome = asyncio.run(trial.run())
+    typer.echo(json.dumps({"reward": outcome.reward, "out": str(out)}))
 
 
 @voice_app.command()
