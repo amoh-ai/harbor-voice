@@ -245,7 +245,12 @@ def write_task(
         task / "environment" / "docker-compose.yaml",
         COMPOSE.format(env=env, review=REVIEW_MODEL, tau2_source=source),
     )
-    shutil.copy2(TEMPLATE / "tests" / "test.sh", task / "tests" / "test.sh")
+    # Written, not copied: it runs under bash in a Linux container, so it must
+    # be LF even when this checkout is CRLF (Windows).
+    write(
+        task / "tests" / "test.sh",
+        (TEMPLATE / "tests" / "test.sh").read_text(encoding="utf-8"),
+    )
     return task
 
 

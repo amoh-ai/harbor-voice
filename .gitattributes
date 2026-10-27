@@ -1,0 +1,5 @@
+# These run inside Linux containers, so they stay LF on every checkout —
+# a CRLF test.sh breaks bash. (Windows checkouts default to CRLF.)
+*.sh text eol=lf
+adapters/tau-voice/sidecar/** text eol=lf
+adapters/tau-voice/template/** text eol=lf

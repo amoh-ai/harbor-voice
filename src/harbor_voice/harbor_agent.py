@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any
 from typing import override
 
+from harbor.agents.capabilities import AgentCapabilities
 from harbor.agents.installed.base import BaseInstalledAgent
 from harbor.agents.options import InstalledAgentOptions
 from harbor.environments.base import BaseEnvironment
@@ -98,7 +99,7 @@ _wheels = _Wheels()
 
 class VoiceCallAgent(BaseInstalledAgent):
     options_model = VoiceCallOptions
-    SUPPORTS_ATIF = True
+    capabilities = AgentCapabilities(atif=True)
 
     @staticmethod
     @override

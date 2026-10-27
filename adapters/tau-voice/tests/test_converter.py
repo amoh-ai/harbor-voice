@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 
 from harbor_voice.trial import VoiceTaskConfig
@@ -85,3 +86,19 @@ def test_image_tags_follow_their_contents(monkeypatch) -> None:
 
 def test_trial_seeds_match_tau2() -> None:
     assert trial_seeds(300, 3) == [626729, 373753, 361454]
+
+
+def test_test_sh_is_lf_even_from_a_crlf_checkout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tau_voice.main as converter
+
+    template = tmp_path / "template"
+    (template / "tests").mkdir(parents=True)
+    source = (converter.TEMPLATE / "tests" / "test.sh").read_bytes()
+    (template / "tests" / "test.sh").write_bytes(source.replace(b"\n", b"\r\n"))
+    monkeypatch.setattr(converter, "TEMPLATE", template)
+
+    task = write_task(tmp_path / "out", "airline", "7", complexity="control", seed=1)
+    written = (task / "tests" / "test.sh").read_bytes()
+    assert b"\r\n" not in written and written.startswith(b"#!/bin/bash\n")
