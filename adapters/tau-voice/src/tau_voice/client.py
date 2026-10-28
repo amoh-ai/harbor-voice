@@ -80,6 +80,8 @@ class Sidecar:
         seed: int,
         user_llm: str | None = None,
         hallucination_feedback: str | None = None,
+        live_config: Mapping[str, Any] | None = None,
+        agent_model: str | None = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "domain": domain,
@@ -91,6 +93,9 @@ class Sidecar:
             body["user_llm"] = user_llm
         if hallucination_feedback is not None:
             body["hallucination_feedback"] = hallucination_feedback
+        if live_config is not None:
+            body["live_config"] = dict(live_config)
+            body["agent_model"] = agent_model
         return await self._post("/open", body)
 
     async def tool(
@@ -123,34 +128,55 @@ class Sidecar:
         self, steps: Sequence[StepRecord], pending: Pending
     ) -> dict[str, Any]:
         """The caller-LLM request body tau2 would send now."""
-        body: dict[str, Any] = {"steps": [_caller_step(s) for s in steps]}
-        if isinstance(pending, tuple):
-            body["pending"] = None
-            body["pending_tool_results"] = [_result(r) for r in pending]
-        else:
-            body["pending"] = _heard(pending)
-        return await self._post("/user_context", body)
+        return await self._post("/user_context", _context(steps, pending))
+
+    async def decide(
+        self, steps: Sequence[StepRecord], pending: Heard | None
+    ) -> dict[str, Any]:
+        """tau2's listener reactions now: whether to interrupt, to backchannel.
+
+        The sidecar runs tau2's decision model on the same state it builds
+        for ``/user_context``; it returns tau2's ``ListenerReactionResult``.
+        """
+        return await self._post("/decide", _context(steps, pending))
 
     async def close(self, body: Mapping[str, Any]) -> dict[str, Any]:
         return await self._post("/close", body)
 
-    async def state(self) -> dict[str, Any]:
-        """tau2's own state of the call last closed (its message log)."""
+    async def _get(self, path: str) -> httpx.Response:
         try:
-            response = await self._client.get(f"{self._base}/state")
+            response = await self._client.get(f"{self._base}{path}")
         except httpx.HTTPError as exc:
             raise SidecarError(
-                f"sidecar unreachable at {self._base}/state: {exc}"
+                f"sidecar unreachable at {self._base}{path}: {exc}"
             ) from exc
         if response.status_code != 200:
             raise SidecarError(
-                f"sidecar /state returned {response.status_code}: {response.text[:300]}"
+                f"sidecar {path} returned {response.status_code}: {response.text[:300]}"
             )
-        return response.json()
+        return response
+
+    async def state(self) -> dict[str, Any]:
+        """tau2's own state of the call last closed (its message log)."""
+        return (await self._get("/state")).json()
+
+    async def asset(self, kind: str, name: str) -> bytes:
+        """A noise file tau2 ships: ``kind`` is ``continuous`` or ``bursts``."""
+        return (await self._get(f"/asset/{kind}/{name}")).content
 
     async def grade(self, *, hallucination_check: bool = True) -> dict[str, Any]:
         """Grade the call last closed — the verifier's code, run in the sidecar."""
         return await self._post("/grade", {"hallucination_check": hallucination_check})
+
+
+def _context(steps: Sequence[StepRecord], pending: Pending) -> dict[str, Any]:
+    body: dict[str, Any] = {"steps": [_caller_step(s) for s in steps]}
+    if isinstance(pending, tuple):
+        body["pending"] = None
+        body["pending_tool_results"] = [_result(r) for r in pending]
+    else:
+        body["pending"] = _heard(pending)
+    return body
 
 
 def _heard(heard: Heard | None) -> dict[str, Any] | None:

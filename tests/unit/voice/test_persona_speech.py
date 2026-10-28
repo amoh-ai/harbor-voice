@@ -327,22 +327,28 @@ class TestSignalSideKeepsTheFrameLength:
 
 
 class TestTheProfilesThatNeededThem:
-    @pytest.mark.parametrize("name", ["eva_a", "eva_a_plus_b", "tau_voice_default"])
+    @pytest.mark.parametrize("name", ["accented", "accented_noisy"])
     def test_they_build_now(self, name: str) -> None:
         pipeline = get_profile(name).pipeline(SeedSet.derive(1))
         assert not pipeline.is_unperturbed
 
-    def test_eva_a_pins_accent_and_not_behaviour(self) -> None:
-        """EVA makes them mutually exclusive — one agent ID per call."""
-        pipeline = get_profile("eva_a").pipeline(SeedSet.derive(1))
+    def test_accented_pins_accent_and_not_behaviour(self) -> None:
+        """Accent only, so a difference is the accent's."""
+        pipeline = get_profile("accented").pipeline(SeedSet.derive(1))
         assert {str(k) for k in pipeline.active_layers} == {"L1.accent"}
 
-    def test_eva_a_degrades_no_signal(self) -> None:
+    def test_accented_degrades_no_signal(self) -> None:
         """An accented caller on a clean line is still a clean line."""
-        assert get_profile("eva_a").pipeline(SeedSet.derive(1)).is_clean
+        assert get_profile("accented").pipeline(SeedSet.derive(1)).is_clean
 
-    def test_tau_combines_a_text_layer_with_three_signal_ones(self) -> None:
-        pipeline = get_profile("tau_voice_default").pipeline(SeedSet.derive(1))
+    def test_a_text_layer_combines_with_three_signal_ones(self) -> None:
+        seeds = SeedSet.derive(1)
+        noisy_line = get_profile("noisy_line").pipeline(seeds)
+        pipeline = PerturbationPipeline(
+            noisy_line.perturbations,
+            seeds=seeds,
+            speech=SpeechPlan([VocalTics()], seeds=seeds),
+        )
         assert {str(k) for k in pipeline.active_layers} == {
             "L2.vocal_tics",
             "L3.background_bed",
@@ -354,7 +360,7 @@ class TestTheProfilesThatNeededThem:
 
     def test_the_written_plan_carries_every_insertion_point(self) -> None:
         """One record, whether the layer touched audio or not."""
-        pipeline = get_profile("eva_a_plus_b").pipeline(SeedSet.derive(1))
+        pipeline = get_profile("accented_noisy").pipeline(SeedSet.derive(1))
         layers = pipeline.as_record().as_dict()["layers"]
         assert set(layers) == {"L1.accent", "L3.background_bed"}
 

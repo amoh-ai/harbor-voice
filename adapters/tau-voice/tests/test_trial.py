@@ -17,7 +17,19 @@ def _fakes(found: list[bool]):
 
     async def attempt(**kw):
         runs.append(kw)
-        return {"termination": "user_stop", "call_s": 10.0}
+        return {
+            "termination": "user_stop",
+            "call_s": 10.0,
+            "usage": [
+                {
+                    "component": "agent",
+                    "model": "m",
+                    "requests": 2,
+                    "input_tokens": 100,
+                },
+                {"component": "caller.tts", "characters": 50},
+            ],
+        }
 
     async def grade(attempt_dir: Path):
         hit = next(verdicts)
@@ -68,3 +80,59 @@ async def test_retries_can_be_switched_off(tmp_path: Path) -> None:
         task_id="1",
     )
     assert len(runs) == 1
+
+
+async def test_every_attempts_tokens_count(tmp_path: Path) -> None:
+    """A set-aside attempt consumed tokens too."""
+    _, attempt, grade = _fakes([True, False])
+    trial = await run_trial(grade=grade, out_dir=tmp_path, attempt=attempt, task_id="1")
+    assert trial["usage"] == [
+        {"component": "agent", "model": "m", "requests": 4, "input_tokens": 200},
+        {"component": "caller.tts", "characters": 100},
+    ]
+
+
+async def test_grading_usage_joins_the_attempts_record(tmp_path: Path) -> None:
+    """The grader's own LLM calls (the hallucination review) count too: in the
+    attempt's summary, its trajectory and the trial's total."""
+    import json
+
+    from harbor.models.trajectories.trajectory import Trajectory
+
+    from harbor_voice.trajectory.model import UsageRecord
+    from harbor_voice.trajectory.model import VoiceTrajectory
+
+    review = {
+        "component": "grader.hallucination_review",
+        "model": "bedrock/claude",
+        "requests": 1,
+        "input_tokens": 5000,
+        "cached_input_tokens": 0,
+        "output_tokens": 300,
+    }
+
+    async def attempt(*, out_dir: Path, **kw):
+        out_dir.mkdir(parents=True)
+        summary = {"termination": "user_stop", "call_s": 10.0, "usage": [
+            {"component": "agent", "model": "m", "requests": 1, "input_tokens": 10}
+        ]}  # fmt: skip
+        (out_dir / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+        voice = VoiceTrajectory(usage=(UsageRecord(component="agent", model="m"),))
+        (out_dir / "trajectory.json").write_text(
+            voice.to_atif().model_dump_json(), encoding="utf-8"
+        )
+        return summary
+
+    async def grade(attempt_dir: Path):
+        return {"reward": 1.0, "hallucination": {"found": False}, "usage": [review]}
+
+    trial = await run_trial(grade=grade, out_dir=tmp_path, attempt=attempt, task_id="1")
+    assert review in trial["usage"]
+    saved = json.loads((tmp_path / "attempt-0" / "summary.json").read_text())
+    assert saved["usage"][-1] == review
+    atif = Trajectory.model_validate_json(
+        (tmp_path / "attempt-0" / "trajectory.json").read_text(encoding="utf-8")
+    )
+    components = [u["component"] for u in atif.final_metrics.extra["usage"]]
+    assert components == ["agent", "grader.hallucination_review"]
+    assert VoiceTrajectory.from_atif(atif).usage[-1].model == "bedrock/claude"

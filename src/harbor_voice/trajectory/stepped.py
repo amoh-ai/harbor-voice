@@ -42,6 +42,7 @@ from harbor_voice.trajectory.model import EventType
 from harbor_voice.trajectory.model import PartyRecord
 from harbor_voice.trajectory.model import PartyRole
 from harbor_voice.trajectory.model import TimelineEvent
+from harbor_voice.trajectory.model import UsageRecord
 from harbor_voice.trajectory.model import VoiceTrajectory
 from harbor_voice.trajectory.model import VoiceTurn
 
@@ -159,6 +160,7 @@ def from_steps(
     agent_name: str | None = None,
     model: str | None = None,
     attempt: int = 0,
+    usage: Sequence[UsageRecord] = (),
 ) -> VoiceTrajectory:
     """Build the trajectory of a lockstep call from its per-tick record."""
 
@@ -263,6 +265,7 @@ def from_steps(
             if audio is not None and audio.exists()
             else Artifacts()
         ),
+        usage=tuple(usage),
     )
 
 

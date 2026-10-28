@@ -23,9 +23,14 @@ conversation should match it.
 
 from __future__ import annotations
 
+import audioop
+import dataclasses
 import math
+from collections import deque
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
+from typing import override
 
 from harbor_voice.transport.stream import InputSpeech
 from harbor_voice.transport.stream import OutputAudio
@@ -79,11 +84,33 @@ class AgentStep:
     truncated_bytes: int
     utterances: tuple[str, ...]
     vad: tuple[str, ...] = ()
+    interruption_ms: int | None = None
+    """Where in the caller's audio the barge-in was detected, if one was."""
+    user_ms_at_start: int = 0
+    """Caller audio sent to the agent before this step (ms)."""
+    speech: bool | None = None
+    """Speech activity, where the stepper measures it (tau2's
+    ``TickResult.contains_speech``); ``None`` falls back to any audio."""
 
     @property
     def contains_speech(self) -> bool:
         """tau2's rule when no provider reports speech activity: any audio."""
-        return self.raw_bytes > 0
+        return self.speech if self.speech is not None else self.raw_bytes > 0
+
+    def raw_data(self) -> dict[str, Any]:
+        """tau2's ``TickResult`` fields as its agent stores them in ``raw_data``.
+
+        The ones tau2's interaction metrics read: timing, VAD events, the
+        transcript share and the truncation record.
+        """
+        return {
+            "vad_events": list(self.vad),
+            "proportional_transcript": self.transcript,
+            "was_truncated": self.was_truncated,
+            "truncated_audio_bytes": self.truncated_bytes,
+            "interruption_audio_start_ms": self.interruption_ms,
+            "cumulative_user_audio_at_tick_start_ms": self.user_ms_at_start,
+        }
 
 
 @dataclass(slots=True)
@@ -105,6 +132,9 @@ class AgentStepper:
         bytes_per_second: Of that format.
         silence: One sample of silence in that format.
     """
+
+    truncates = True
+    """Whether a barge-in cuts the agent off (and the provider is told)."""
 
     def __init__(
         self,
@@ -182,6 +212,8 @@ class AgentStepper:
             truncated_bytes=step.truncated_bytes,
             utterances=tuple(seen),
             vad=tuple(step.vad),
+            interruption_ms=step.interruption_ms,
+            user_ms_at_start=step.user_ms_at_start,
         )
 
     # ------------------------------------------------------------- internals
@@ -299,3 +331,83 @@ class AgentStepper:
                 if text:
                     parts.append(text)
         return " ".join(parts)
+
+
+class LiveAgentStepper(AgentStepper):
+    """tau2's ``DiscreteTimeOpenAILiveAdapter`` tick, for OpenAI Live.
+
+    The Realtime tick (:class:`AgentStepper`) with tau2's four Live changes:
+
+    - agent audio arrives as 24 kHz PCM16 and goes through tau2's streaming
+      telephony converter to μ-law; the same converter turns the caller's
+      μ-law into the provider's PCM (:meth:`convert_input`);
+    - the transcript is released by audio position: a delta counts as spoken
+      once the audio played so far reaches the point where it arrived;
+    - speech is measured, not inferred from audio presence: WebRTC carries
+      silence too, so a step speaks if its audio peaks above 32;
+    - the caller's speech (Live's input transcript) is only recorded as a VAD
+      event. Live never truncates, so there is nothing to cut and nothing to
+      tell the provider.
+    """
+
+    truncates = False
+
+    def __init__(
+        self,
+        *,
+        bytes_per_step: int,
+        bytes_per_second: int,
+        silence: bytes = MULAW_SILENCE,
+        provider_rate: int = 24_000,
+    ) -> None:
+        super().__init__(
+            bytes_per_step=bytes_per_step,
+            bytes_per_second=bytes_per_second,
+            silence=silence,
+        )
+        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
+
+        self.provider_rate = provider_rate
+        self._converter = StreamingTelephonyConverter(
+            input_sample_rate=provider_rate, output_sample_rate=provider_rate
+        )
+        self._deltas: deque[tuple[int, str]] = deque()
+        self._played_bytes = 0
+
+    def convert_input(self, ulaw: bytes) -> bytes:
+        """The caller's step, as the provider takes it (tau2's ``convert_input``)."""
+        return self._converter.convert_input(ulaw)
+
+    @override
+    def feed(self, event: StreamEvent) -> Truncation | None:
+        if isinstance(event, InputSpeech):
+            if event.started:
+                self._current().vad.append("speech_started")
+            return None
+        if isinstance(event, OutputTranscript):
+            if event.audio_position is not None:
+                self._deltas.append((event.audio_position, event.delta))
+            return None
+        if isinstance(event, OutputAudio):
+            ulaw = self._converter.convert_output(event.pcm)
+            return super().feed(OutputAudio(ulaw, event.utterance, event.t))
+        return super().feed(event)
+
+    @override
+    def end(self, *, user_bytes: int) -> AgentStep:
+        step = super().end(user_bytes=user_bytes)
+        # What actually played this step, before padding (``agent_audio_data``).
+        audio = step.played[: step.raw_bytes]
+        self._played_bytes += len(audio)
+        played_pcm = (
+            self._played_bytes * self.provider_rate * 2 // self.bytes_per_second
+        )
+        text = []
+        while self._deltas and self._deltas[0][0] <= played_pcm:
+            text.append(self._deltas.popleft()[1])
+        pcm = audioop.ulaw2lin(audio, 2)
+        return dataclasses.replace(
+            step,
+            transcript="".join(text),
+            speech=bool(pcm) and audioop.max(pcm, 2) > 32,
+        )

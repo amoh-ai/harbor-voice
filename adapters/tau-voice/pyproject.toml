@@ -6,8 +6,11 @@ requires-python = ">=3.12"
 # harbor-voice itself is the host environment, not a declared dependency, the
 # same arrangement as harbor's own adapters. These are what this adapter adds.
 dependencies = [
-    # tau2's phone line filters with a scipy Butterworth band-pass.
-    "scipy>=1.10",
+    # tau2's audio effects are vendored verbatim (tau_voice.tau2_audio); to
+    # reproduce its bytes they must run on the same numerics as the tau2 image,
+    # which pins these too (sidecar/Dockerfile). Bump both together.
+    "numpy==2.5.4",
+    "scipy==1.18.1",
     "audioop-lts>=0.2; python_version >= '3.13'",
 ]
 

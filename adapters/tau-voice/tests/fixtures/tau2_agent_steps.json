@@ -51,7 +51,15 @@
      "utterances": [
       "a"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "Hello, how c",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 0
+     }
     },
     {
      "played_sha256": "74e76eed59be96da62030a72c9ecb7babf156b21a780ee106c1f125faf2ab086",
@@ -64,7 +72,15 @@
      "utterances": [
       "a"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "an I help you today?",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 200
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -75,7 +91,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 400
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -86,7 +110,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 600
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -97,7 +129,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 800
+     }
     }
    ]
   },
@@ -180,7 +220,15 @@
      "utterances": [
       "a"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "Let me look that up for you right now.",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 0
+     }
     },
     {
      "played_sha256": "9a2366548afb2ac9284aae7fed8fc7aac01fd6a0c21e29597b8046784776b9df",
@@ -193,7 +241,15 @@
      "utterances": [
       "a"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 200
+     }
     },
     {
      "played_sha256": "e92c81e477348f290c6386467a38b489aec8d3e76eae6416524cf2853f714188",
@@ -211,7 +267,17 @@
        "utterance": "a",
        "audio_end_ms": 200
       }
-     ]
+     ],
+     "raw_data": {
+      "vad_events": [
+       "speech_started"
+      ],
+      "proportional_transcript": "",
+      "was_truncated": true,
+      "truncated_audio_bytes": 1200,
+      "interruption_audio_start_ms": 500,
+      "cumulative_user_audio_at_tick_start_ms": 400
+     }
     },
     {
      "played_sha256": "650372bd1d4e1c88cfd667d9d1f2369489ec3d4a0571ae322d5e8b241c04c895",
@@ -224,7 +290,17 @@
      "utterances": [
       "b"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [
+       "speech_stopped"
+      ],
+      "proportional_transcript": "Sure.",
+      "was_truncated": false,
+      "truncated_audio_bytes": 1600,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 600
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -235,7 +311,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 800
+     }
     }
    ]
   },
@@ -284,7 +368,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 0
+     }
     },
     {
      "played_sha256": "99fadac6f5037760ca82a62725fef4f6166c2fd24216946195c8331576ceedd5",
@@ -298,7 +390,15 @@
       "a",
       "b"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "One.  Two three.",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 200
+     }
     },
     {
      "played_sha256": "23a2e4f0afc0cecaef4c37e291d1534e48ce0d0d5986ab43587e913f55ca9a51",
@@ -311,7 +411,15 @@
      "utterances": [
       "b"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 400
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -322,7 +430,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 600
+     }
     }
    ]
   },
@@ -366,7 +482,17 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [
+       "speech_started"
+      ],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 0
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -377,7 +503,17 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [
+       "speech_stopped"
+      ],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 200
+     }
     },
     {
      "played_sha256": "8de2d0cc29d1da23f37284763dc5282d771bca0b475e457f1ad4b532b295ba98",
@@ -390,7 +526,15 @@
      "utterances": [
       "a"
      ],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "Yes?",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 400
+     }
     },
     {
      "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
@@ -401,7 +545,15 @@
      "was_truncated": false,
      "truncated_audio_bytes": 0,
      "utterances": [],
-     "truncations": []
+     "truncations": [],
+     "raw_data": {
+      "vad_events": [],
+      "proportional_transcript": "",
+      "was_truncated": false,
+      "truncated_audio_bytes": 0,
+      "interruption_audio_start_ms": null,
+      "cumulative_user_audio_at_tick_start_ms": 600
+     }
     }
    ]
   }

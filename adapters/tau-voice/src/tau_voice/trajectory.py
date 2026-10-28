@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from harbor_voice.trajectory.model import UsageRecord
 from harbor_voice.trajectory.model import VoiceTrajectory
 from harbor_voice.trajectory.stepped import Tick
 from harbor_voice.trajectory.stepped import ToolEvent
@@ -97,6 +98,7 @@ def build(
         audio=audio,
         floor_policy=FLOOR_POLICY,
         plan=summary.get("caller_plan"),
+        usage=[UsageRecord.model_validate(u) for u in summary.get("usage") or []],
         seed_root=summary.get("seed"),
         task=f"tau-voice/{summary.get('domain')}/{summary.get('task_id')}",
         trial_id=agent.get("session_id"),

@@ -11,7 +11,9 @@ as tau2's ``run_unit`` does).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -22,9 +24,66 @@ from tau2.evaluator.evaluator import EvaluationType
 from tau2.evaluator.evaluator import evaluate_simulation
 from tau2.evaluator.reviewer import check_hallucination
 from tau2.evaluator.reviewer import format_hallucination_feedback
+from tau2.evaluator import auth_classifier
+from tau2.evaluator import evaluator_nl_assertions
+from tau2.evaluator import hallucination_reviewer
 from tau2.orchestrator.modes import CommunicationMode
 from tau2.runner.build import _build_env_kwargs
 from tau2.runner.helpers import get_tasks
+
+GRADER_LLMS = {
+    hallucination_reviewer: "grader.hallucination_review",
+    evaluator_nl_assertions: "grader.nl_assertions",
+    auth_classifier: "grader.auth_classifier",
+}
+"""tau2's modules that call an LLM while grading, and what to call their usage."""
+
+
+@contextlib.contextmanager
+def metered() -> Iterator[list[dict[str, Any]]]:
+    """Every LLM call the grader makes, as harbor-voice usage records.
+
+    tau2 keeps a dollar cost at most; the counts are read off each call's
+    message (``usage``, with cached tokens when the sidecar adds them).
+    The list fills when the block exits.
+    """
+    calls: list[tuple[str, Any, dict[str, Any]]] = []
+    saved = {module: module.generate for module in GRADER_LLMS}
+
+    def counted(module: Any, real: Any) -> Any:
+        def call(*args: Any, **kwargs: Any) -> Any:
+            message = real(*args, **kwargs)
+            model = kwargs.get("model", args[0] if args else None)
+            calls.append(
+                (GRADER_LLMS[module], model, getattr(message, "usage", None) or {})
+            )
+            return message
+
+        return call
+
+    for module, real in saved.items():
+        module.generate = counted(module, real)
+    records: list[dict[str, Any]] = []
+    try:
+        yield records
+    finally:
+        for module, real in saved.items():
+            module.generate = real
+        merged: dict[tuple[str, Any], dict[str, Any]] = {}
+        for component, model, usage in calls:
+            record = merged.setdefault(
+                (component, model),
+                {"component": component, "model": model, "requests": 0,
+                 "input_tokens": 0, "output_tokens": 0},
+            )  # fmt: skip
+            record["requests"] += 1
+            record["input_tokens"] += int(usage.get("prompt_tokens") or 0)
+            record["output_tokens"] += int(usage.get("completion_tokens") or 0)
+            if usage.get("cached_tokens") is not None:
+                record["cached_input_tokens"] = record.get(
+                    "cached_input_tokens", 0
+                ) + int(usage["cached_tokens"])
+        records.extend(merged.values())
 
 
 def grade(
@@ -46,29 +105,30 @@ def grade(
     )
     env_kwargs = _build_env_kwargs(config, task) or None
 
-    # The same call tau2's run_simulation makes for a full-duplex run.
-    reward_info = evaluate_simulation(
-        simulation=simulation,
-        task=task,
-        evaluation_type=EvaluationType.ALL,
-        solo_mode=False,
-        domain=opened["domain"],
-        mode=CommunicationMode.FULL_DUPLEX,
-        env_kwargs=env_kwargs,
-    )
-    simulation.reward_info = reward_info
-
-    hallucination = None
-    if hallucination_check:
-        check = check_hallucination(
-            simulation, task, review_model=review_model or config.review_model
+    with metered() as usage:
+        # The same call tau2's run_simulation makes for a full-duplex run.
+        reward_info = evaluate_simulation(
+            simulation=simulation,
+            task=task,
+            evaluation_type=EvaluationType.ALL,
+            solo_mode=False,
+            domain=opened["domain"],
+            mode=CommunicationMode.FULL_DUPLEX,
+            env_kwargs=env_kwargs,
         )
-        hallucination = {
-            "found": check.hallucination_found,
-            "errors": len(check.errors),
-            "feedback": format_hallucination_feedback(check),
-            "detail": check.model_dump(mode="json"),
-        }
+        simulation.reward_info = reward_info
+
+        hallucination = None
+        if hallucination_check:
+            check = check_hallucination(
+                simulation, task, review_model=review_model or config.review_model
+            )
+            hallucination = {
+                "found": check.hallucination_found,
+                "errors": len(check.errors),
+                "feedback": format_hallucination_feedback(check),
+                "detail": check.model_dump(mode="json"),
+            }
     return {
         "task_id": task.id,
         "domain": opened["domain"],
@@ -76,6 +136,8 @@ def grade(
         "reward": reward_info.reward,
         "reward_info": reward_info.model_dump(mode="json"),
         "hallucination": hallucination,
+        # The grader's own LLM calls, for the attempt's usage record.
+        "usage": usage,
     }
 
 

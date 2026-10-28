@@ -9,6 +9,7 @@ from typing import override
 
 import pytest
 
+from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.capabilities import Capabilities
 from harbor_voice.capabilities import Duplex
@@ -26,7 +27,9 @@ from tau_voice.reactive import CallerToolResult
 from tau_voice.reactive import HangUp
 from tau_voice.reactive import Pending
 from tau_voice.reactive import Say
+from tau_voice.agent_steps import LiveAgentStepper
 from tau_voice.reactive import StepRecord
+from tau_voice.stepped_call import CallResult
 from tau_voice.stepped_call import StepGate
 from tau_voice.stepped_call import SteppedCall
 from tau_voice.stepped_call import Termination
@@ -49,6 +52,7 @@ class FakeAgent(VoiceTransport):
         self._open = False
         self._inbox: asyncio.Queue[StreamEvent | None] = asyncio.Queue()
         self.packets: list[bytes] = []
+        self.frames: list[AudioFrame] = []
         self.heard_speech = 0
         self.replied = False
         self.truncated: list[tuple[str, int]] = []
@@ -77,6 +81,7 @@ class FakeAgent(VoiceTransport):
     @override
     async def tx(self, frame: AudioFrame) -> None:
         self.packets.append(frame.pcm)
+        self.frames.append(frame)
         if SPEECH in frame.pcm:
             self.heard_speech += 1
         elif self.heard_speech and not self.replied:
@@ -133,6 +138,7 @@ class LoudVoice:
     """One 20 ms step of 'speech' per 5 characters; steps map PCM to μ-law."""
 
     step_bytes = 640  # 20 ms at 16 kHz
+    last_effects = None
 
     def __init__(self) -> None:
         self.finished: list[tuple[str, bool]] = []
@@ -165,10 +171,7 @@ def _call(script: Script, agent: FakeAgent, **kw) -> SteppedCall:
         caller=caller,
         transport=agent,
         run_user_tools=user_tools,
-        audio_format=TELEPHONY,
-        step_s=0.02,
-        packet_ms=20,
-        **kw,
+        **{"audio_format": TELEPHONY, "step_s": 0.02, "packet_ms": 20, **kw},
     )
 
 
@@ -265,3 +268,62 @@ async def test_a_tool_call_belongs_to_the_window_it_arrived_in() -> None:
         call._tools.notify_all()
     assert await asyncio.wait_for(between, 1.0) == 6
     await call.tool_done(6)
+
+
+class NoTruncate(FakeAgent):
+    """OpenAI Live's shape: the event stream, but nothing to truncate."""
+
+    @property
+    @override
+    def capabilities(self) -> Capabilities:
+        caps = super().capabilities
+        return caps.model_copy(
+            update={"optional_ops": frozenset({OptionalOp.EVENT_STREAM})}
+        )
+
+
+def _live() -> LiveAgentStepper:
+    return LiveAgentStepper(bytes_per_step=160, bytes_per_second=8000)
+
+
+def test_only_a_stepper_that_truncates_needs_truncate() -> None:
+    with pytest.raises(ValueError, match="does not declare truncate"):
+        _call(Script([]), NoTruncate())
+    _call(Script([]), NoTruncate(), stepper=_live(), send_format=AudioFormat())
+
+
+def test_a_stepper_that_converts_needs_the_send_format() -> None:
+    with pytest.raises(ValueError, match="send_format"):
+        _call(Script([]), NoTruncate(), stepper=_live())
+
+
+async def test_a_live_step_goes_out_whole_in_the_providers_format() -> None:
+    """tau2's Live adapter converts a tick and sends it in one call."""
+    agent = NoTruncate()
+    call = _call(Script([]), agent, stepper=_live(), send_format=AudioFormat())
+    audio = SPEECH * 160
+    step = await call._agent_step(1, audio, CallResult())
+
+    assert len(agent.frames) == 1
+    assert agent.frames[0].fmt == AudioFormat()
+    assert agent.frames[0].pcm == _live().convert_input(audio)
+    assert step.was_truncated is False
+
+
+async def test_realtime_pacing_makes_up_the_time_the_caller_spent() -> None:
+    """tau2's ``realtime_pacing``: steps keep a fixed schedule, so after the
+    caller pauses to generate, the next steps run back to back (each still
+    listening 10 ms) until the call is back on time."""
+
+    async def elapsed(paced: bool) -> float:
+        call = _call(Script([]), FakeAgent(), step_s=0.1, realtime_pacing=paced)
+        loop = asyncio.get_running_loop()
+        start = loop.time()
+        await call._agent_step(1, b"", CallResult())
+        await asyncio.sleep(0.3)  # the caller generating
+        for k in range(2, 7):
+            await call._agent_step(k, b"", CallResult())
+        return loop.time() - start
+
+    assert await elapsed(True) == pytest.approx(0.6, abs=0.08)
+    assert await elapsed(False) == pytest.approx(0.9, abs=0.08)

@@ -26,6 +26,7 @@ import contextlib
 import json
 import os
 from collections.abc import AsyncIterator
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 from typing import override
@@ -54,6 +55,7 @@ from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
 from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.trajectory.model import UsageRecord
 from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.base import VoiceTransport
 from harbor_voice.transport.stream import InputSpeech
@@ -62,6 +64,33 @@ from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import StreamEvent
 
 NAME = "openai.realtime"
+TOKEN_COUNTS = (
+    "input",
+    "input_cached",
+    "input_text",
+    "input_audio",
+    "output",
+    "output_text",
+    "output_audio",
+)
+"""The token counts kept per session, as :func:`token_counts` names them."""
+
+
+def token_counts(usage: Mapping[str, Any]) -> dict[str, int]:
+    """One ``response.done`` usage block as flat counts (cached is part of input)."""
+    details_in = usage.get("input_token_details") or {}
+    details_out = usage.get("output_token_details") or {}
+    return {
+        "input": int(usage.get("input_tokens") or 0),
+        "input_cached": int(details_in.get("cached_tokens") or 0),
+        "input_text": int(details_in.get("text_tokens") or 0),
+        "input_audio": int(details_in.get("audio_tokens") or 0),
+        "output": int(usage.get("output_tokens") or 0),
+        "output_text": int(details_out.get("text_tokens") or 0),
+        "output_audio": int(details_out.get("audio_tokens") or 0),
+    }
+
+
 DEFAULT_MODEL = "gpt-realtime-1.5"
 URL = "wss://api.openai.com/v1/realtime"
 
@@ -129,7 +158,8 @@ class OpenAIRealtimeTransport(VoiceTransport):
         self._inbox: asyncio.Queue[StreamEvent | None] = asyncio.Queue()
         self._tool_tasks: list[asyncio.Task[None]] = []
         self._tools_outstanding = 0
-        self._usage = {"input": 0, "output": 0, "audio_in": 0, "audio_out": 0}
+        self._usage = dict.fromkeys(TOKEN_COUNTS, 0)
+        self._responses = 0
         self._seq = 0
         self.session_id: str | None = None
         self.errors: list[dict[str, Any]] = []
@@ -173,14 +203,30 @@ class OpenAIRealtimeTransport(VoiceTransport):
 
     @property
     def usage(self) -> Usage:
+        u = self._usage
         return Usage(
             tokens=UsageInfo(
-                prompt_tokens=self._usage["input"],
-                completion_tokens=self._usage["output"],
-                cache_tokens=0,
+                prompt_tokens=u["input"],
+                completion_tokens=u["output"],
+                cache_tokens=u["input_cached"],
                 cost_usd=0.0,
             ),
-            speech_tokens=self._usage["audio_in"] + self._usage["audio_out"],
+            speech_tokens=u["input_audio"] + u["output_audio"],
+            text_tokens=u["input_text"] + u["output_text"],
+        )
+
+    def usage_record(self, component: str = "agent") -> UsageRecord:
+        """The session's tokens so far, summed over every ``response.done``."""
+        u = self._usage
+        return UsageRecord(
+            component=component,
+            model=self._model,
+            requests=self._responses,
+            input_tokens=u["input"],
+            cached_input_tokens=u["input_cached"],
+            output_tokens=u["output"],
+            input_audio_tokens=u["input_audio"],
+            output_audio_tokens=u["output_audio"],
         )
 
     # ------------------------------------------------------------- lifecycle
@@ -413,12 +459,9 @@ class OpenAIRealtimeTransport(VoiceTransport):
                 self._tool_tasks.append(asyncio.create_task(self._answer(invocation)))
         elif kind == "response.done":
             usage = (data.get("response") or {}).get("usage") or {}
-            self._usage["input"] += int(usage.get("input_tokens") or 0)
-            self._usage["output"] += int(usage.get("output_tokens") or 0)
-            details_in = usage.get("input_token_details") or {}
-            details_out = usage.get("output_token_details") or {}
-            self._usage["audio_in"] += int(details_in.get("audio_tokens") or 0)
-            self._usage["audio_out"] += int(details_out.get("audio_tokens") or 0)
+            self._responses += 1
+            for key, value in token_counts(usage).items():
+                self._usage[key] += value
         elif kind == "error":
             self.errors.append(data.get("error") or data)
 

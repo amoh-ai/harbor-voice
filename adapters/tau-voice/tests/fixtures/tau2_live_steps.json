@@ -1,0 +1,139 @@
+{
+ "source": "tau2-bench@2174a60 DiscreteTimeOpenAILiveAdapter",
+ "steps": [
+  {
+   "sent": "f723b2200ccfa060725148b706f788565b2318a3bd4b7760503bf1d4c850a845",
+   "sent_len": 9596,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "Hello, ",
+   "contains_speech": true,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "bd0c12b09a9c571fdedc8d9f73f0874d09ea1a410e0d387808484ca25559b6e1",
+   "sent_len": 9600,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "how can ",
+   "contains_speech": true,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "c56444628aa58242f7e46d89064e7969b96237a64183832218b551b1260337b4",
+   "sent_len": 9600,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "",
+   "contains_speech": true,
+   "vad_events": [
+    "speech_started"
+   ],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "bd0c12b09a9c571fdedc8d9f73f0874d09ea1a410e0d387808484ca25559b6e1",
+   "sent_len": 9600,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "I help you today?",
+   "contains_speech": true,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "c56444628aa58242f7e46d89064e7969b96237a64183832218b551b1260337b4",
+   "sent_len": 9600,
+   "played_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "",
+   "contains_speech": false,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "bd0c12b09a9c571fdedc8d9f73f0874d09ea1a410e0d387808484ca25559b6e1",
+   "sent_len": 9600,
+   "played_sha256": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "",
+   "contains_speech": false,
+   "vad_events": [
+    "speech_started"
+   ],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "c56444628aa58242f7e46d89064e7969b96237a64183832218b551b1260337b4",
+   "sent_len": 9600,
+   "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
+   "played_len": 1600,
+   "raw_len": 0,
+   "transcript": "",
+   "contains_speech": false,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "bd0c12b09a9c571fdedc8d9f73f0874d09ea1a410e0d387808484ca25559b6e1",
+   "sent_len": 9600,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "",
+   "contains_speech": true,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "c56444628aa58242f7e46d89064e7969b96237a64183832218b551b1260337b4",
+   "sent_len": 9600,
+   "played_sha256": "ee3f32d37134634f6a8162fdd5b9174863cc9caae91671c254ccbb8bd147ccac",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "Sure.",
+   "contains_speech": true,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "bd0c12b09a9c571fdedc8d9f73f0874d09ea1a410e0d387808484ca25559b6e1",
+   "sent_len": 9600,
+   "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
+   "played_len": 1600,
+   "raw_len": 0,
+   "transcript": "",
+   "contains_speech": false,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  }
+ ]
+}

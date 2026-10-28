@@ -9,6 +9,7 @@ import yaml
 
 from harbor_voice.trial import VoiceTaskConfig
 from tau_voice import images
+from tau_voice.main import TRIAL_TIMEOUT_S
 from tau_voice.main import trial_seeds
 from tau_voice.main import write_task
 
@@ -51,7 +52,8 @@ def test_a_task_is_also_a_harbor_task(tmp_path: Path) -> None:
         (task / "task.toml").read_text(encoding="utf-8")
     )
     assert harbor.task is not None and harbor.task.name == f"tau-voice/{task.name}"
-    assert harbor.agent.timeout_sec == 3600
+    # Room for every hallucination retry, each call run to tau2's limit.
+    assert harbor.agent.timeout_sec == TRIAL_TIMEOUT_S >= 4 * 1200
     assert harbor.environment.env["ELEVENLABS_API_KEY"] == "${ELEVENLABS_API_KEY}"
     # Harbor hands the agent only the instruction; it carries the call spec.
     instruction = (task / "instruction.md").read_text(encoding="utf-8")
@@ -75,6 +77,40 @@ def test_a_prebuilt_task_names_its_images(tmp_path: Path) -> None:
     assert config.environment is not None
     assert config.environment.docker_image == images.main_image()
     assert not (task / "environment" / "sidecar").exists()
+
+
+def test_a_registry_names_where_trials_pull_from(tmp_path: Path) -> None:
+    task = write_task(
+        tmp_path,
+        "airline",
+        "7",
+        complexity="regular",
+        seed=626729,
+        registry="ghcr.io/org/",
+    )
+    compose = yaml.safe_load(
+        (task / "environment" / "docker-compose.yaml").read_text(encoding="utf-8")
+    )
+    tau2 = compose["services"]["tau2"]
+    assert "build" not in tau2  # a registry means prebuilt
+    assert tau2["image"] == images.tau2_image("ghcr.io/org")
+    assert tau2["image"].startswith("ghcr.io/org/tau-voice-runtime:2174a60-")
+    config = VoiceTaskConfig.from_toml(task / "voice.toml")
+    assert config.environment is not None
+    assert config.environment.docker_image == "ghcr.io/org/" + images.main_image()
+
+
+def test_the_callers_model_is_tau2s_unless_named(tmp_path: Path) -> None:
+    default = write_task(tmp_path / "a", "airline", "7", complexity="control", seed=1)
+    assert VoiceTaskConfig.from_toml(default / "voice.toml").call is not None
+    assert "user_llm" not in (default / "voice.toml").read_text(encoding="utf-8")
+    named = write_task(
+        tmp_path / "b", "airline", "7", complexity="control", seed=1,
+        user_llm="gpt-4.1-mini-2025-04-14",
+    )  # fmt: skip
+    spec = (named / "voice.toml").read_text(encoding="utf-8")
+    assert 'user_llm = "gpt-4.1-mini-2025-04-14"' in spec
+    assert VoiceTaskConfig.from_toml(named / "voice.toml").call is not None
 
 
 def test_image_tags_follow_their_contents(monkeypatch) -> None:

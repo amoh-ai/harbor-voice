@@ -18,17 +18,29 @@ caller's thinking time.
 
 Every counter, threshold and edge case here is tau2's, including the ones
 that look odd (a tool call does not advance the caller's silence counter; a
-caller line is split across steps character-evenly). They decide when the
-caller talks, which decides what the benchmark measures.
+caller line is split across steps character-evenly; a backchannel's flag
+outlives it). They decide when the caller talks, which decides what the
+benchmark measures.
+
+:class:`PatientPolicy` is tau2's policy for a caller that waits its turn
+(``control``). :class:`ReactivePolicy` adds the listener branch: while the
+agent speaks, a :class:`Listener` is asked every few steps whether to
+interrupt or backchannel — tau2's decision model, through the sidecar.
 """
 
 from __future__ import annotations
 
+import random
+import uuid
+from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
 from enum import StrEnum
+from typing import Any
 from typing import Protocol
+from typing import override
 
 from harbor_voice._deps import numpy as _numpy
 from harbor_voice.simulator import PreparedLine
@@ -41,6 +53,7 @@ from tau_voice.reactive import ReactiveContentSource
 from tau_voice.reactive import Say
 from tau_voice.reactive import StepRecord
 from tau_voice.reactive import UseTools
+from tau_voice.tau2_audio.voice_config import BACKCHANNEL_PHRASES
 
 
 class Action(StrEnum):
@@ -69,6 +82,11 @@ class CallerVoice(Protocol):
         """Synthesis-format bytes in one step."""
         ...
 
+    @property
+    def last_effects(self) -> Mapping[str, Any] | None:
+        """tau2's effect results for the step last emitted, or ``None``."""
+        ...
+
     async def prepare(self, text: str) -> PreparedLine: ...
 
     def emit_step(
@@ -91,6 +109,12 @@ class CallerChunk:
     tool_calls: tuple[CallerToolCall, ...] = ()
     hang_up: HangUp | None = None
     action: Action | None = None
+    """tau2's turn-taking action for the step; ``None`` where tau2 sets none
+    (waiting on tools, and the reply to a tool result)."""
+    utterance_id: str | None = None
+    """One id per line, on every step of it (tau2's ``utterance_ids``)."""
+    effects: Mapping[str, Any] | None = None
+    """tau2's effect results for the step (see ``CallerVoice.last_effects``)."""
 
     @property
     def is_meaningful(self) -> bool:
@@ -104,6 +128,7 @@ class _Queued:
     text: str
     line: PreparedLine
     last: bool
+    utterance: str
 
 
 @dataclass(slots=True)
@@ -159,31 +184,93 @@ class PatientPolicy:
     yield_when_interrupted: int | None = 5
     yield_when_interrupting: int | None = 25
 
-    def decide(self, state: CallerState) -> Action:
+    async def decide(self, state: CallerState) -> Action:
         if state.is_talking:
-            if state.is_backchanneling:
-                return Action.KEEP_TALKING
-            if state.interrupted():
-                if state.delivering_tool_result_speech:
-                    threshold = self.yield_when_interrupting
-                elif state.overlap_initiator == "self":
-                    threshold = self.yield_when_interrupting
-                else:
-                    threshold = self.yield_when_interrupted
-                if (
-                    self.yield_when_interrupted is not None
-                    and threshold is not None
-                    and state.ongoing_speech() >= threshold
-                ):
-                    return Action.STOP_TALKING
+            return self._while_talking(state)
+        return self._when_silent(state)
+
+    def _while_talking(self, state: CallerState) -> Action:
+        if state.is_backchanneling:
             return Action.KEEP_TALKING
+        if state.interrupted():
+            if state.delivering_tool_result_speech:
+                threshold = self.yield_when_interrupting
+            elif state.overlap_initiator == "self":
+                threshold = self.yield_when_interrupting
+            else:
+                threshold = self.yield_when_interrupted
+            if (
+                self.yield_when_interrupted is not None
+                and threshold is not None
+                and state.ongoing_speech() >= threshold
+            ):
+                return Action.STOP_TALKING
+        return Action.KEEP_TALKING
+
+    def _when_silent(self, state: CallerState) -> Action:
         if state.since_other > self.wait_other and state.since_self > self.wait_self:
             return Action.GENERATE
         return Action.WAIT
 
 
+@dataclass(frozen=True, slots=True)
+class Reaction:
+    """tau2's ``ListenerReactionResult``: interrupting wins over backchanneling."""
+
+    interrupt: bool = False
+    backchannel: bool = False
+
+
+class Listener(Protocol):
+    """Decides how the caller reacts to the agent's ongoing speech.
+
+    tau2's ``evaluate_listener_reactions`` with its caller's callbacks; see
+    :class:`tau_voice.content.Tau2Listener`. Asked mid-step, before the
+    step's record is written: ``state.records`` is the past, the last of
+    ``state.heard_buffer`` is what the agent is saying now.
+    """
+
+    async def react(self, state: CallerState) -> Reaction: ...
+
+
+@dataclass(frozen=True, slots=True)
+class ReactivePolicy(PatientPolicy):
+    """tau2's ``basic_turn_taking_policy`` with its listener branch.
+
+    While the caller is silent and the agent is speaking, every
+    ``check_interval`` steps (by the step count, as tau2 counts; ``None``:
+    every step) the listener is asked: interrupt means generate a line now,
+    over the agent; backchannel means a short acknowledgement. Otherwise, or
+    without a listener, the caller waits its turn as :class:`PatientPolicy`.
+    The question blocks the step, as the caller's own generation does.
+    """
+
+    listener: Listener | None = None
+    check_interval: int | None = 10
+
+    @override
+    async def decide(self, state: CallerState) -> Action:
+        if state.is_talking:
+            return self._while_talking(state)
+        due = self.check_interval is None or state.tick_count % self.check_interval == 0
+        if self.listener is not None and state.ongoing_speech() > 0 and due:
+            reaction = await self.listener.react(state)
+            if reaction.interrupt:
+                return Action.GENERATE
+            if reaction.backchannel:
+                return Action.BACKCHANNEL
+        return self._when_silent(state)
+
+
 class TurnPolicy(Protocol):
-    def decide(self, state: CallerState) -> Action: ...
+    async def decide(self, state: CallerState) -> Action: ...
+
+
+def tau2_backchannels(voice_seed: int) -> Iterator[str]:
+    """tau2's backchannel phrases, in its order: ``Random(voice_seed + 100)``."""
+    rng = random.Random(voice_seed + 100)
+    while True:
+        yield rng.choice(BACKCHANNEL_PHRASES)
 
 
 FADE_OUT_SAMPLES = 100
@@ -227,10 +314,13 @@ class ReactiveCaller:
         content: ReactiveContentSource,
         voice: CallerVoice,
         policy: TurnPolicy,
+        backchannels: Iterator[str] | None = None,
     ) -> None:
         self.content = content
         self.voice = voice
         self.policy = policy
+        self.backchannels = backchannels
+        """Phrases for backchannels, in order (:func:`tau2_backchannels`)."""
         self.state = CallerState()
 
     async def next_chunk(
@@ -261,7 +351,7 @@ class ReactiveCaller:
         elif st.waiting_for_tool_results:
             chunk = self._waiting()
         else:
-            chunk = await self._act(self.policy.decide(st))
+            chunk = await self._act(await self.policy.decide(st))
             if chunk.tool_calls:
                 st.waiting_for_tool_results = True
 
@@ -288,6 +378,7 @@ class ReactiveCaller:
             speech=False,
             text=text,
             action=action,
+            effects=self.voice.last_effects,
         )
 
     def _waiting(self) -> CallerChunk:
@@ -295,7 +386,7 @@ class ReactiveCaller:
         self.state.since_self += 1
         return self._silence(action=None)
 
-    def _speak_next(self, action: Action) -> CallerChunk:
+    def _speak_next(self, action: Action | None) -> CallerChunk:
         st = self.state
         piece = st.queue.pop(0)
         # Only the keep-talking path clears these in tau2; the first piece of
@@ -305,9 +396,17 @@ class ReactiveCaller:
             st.delivering_tool_result_speech = False
         st.since_self = 0
         audio = self.voice.emit_step(piece.pcm, is_speech=True, line=piece.line)
+        effects = self.voice.last_effects
         if piece.last:
             self.voice.finish(piece.line, truncated=False)
-        return CallerChunk(audio=audio, speech=True, text=piece.text, action=action)
+        return CallerChunk(
+            audio=audio,
+            speech=True,
+            text=piece.text,
+            action=action,
+            utterance_id=piece.utterance,
+            effects=effects,
+        )
 
     async def _queue_line(self, text: str) -> None:
         line = await self.voice.prepare(text)
@@ -315,9 +414,11 @@ class ReactiveCaller:
         size = self.voice.step_bytes
         steps = [pcm[i : i + size] for i in range(0, len(pcm), size)] or [b""]
         steps = [_pad(s, size) for s in steps]
-        texts = split_text(text, len(steps))
+        # tau2 spreads the text as synthesised (with any vocal tic) over steps.
+        texts = split_text(line.said, len(steps))
+        utterance = str(uuid.uuid4())
         self.state.queue.extend(
-            _Queued(p, t, line, index == len(steps) - 1)
+            _Queued(p, t, line, index == len(steps) - 1, utterance)
             for index, (p, t) in enumerate(zip(steps, texts, strict=True))
         )
 
@@ -342,21 +443,37 @@ class ReactiveCaller:
         if action is Action.WAIT:
             st.since_self += 1
             return self._silence(action=action)
-        raise ValueError(f"{action.value} is not supported by this caller yet")
+        if action is Action.BACKCHANNEL:
+            if self.backchannels is None:
+                raise ValueError("a backchannel was decided, but no phrases were given")
+            # The heard buffer is kept: a backchannel is not a reply.
+            await self._queue_line(next(self.backchannels))
+            chunk = self._speak_next(action)
+            # Set after the first piece, as tau2 does: only a keep-talking step
+            # that empties the queue clears it, so a one-step backchannel
+            # leaves it set into the caller's next line.
+            st.is_backchanneling = True
+            st.ticks_since_backchannel = 0
+            return chunk
+        raise ValueError(f"unknown action {action.value}")
 
     async def _handle(
-        self, reply: Say | UseTools | HangUp, action: Action
+        self, reply: Say | UseTools | HangUp, action: Action | None
     ) -> CallerChunk:
         if isinstance(reply, UseTools):
             # tau2 returns before touching the silence counter here.
+            audio = self.voice.emit_step(bytes(self.voice.step_bytes), is_speech=False)
+            effects = self.voice.last_effects
+            if effects is not None:
+                # tau2 copies only the source effects onto a tool call.
+                effects = {**effects, "channel_effects": None}
             return CallerChunk(
-                audio=self.voice.emit_step(
-                    bytes(self.voice.step_bytes), is_speech=False
-                ),
+                audio=audio,
                 speech=False,
                 text=reply.text,
                 tool_calls=reply.calls,
                 action=action,
+                effects=effects,
             )
         if isinstance(reply, HangUp):
             # tau2 returns the stop message unsynthesised: no audio, and its
@@ -379,7 +496,8 @@ class ReactiveCaller:
         pending: Pending = results
         reply = await self.content.respond(st.records, pending)
         if isinstance(reply, (UseTools, HangUp)):
-            return await self._handle(reply, Action.GENERATE)
+            # tau2 sets no turn-taking action on a reply to a tool result.
+            return await self._handle(reply, None)
         if reply.text:
             await self._queue_line(reply.text)
             st.delivering_tool_result_speech = True

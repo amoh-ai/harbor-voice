@@ -624,14 +624,14 @@ class TestRobustnessPairsOnEverythingButProfile:
         report = robustness(
             [
                 paired_trial(0.40, profile="telephony", seed=1),
-                paired_trial(0.20, profile="eva_b", seed=1),
+                paired_trial(0.20, profile="background_noise", seed=1),
                 paired_trial(0.02, profile="clean", seed=1),
             ],
             bootstrap=False,
         )
-        assert report.profiles == ("eva_b", "telephony")
+        assert report.profiles == ("background_noise", "telephony")
         assert report.deltas["telephony"]["m"].mean == pytest.approx(0.38)
-        assert report.deltas["eva_b"]["m"].mean == pytest.approx(0.18)
+        assert report.deltas["background_noise"]["m"].mean == pytest.approx(0.18)
 
     def test_a_trial_with_no_recorded_profile_is_named_not_dropped(self) -> None:
         report = robustness([trial(0.4)], bootstrap=False)

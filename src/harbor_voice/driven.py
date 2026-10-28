@@ -23,6 +23,7 @@ from harbor_voice.driver import DriverOutcome
 from harbor_voice.driver import load_driver
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    from harbor_voice.trial import AgentSpec
     from harbor_voice.trial import VoiceTaskConfig
     from harbor_voice.transport.base import VoiceTransport
 
@@ -41,6 +42,7 @@ async def drive_here(
     out_dir: Path,
     build_agent: Callable[..., VoiceTransport],
     trajectory_path: Path | None = None,
+    agent: AgentSpec | None = None,
 ) -> DriverOutcome:
     """Run the task's driver in this process and write ``outcome.json``.
 
@@ -60,6 +62,7 @@ async def drive_here(
         services={},
         build_agent=build_agent,
         verify=None,
+        agent=agent,
     )
     outcome = await driver(context)
     (out_dir / OUTCOME).write_text(

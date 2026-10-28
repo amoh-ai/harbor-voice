@@ -8,13 +8,20 @@ Reads harbor job folders (``harbor-voice jobs start``) and tau2 result folders
 - **Pass^k** for k = 1..runs, tau2's estimator: per task, C(c, k) / C(n, k)
   with c successes in n runs, averaged over tasks;
 - diagnostics that explain a gap without being a parity claim: hallucination
-  retries, termination reasons, call length, errored trials.
+  retries, termination reasons, call length, errored trials;
+- with ``--metrics``, tau2's interaction metrics for both sides (L_R, L_Y,
+  R_R, R_Y, I_A, S_BC, S_VT, S_ND), computed by tau2's code
+  (``sidecar/interaction_metrics.py``, run in the tau2 image);
+- tokens each side consumed, every attempt included (set-aside hallucination
+  reruns too): the agent's and the caller LLM's. Counts, not dollars.
 
-Errored trials (no grade) are left out of the averages and counted, as tau2
-leaves infrastructure errors out::
+One speech complexity at a time: ``--complexity`` keeps that preset's
+records when the folders hold several. Errored trials (no grade) are left
+out of the averages and counted, as tau2 leaves infrastructure errors out::
 
     tau-voice compare --harbor jobs/parity --original parity/original \\
-        --out parity/parity_experiment.json
+        --complexity regular --metrics parity/metrics-regular.json \\
+        --out parity/parity_experiment-regular.json
 """
 
 from __future__ import annotations
@@ -47,6 +54,7 @@ class Record:
     retries: int = 0
     termination: str | None = None
     call_s: float | None = None
+    complexity: str | None = None
 
 
 def _json(path: Path) -> Any:
@@ -85,6 +93,7 @@ def harbor_records(
                     retries=len(attempts) - 1,
                     termination=attempts[-1].get("termination"),
                     call_s=attempts[-1].get("call_s"),
+                    complexity=summary.get("speech_complexity"),
                 )
             )
     return records
@@ -130,9 +139,86 @@ def original_records(result_dirs: Iterable[Path]) -> list[Record]:
                     retries=int(sim.get("hallucination_retries_used") or 0),
                     termination=sim.get("termination_reason"),
                     call_s=None if call_s is None else round(call_s, 1),
+                    complexity=(sim.get("speech_environment") or {}).get("complexity"),
                 )
             )
     return records
+
+
+TOKENS = (
+    "agent_input",
+    "agent_cached",
+    "agent_output",
+    "agent_audio_in",
+    "agent_audio_out",
+    "caller_input",
+    "caller_output",
+)
+"""Token counts compared per side: the agent under test, the caller's LLM."""
+
+
+def harbor_tokens(job_dirs: Iterable[Path], complexity: str | None) -> dict[str, int]:
+    """The harbor trials' tokens, every attempt (``usage`` of each trial)."""
+    total = dict.fromkeys(TOKENS, 0)
+    for job in job_dirs:
+        for outcome in sorted(job.glob("*/agent/call/outcome.json")):
+            summary = _json(outcome).get("summary") or {}
+            if complexity and summary.get("speech_complexity") != complexity:
+                continue
+            for u in summary.get("usage") or []:
+                # Every part of the agent: OpenAI Live's tokens are its
+                # backend's (``agent.backend``).
+                component = str(u.get("component") or "")
+                if component == "agent" or component.startswith("agent."):
+                    total["agent_input"] += u.get("input_tokens") or 0
+                    total["agent_cached"] += u.get("cached_input_tokens") or 0
+                    total["agent_output"] += u.get("output_tokens") or 0
+                    total["agent_audio_in"] += u.get("input_audio_tokens") or 0
+                    total["agent_audio_out"] += u.get("output_audio_tokens") or 0
+                elif u.get("component") == "caller.llm":
+                    total["caller_input"] += u.get("input_tokens") or 0
+                    total["caller_output"] += u.get("output_tokens") or 0
+    return total
+
+
+def original_tokens(
+    result_dirs: Iterable[Path], complexity: str | None
+) -> dict[str, int]:
+    """tau2's tokens, every attempt (its simulations and its set-aside reruns):
+    the agent's from ``agent_usage``, the caller's from its messages."""
+    total = dict.fromkeys(TOKENS, 0)
+    for results_dir in result_dirs:
+        sims = list(_simulations(results_dir))
+        for path in sorted((results_dir / "hallucination_discarded").glob("*.json")):
+            data = _json(path)
+            sims.extend(data.get("simulations") or [data])
+        for sim in sims:
+            env = sim.get("speech_environment") or {}
+            if complexity and env.get("complexity") != complexity:
+                continue
+            for r in (sim.get("agent_usage") or {}).get("records") or []:
+                total["agent_input"] += r.get("input_tokens") or 0
+                total["agent_cached"] += r.get("input_cached_tokens") or 0
+                total["agent_output"] += r.get("output_tokens") or 0
+                total["agent_audio_in"] += r.get("input_audio_tokens") or 0
+                total["agent_audio_out"] += r.get("output_audio_tokens") or 0
+            for tick in sim.get("ticks") or []:
+                usage = (tick.get("user_chunk") or {}).get("usage") or {}
+                total["caller_input"] += usage.get("prompt_tokens") or 0
+                total["caller_output"] += usage.get("completion_tokens") or 0
+    return total
+
+
+def token_table(tokens: dict[str, dict[str, int]]) -> str:
+    lines = [
+        "| Side | " + " | ".join(TOKENS) + " |",
+        "|---|" + "---|" * len(TOKENS),
+    ]
+    for side in ("original", "harbor"):
+        lines.append(
+            f"| {side} | " + " | ".join(f"{tokens[side][k]:,}" for k in TOKENS) + " |"
+        )
+    return "\n".join(lines)
 
 
 def _found(paths: Iterable[Path], marker: str) -> list[Path]:
@@ -255,6 +341,42 @@ def parity_experiment(
     ]
 
 
+INTERACTION = {
+    "response_latency_mean": "L_R (s)",
+    "yield_latency_mean": "L_Y (s)",
+    "response_rate": "R_R",
+    "yield_rate": "R_Y",
+    "agent_interruption_rate": "I_A",
+    "selectivity_backchannel": "S_BC",
+    "selectivity_vocal_tic": "S_VT",
+    "selectivity_non_directed": "S_ND",
+}
+"""tau2's panel fields and the paper's names for them."""
+
+
+def interaction_table(metrics: dict[str, Any]) -> str:
+    """tau2's interaction panel, both sides, per domain and overall."""
+    scopes = sorted(
+        set(metrics["original"]["domains"]) | set(metrics["harbor"]["domains"])
+    )
+    lines = [
+        "| Domain | Side | " + " | ".join(INTERACTION.values()) + " |",
+        "|---|---|" + "---|" * len(INTERACTION),
+    ]
+    for scope in [*scopes, "overall"]:
+        for side in ("original", "harbor"):
+            panel = metrics[side]
+            values = (
+                panel["overall"] if scope == "overall" else panel["domains"].get(scope)
+            )
+            cells = [
+                "n/a" if not values or values.get(key) is None else f"{values[key]:.3f}"
+                for key in INTERACTION
+            ]
+            lines.append(f"| {scope} | {side} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
 def table(report: dict[str, dict[str, Any]], runs: int) -> str:
     lines = [
         "| Domain | Side | Average reward | Runs | "
@@ -285,6 +407,12 @@ def main(argv: list[str]) -> None:
     parser.add_argument("--harbor", type=Path, nargs="+", required=True)
     parser.add_argument("--original", type=Path, nargs="+", required=True)
     parser.add_argument("--runs", type=int, default=3)
+    parser.add_argument(
+        "--complexity", help="only this speech complexity's records (e.g. regular)"
+    )
+    parser.add_argument(
+        "--metrics", type=Path, help="interaction_metrics.py output to report too"
+    )
     parser.add_argument("--model", default="gpt-realtime-1.5")
     parser.add_argument("--agent", default="harbor-voice@0.1.0")
     parser.add_argument("--notes", default="")
@@ -294,8 +422,23 @@ def main(argv: list[str]) -> None:
     # A harbor job folder has job.log; its trial folders have trial.log.
     harbor = harbor_records(_found(args.harbor, "job.log"))
     original = original_records(_found(args.original, "results.json"))
+    if args.complexity:
+        harbor = [r for r in harbor if r.complexity == args.complexity]
+        original = [r for r in original if r.complexity == args.complexity]
     report = compare(harbor, original, args.runs)
     print(table(report, args.runs))
+    tokens = {
+        "harbor": harbor_tokens(_found(args.harbor, "job.log"), args.complexity),
+        "original": original_tokens(
+            _found(args.original, "results.json"), args.complexity
+        ),
+    }
+    print()
+    print(token_table(tokens))
+    interaction = _json(args.metrics) if args.metrics else None
+    if interaction is not None:
+        print()
+        print(interaction_table(interaction))
     if args.out:
         tasks = len(
             {(r.domain, r.task_id) for r in original}
@@ -311,6 +454,9 @@ def main(argv: list[str]) -> None:
         )
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(entry, indent=2), encoding="utf-8")
+        report["tokens"] = tokens
+        if interaction is not None:
+            report["interaction_metrics"] = interaction
         (args.out.with_suffix(".report.json")).write_text(
             json.dumps(report, indent=2, default=str), encoding="utf-8"
         )

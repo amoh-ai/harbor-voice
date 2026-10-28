@@ -24,6 +24,8 @@ aws = [
     "aws-sdk-bedrock-runtime[awscrt]>=0.0.2",
     "boto3>=1.40",
 ]
+# OpenAI Live over WebRTC (providers/openai/live_webrtc.py); tau2's pin.
+live = ["aiortc==1.15.0"]
 # Cloud backends are harbor's; these pass its extras through.
 daytona = ["harbor[daytona]==0.25.0"]
 ec2 = ["harbor[ec2]==0.25.0"]
@@ -43,13 +45,17 @@ harbor-voice-tau-voice-adapter = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "harbor-voice[aws,daytona,ec2]",
+    "harbor-voice[aws,daytona,ec2,live]",
     "harbor-voice-tau-voice-adapter",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "ruff>=0.15.17,<0.16",
     "ty>=0.0.49,<0.0.50",
 ]
+
+[tool.ruff]
+# tau2's vendored audio code is generated verbatim; never reformatted or linted.
+extend-exclude = ["adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["harbor"]
@@ -75,3 +81,4 @@ all = "error"
 
 [tool.ty.src]
 include = ["src/harbor_voice", "adapters/tau-voice/src"]
+exclude = ["adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py"]

@@ -19,6 +19,9 @@ benchmark:
   ``VoiceStreamingUserSimulator._generate_full_duplex_voice_message`` does,
   returned as the request body. Pure computation, and the step most likely to
   break parity if ported, so it is not ported.
+- ``POST /decide`` — tau2's listener reactions (interrupt? backchannel?) on
+  the same state ``/user_context`` builds: ``evaluate_listener_reactions``
+  with the callbacks tau2's caller uses, decision model calls included.
 - ``POST /grade`` — grade the call last closed (same code as
   ``tests/test.sh``), for the driver's per-attempt hallucination retry.
 - ``POST /close`` — turn harbor-voice's step log plus the tool calls recorded
@@ -32,6 +35,7 @@ hallucination retry reopens it after ``/close``.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -46,11 +50,13 @@ from typing import Literal
 import uvicorn
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Response
 from pydantic import BaseModel
 from pydantic import Field
 
 from tau2.agent.base.streaming import LinearizationStrategy
 from tau2.agent.base.streaming import ParticipantTick
+from tau2.agent.base.streaming import evaluate_listener_reactions
 from tau2.agent.discrete_time_audio_native_agent import DiscreteTimeAudioNativeAgent
 from tau2.config import DEFAULT_LLM_USER
 from tau2.data_model.message import AssistantMessage
@@ -59,19 +65,33 @@ from tau2.data_model.message import SystemMessage
 from tau2.data_model.message import Tick
 from tau2.data_model.message import ToolCall
 from tau2.data_model.message import ToolMessage
+from tau2.data_model.message import TurnTakingAction
 from tau2.data_model.message import UserMessage
 from tau2.data_model.simulation import AudioNativeConfig
 from tau2.data_model.simulation import SimulationRun
 from tau2.data_model.simulation import TerminationReason
 from tau2.data_model.simulation import VoiceRunConfig
 from tau2.data_model.voice_personas import get_elevenlabs_voice_id
+from tau2.voice.audio_native.openai.live_config import LiveConfig
 from tau2.runner.batch import make_voice_run_settings
 from tau2.runner.build import _build_env_kwargs
 from tau2.runner.build import build_agent
 from tau2.runner.build import build_environment
 from tau2.runner.build import build_voice_user
 from tau2.runner.helpers import get_tasks
+import tau2.user.user_simulator_streaming as _streaming_user
+import tau2.utils.llm_utils as _llm_utils
+from tau2.user.user_simulator_streaming import user_backchannel_policy
+from tau2.user.user_simulator_streaming import user_interruption_policy
 from tau2.utils.llm_utils import to_litellm_messages
+from tau2.data_model.audio_effects import ChannelEffectsResult
+from tau2.data_model.audio_effects import EffectTimeline
+from tau2.data_model.audio_effects import SourceEffectsResult
+from tau2.data_model.audio_effects import SpeechEffectsResult
+from tau2.voice.synthesis.audio_effects.speech_generator import OutOfTurnSpeechGenerator
+from tau2.voice.utils.utils import BURST_NOISE_FILES
+from tau2.voice_config import BACKGROUND_NOISE_CONTINUOUS_DIR
+from tau2.voice_config import BURST_NOISE_DIR
 
 STATE_PATH = Path(
     os.environ.get("TAU_VOICE_STATE_PATH", "/logs/agent/tau_voice_state.json")
@@ -79,6 +99,24 @@ STATE_PATH = Path(
 MAX_ERRORS = int(os.environ.get("TAU_VOICE_MAX_ERRORS", "10"))
 
 app = FastAPI(title="tau-voice runtime")
+
+_tau2_usage = _llm_utils.get_response_usage
+
+
+def _usage_with_cache(response: Any) -> dict[str, Any] | None:
+    """tau2's usage dict for an LLM call, plus the cached prompt tokens it
+    leaves out — what harbor-voice records for the calls tau2 makes here
+    (listener decisions, the grader's review). Nothing in tau2 reads the key."""
+    usage = _tau2_usage(response)
+    if usage is not None:
+        details = getattr(response.get("usage"), "prompt_tokens_details", None)
+        cached = getattr(details, "cached_tokens", None)
+        if cached is not None:
+            usage["cached_tokens"] = cached
+    return usage
+
+
+_llm_utils.get_response_usage = _usage_with_cache
 
 
 class OpenRequest(BaseModel):
@@ -88,6 +126,12 @@ class OpenRequest(BaseModel):
     seed: int = 42
     user_llm: str = DEFAULT_LLM_USER
     hallucination_feedback: str | None = None
+    live_config: dict[str, Any] | None = None
+    """tau2's ``--live-config`` when the agent is OpenAI Live (``openai_live``).
+    tau2's user then defaults to real-time generation; harbor-voice's caller
+    does not do it, so both sides run with it off (``--no-realtime-generation``)."""
+    agent_model: str | None = None
+    """The Live frontend model (tau2's ``--audio-native-model``)."""
 
 
 class ToolRequest(BaseModel):
@@ -103,11 +147,29 @@ class Utterance(BaseModel):
     speech: bool = False
 
 
+class CallerOut(Utterance):
+    """The caller's chunk, with what tau2's interaction metrics read."""
+
+    action: str | None = None
+    """tau2's turn-taking action, where tau2 sets one."""
+    utterance_id: str | None = None
+    speech_effects: dict[str, Any] | None = None
+    source_effects: dict[str, Any] | None = None
+    channel_effects: dict[str, Any] | None = None
+
+
+class AgentOut(Utterance):
+    """The agent's chunk, with tau2's ``TickResult`` fields."""
+
+    utterance_ids: list[str] | None = None
+    raw_data: dict[str, Any] | None = None
+
+
 class Step(BaseModel):
     step: int = Field(ge=0)
     t_s: float = Field(ge=0, description="call time at the start of the step")
-    user: Utterance | None = None
-    agent: Utterance | None = None
+    user: CallerOut | None = None
+    agent: AgentOut | None = None
 
 
 class CallerToolCall(BaseModel):
@@ -175,6 +237,21 @@ class CloseRequest(BaseModel):
     ]
     duration_s: float = Field(ge=0)
     tick_duration_s: float = 0.2
+    effect_timeline: dict[str, Any] | None = None
+    """tau2's ``EffectTimeline`` as the caller recorded it."""
+
+
+def _live(anc: AudioNativeConfig, system_prompt: str) -> dict[str, Any] | None:
+    """The Live session tau2 would configure: its two rendered prompts."""
+    cfg = anc.live_config
+    if cfg is None:
+        return None
+    return {
+        "frontend_prompt": cfg.render_frontend_prompt(system_prompt),
+        "backend_prompt": cfg.render_backend_prompt(system_prompt),
+        "backend_model": cfg.backend_model,
+        "voice": cfg.voice,
+    }
 
 
 class _Session:
@@ -186,9 +263,17 @@ class _Session:
             raise ValueError(f"task {request.task_id!r} not found in {request.domain}")
         self.request = request
         self.task = tasks[0]
+        audio_native = AudioNativeConfig()
+        if request.live_config is not None:
+            audio_native = AudioNativeConfig(
+                provider="openai_live",
+                model=request.agent_model or "gpt-live-1",
+                live_config=LiveConfig(**request.live_config),
+                realtime_generation=False,
+            )
         self.config = VoiceRunConfig(
             domain=request.domain,
-            audio_native_config=AudioNativeConfig(),
+            audio_native_config=audio_native,
             llm_user=request.user_llm,
             speech_complexity=request.speech_complexity,
             seed=request.seed,
@@ -237,7 +322,14 @@ class _Session:
         # Built once: it loads noise files and effect schedulers, none of which
         # linearisation touches. Only its ticks and input buffer are replaced
         # per request.
-        self.user_state = user.get_init_state()
+        # The out-of-turn sounds (regular's tics and phrases) are played by
+        # harbor-voice's caller, so this state does not synthesise them.
+        generate_all = OutOfTurnSpeechGenerator.generate_all
+        OutOfTurnSpeechGenerator.generate_all = lambda self, items: None
+        try:
+            self.user_state = user.get_init_state()
+        finally:
+            OutOfTurnSpeechGenerator.generate_all = generate_all
         self.calls: list[tuple[int, str, ToolCall, ToolMessage]] = []
         self.num_errors = 0
         self.start = datetime.now()
@@ -255,6 +347,7 @@ class _Session:
                 "stop_tool": DiscreteTimeAudioNativeAgent.STOP_FUNCTION_NAME,
                 "default_provider": anc.provider,
                 "default_model": anc.model,
+                "live": _live(anc, self.agent.system_prompt),
             },
             "user": {
                 "system_prompt": user.system_prompt,
@@ -268,6 +361,9 @@ class _Session:
                     user.voice_settings.speech_environment.persona_name
                 ),
                 "voice_settings": user.voice_settings.model_dump(mode="json"),
+                # tau2's own burst list, in its order: per-turn effect draws
+                # pick from it, and the scheduler falls back to it.
+                "tau2_burst_files": [p.name for p in BURST_NOISE_FILES],
                 "turn_taking": {
                     "tick_duration_s": anc.tick_duration_seconds,
                     "wait_to_respond_other_ticks": user.wait_to_respond_threshold_other,
@@ -279,6 +375,7 @@ class _Session:
                     "backchannel_poisson_rate": user.backchannel_poisson_rate,
                     "use_llm_backchannel": user.use_llm_backchannel,
                     "interruption_check_interval_ticks": user.interruption_check_interval,
+                    "enable_user_initiated_interruption": user.enable_user_initiated_interruption,
                     "integration_ticks": user.integration_ticks,
                     "silence_annotation_threshold_ticks": user.silence_annotation_threshold_ticks,
                     "max_steps_seconds": anc.max_steps_seconds,
@@ -309,8 +406,8 @@ class _Session:
             "too_many_errors": self.num_errors >= MAX_ERRORS,
         }
 
-    def user_context(self, request: UserContextRequest) -> dict[str, Any]:
-        user = self.user
+    def _rebuild(self, request: UserContextRequest) -> Any:
+        """The caller's tau2 state as of now: step history plus pending input."""
         state = self.user_state
         stamp = self.start.isoformat()
         ticks = []
@@ -389,6 +486,36 @@ class _Session:
                     timestamp=stamp,
                 )
             ]
+        return state
+
+    def decide(self, request: UserContextRequest) -> dict[str, Any]:
+        """``_compute_turn_taking_action``'s listener callbacks, evaluated."""
+        user = self.user
+        state = self._rebuild(request)
+        integration_ticks = user.integration_ticks
+        interrupt = None
+        if user.enable_user_initiated_interruption:
+
+            def interrupt(s: Any) -> Any:
+                return user_interruption_policy(s, integration_ticks=integration_ticks)
+
+        backchannel = None
+        if user.use_llm_backchannel:
+
+            def backchannel(s: Any) -> Any:
+                return user_backchannel_policy(s, integration_ticks=integration_ticks)
+
+        return {
+            **dataclasses.asdict(
+                evaluate_listener_reactions(state, interrupt, backchannel)
+            ),
+            # tau2's decision model, fixed (not the caller's --user-llm).
+            "model": _streaming_user.VOICE_USER_SIMULATOR_DECISION_MODEL,
+        }
+
+    def user_context(self, request: UserContextRequest) -> dict[str, Any]:
+        user = self.user
+        state = self._rebuild(request)
         linearized = state.get_linearized_messages(
             strategy=LinearizationStrategy.CONTAINMENT_AWARE,
             include_pending_input=True,
@@ -422,19 +549,30 @@ class _Session:
                 timestamp=stamp,
                 tick_duration_seconds=request.tick_duration_s,
             )
-            if step.user is not None:
+            user = step.user
+            if user is not None:
                 tick.user_chunk = UserMessage(
                     role="user",
-                    content=step.user.text or None,
+                    content=user.text or None,
                     timestamp=stamp,
-                    contains_speech=step.user.speech,
+                    contains_speech=user.speech,
+                    turn_taking_action=(
+                        TurnTakingAction(action=user.action) if user.action else None
+                    ),
+                    utterance_ids=[user.utterance_id] if user.utterance_id else None,
+                    speech_effects=_model(SpeechEffectsResult, user.speech_effects),
+                    source_effects=_source_effects(user.source_effects),
+                    channel_effects=_model(ChannelEffectsResult, user.channel_effects),
                 )
-            if step.agent is not None:
+            agent = step.agent
+            if agent is not None:
                 tick.agent_chunk = AssistantMessage(
                     role="assistant",
-                    content=step.agent.text or None,
+                    content=agent.text or None,
                     timestamp=stamp,
-                    contains_speech=step.agent.speech,
+                    contains_speech=agent.speech,
+                    utterance_ids=agent.utterance_ids or None,
+                    raw_data=agent.raw_data,
                 )
             ticks[step.step] = tick
         for index, side, call, result in self.calls:
@@ -477,7 +615,25 @@ class _Session:
             seed=self.request.seed,
             mode="full_duplex",
             speech_environment=self.user.voice_settings.speech_environment,
+            # tau2's user always has a timeline (empty without effects).
+            effect_timeline=EffectTimeline.model_validate(
+                request.effect_timeline or {"events": []}
+            ),
         )
+
+
+def _model(cls: Any, data: dict[str, Any] | None) -> Any:
+    return cls.model_validate(data) if data is not None else None
+
+
+def _source_effects(data: dict[str, Any] | None) -> Any:
+    """A burst arrives as a file name; tau2 records its path in its data."""
+    if data is not None and data.get("burst_noise_file"):
+        data = {
+            **data,
+            "burst_noise_file": str(BURST_NOISE_DIR / data["burst_noise_file"]),
+        }
+    return _model(SourceEffectsResult, data)
 
 
 _session: _Session | None = None
@@ -492,6 +648,26 @@ def _require() -> _Session:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+ASSET_DIRS = {
+    "continuous": BACKGROUND_NOISE_CONTINUOUS_DIR,
+    "bursts": BURST_NOISE_DIR,
+}
+
+
+@app.get("/asset/{kind}/{name}")
+def asset(kind: str, name: str) -> Response:
+    """A noise file tau2 ships (``regular`` background and burst sounds).
+
+    The caller runs in harbor-voice's ``main``; it fetches these here rather
+    than harbor-voice redistributing tau2's data.
+    """
+    folder = ASSET_DIRS.get(kind)
+    path = (folder / name) if folder else None
+    if path is None or path.parent != folder or not path.is_file():
+        raise HTTPException(status_code=404, detail=f"no {kind} asset {name!r}")
+    return Response(content=path.read_bytes(), media_type="audio/wav")
 
 
 @app.get("/state")
@@ -524,6 +700,11 @@ def tool(request: ToolRequest) -> dict[str, Any]:
 @app.post("/user_context")
 def user_context(request: UserContextRequest) -> dict[str, Any]:
     return _require().user_context(request)
+
+
+@app.post("/decide")
+def decide(request: UserContextRequest) -> dict[str, Any]:
+    return _require().decide(request)
 
 
 @app.post("/close")

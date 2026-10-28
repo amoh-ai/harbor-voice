@@ -232,7 +232,7 @@ class PerturbationPipeline:
         """Whether anything here degrades the *signal*.
 
         L5 deliberately does not count. A conversation-only profile such as
-        ``fdb_overlap`` transmits the caller's audio untouched, so there is no
+        ``overlap`` transmits the caller's audio untouched, so there is no
         clean/transmitted distinction to store and ``clean_tx_parity`` has
         nothing to check. Folding L5 in here would make every barge-in run
         store a redundant copy of every frame and then verify it against

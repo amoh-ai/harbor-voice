@@ -8,8 +8,12 @@ what goes into each image, so
 a change to the sidecar or to ``main`` gives a new tag and the converter's
 tasks point at it — a stale image is never picked up silently.
 
-Remote backends will need these pushed to a registry they can pull from;
-that is a later step.
+Remote backends (Daytona, EC2, ...) pull from a registry instead:
+``--registry <prefix> --push`` names the images under that prefix
+(``ghcr.io/<org>``, ``docker.io/<user>``, ...) and pushes them, and tasks
+converted with the same ``--registry`` name them there. Neither image holds a
+secret (tau2-bench is public; keys arrive as environment variables at run
+time), so a public registry works without credentials on the pulling side.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ SIDECAR_FILES = ("Dockerfile", "server.py", "evaluate.py")
 MAIN_DOCKERFILE = """\
 # main: harbor-voice and the adapter are installed here at trial start, from
 # wheels of the orchestrator's code.
-FROM python:3.13-slim
+FROM mirror.gcr.io/library/python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:0.8.17 /uv /usr/local/bin/uv
 ENV PYTHONUNBUFFERED=1 PYTHONUTF8=1 UV_LINK_MODE=copy
 WORKDIR /task
@@ -39,14 +43,18 @@ def _digest(parts: list[bytes]) -> str:
     return h.hexdigest()[:10]
 
 
-def tau2_image() -> str:
+def _named(name: str, tag: str, registry: str | None) -> str:
+    return f"{registry.rstrip('/')}/{name}:{tag}" if registry else f"{name}:{tag}"
+
+
+def tau2_image(registry: str | None = None) -> str:
     """The sidecar: tau2 at a pinned commit, plus our server and grader."""
     files = [(SIDECAR / name).read_bytes() for name in SIDECAR_FILES]
-    return f"tau-voice-runtime:{TAU2_COMMIT}-{_digest(files)}"
+    return _named("tau-voice-runtime", f"{TAU2_COMMIT}-{_digest(files)}", registry)
 
 
-def main_image() -> str:
-    return f"tau-voice-main:{_digest([MAIN_DOCKERFILE.encode()])}"
+def main_image(registry: str | None = None) -> str:
+    return _named("tau-voice-main", _digest([MAIN_DOCKERFILE.encode()]), registry)
 
 
 def exists(image: str) -> bool:
@@ -56,9 +64,16 @@ def exists(image: str) -> bool:
     return result.returncode == 0
 
 
-def build(*, force: bool = False) -> list[str]:
-    """Build whichever image is missing (both with ``force``); returns the tags."""
-    tau2, main = tau2_image(), main_image()
+def build(
+    *, force: bool = False, registry: str | None = None, push: bool = False
+) -> list[str]:
+    """Build whichever image is missing (both with ``force``); returns the tags.
+
+    With ``push``, both are pushed to ``registry`` (log in to it first).
+    """
+    if push and not registry:
+        raise ValueError("push needs a registry")
+    tau2, main = tau2_image(registry), main_image(registry)
     if force or not exists(tau2):
         subprocess.run(["docker", "build", "-t", tau2, str(SIDECAR)], check=True)
     if force or not exists(main):
@@ -68,4 +83,7 @@ def build(*, force: bool = False) -> list[str]:
             input=MAIN_DOCKERFILE.encode(),
             check=True,
         )
+    if push:
+        for image in (tau2, main):
+            subprocess.run(["docker", "push", image], check=True)
     return [tau2, main]

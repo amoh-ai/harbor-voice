@@ -10,6 +10,7 @@ from pathlib import Path
 from harbor.models.job.config import JobConfig
 
 from tau_voice.job import METRIC
+from tau_voice.job import RETRY_ON
 from tau_voice.job import job_config
 
 
@@ -29,7 +30,10 @@ def test_one_agent_entry_per_tau2_seed(tmp_path: Path) -> None:
         "openai.realtime/gpt-realtime-1.5"
     }
     assert config.retry.max_retries == 3
-    assert config.retry.include_exceptions == {"VoiceInfrastructureError"}
+    assert config.retry.include_exceptions == set(RETRY_ON)
+    # Environment failures before the call retry too (parity-40 lost a trial
+    # to a dropped clone inside the image build).
+    assert "RuntimeError" in RETRY_ON
 
 
 def test_the_backend_is_named_and_nothing_account_specific(tmp_path: Path) -> None:
@@ -51,3 +55,19 @@ def test_the_mean_leaves_errored_trials_out(tmp_path: Path) -> None:
         "graded": 3,
         "errored": 1,
     }
+
+
+def test_an_agents_settings_travel_as_its_agent_json(tmp_path: Path) -> None:
+    raw = job_config(
+        dataset=tmp_path,
+        model="openai.live/gpt-live-1",
+        agent_config={"backend_model": "gpt-6-luna"},
+    )
+    config = JobConfig.model_validate(raw)
+    (agent,) = config.agents
+    assert agent.model_name == "openai.live/gpt-live-1"
+    spec = json.loads(agent.kwargs["agent_json"])
+    assert spec["s2s"] == "openai.live/gpt-live-1"
+    assert spec["config"] == {"s2s": {"backend_model": "gpt-6-luna"}}
+    plain = job_config(dataset=tmp_path, model="m")
+    assert "agent_json" not in plain["agents"][0]["kwargs"]

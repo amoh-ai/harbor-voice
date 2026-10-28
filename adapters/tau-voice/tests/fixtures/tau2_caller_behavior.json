@@ -1,0 +1,2958 @@
+{
+ "source": "tau2-bench@2174a60 VoiceStreamingUserSimulator, control_behavior, scripted LLM, decisions and synthesis",
+ "metrics": {
+  "response_latency_mean": 0.7999999999999998,
+  "yield_latency_mean": null,
+  "response_rate": 1.0,
+  "yield_rate": 0.0,
+  "agent_interruption_rate": 0.0,
+  "selectivity_backchannel": 1.0,
+  "selectivity_vocal_tic": null,
+  "selectivity_non_directed": null,
+  "counts": {
+   "n_simulations": 1,
+   "response_total": 1,
+   "yield_total": 1,
+   "backchannel_total": 1,
+   "vocal_tic_total": 0,
+   "non_directed_total": 0,
+   "agent_interrupts_count": 0
+  }
+ },
+ "user": {
+  "voice_settings": {
+   "synthesis_config": {
+    "provider": "elevenlabs",
+    "provider_config": {
+     "model_id": "eleven_v3",
+     "voice_id": null,
+     "api_key": null,
+     "voice_settings": {
+      "stability": 0.5,
+      "use_speaker_boost": false,
+      "similarity_boost": 0.75,
+      "style": 0.0
+     },
+     "insert_audio_tags": true,
+     "audio_tags_probability": 0.2,
+     "seed": null
+    },
+    "channel_effects_config": {
+     "enable_frame_drops": false,
+     "frame_drop_rate": 0.0,
+     "frame_drop_burst_duration_ms": 200.0,
+     "frame_drop_count": 1,
+     "frame_drop_duration_ms": 150
+    },
+    "source_effects_config": {
+     "enable_background_noise": false,
+     "noise_snr_db": 15.0,
+     "noise_snr_drift_db": 3.0,
+     "noise_variation_speed": 0.5,
+     "enable_burst_noise": false,
+     "burst_noise_events_per_minute": 0.0,
+     "burst_snr_range_db": [
+      -5.0,
+      10.0
+     ]
+    },
+    "speech_effects_config": {
+     "enable_dynamic_muffling": false,
+     "muffle_probability": 0.0,
+     "muffle_segment_count": 1,
+     "muffle_segment_duration_ms": 500,
+     "muffle_cutoff_freq": 1500.0,
+     "muffle_transition_ms": 100,
+     "enable_vocal_tics": true,
+     "vocal_tics": [
+      {
+       "text": ".[cough][cough][cough]",
+       "type": "vocal_tic"
+      },
+      {
+       "text": ".[sneeze][sneeze][sneeze]",
+       "type": "vocal_tic"
+      },
+      {
+       "text": ".[sniffle][sniffle][sniffle]",
+       "type": "vocal_tic"
+      }
+     ],
+     "min_words_for_vocal_tics": 3,
+     "enable_non_directed_phrases": true,
+     "non_directed_phrases": [
+      {
+       "text": "Not now.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Hold on a second.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I'm on the phone.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Just a minute.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I don't know.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Give me a moment.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "One second.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I'll be right with you.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Can you wait?",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Shh, quiet.",
+       "type": "non_directed_phrase"
+      }
+     ],
+     "speech_insert_events_per_minute": 0.7
+    }
+   },
+   "transcription_config": null,
+   "output_dir": null,
+   "speech_environment": {
+    "voice_seed": 137036,
+    "persona_name": "matt_delaney",
+    "voice_id": "EZfwTIuZL0WWIVnjSgTF",
+    "background_noise_file": null,
+    "burst_noise_files": [],
+    "environment": null,
+    "backchannel_min_threshold": 3,
+    "use_llm_backchannel": true,
+    "enable_interruptions": true,
+    "telephony_enabled": true,
+    "complexity": "control_behavior",
+    "snr_speech_reference_rms": 3000.0,
+    "source_effects_config": {
+     "enable_background_noise": false,
+     "noise_snr_db": 15.0,
+     "noise_snr_drift_db": 3.0,
+     "noise_variation_speed": 0.5,
+     "enable_burst_noise": false,
+     "burst_noise_events_per_minute": 0.0,
+     "burst_snr_range_db": [
+      -5.0,
+      10.0
+     ]
+    },
+    "speech_effects_config": {
+     "enable_dynamic_muffling": false,
+     "muffle_probability": 0.0,
+     "muffle_segment_count": 1,
+     "muffle_segment_duration_ms": 500,
+     "muffle_cutoff_freq": 1500.0,
+     "muffle_transition_ms": 100,
+     "enable_vocal_tics": true,
+     "vocal_tics": [
+      {
+       "text": ".[cough][cough][cough]",
+       "type": "vocal_tic"
+      },
+      {
+       "text": ".[sneeze][sneeze][sneeze]",
+       "type": "vocal_tic"
+      },
+      {
+       "text": ".[sniffle][sniffle][sniffle]",
+       "type": "vocal_tic"
+      }
+     ],
+     "min_words_for_vocal_tics": 3,
+     "enable_non_directed_phrases": true,
+     "non_directed_phrases": [
+      {
+       "text": "Not now.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Hold on a second.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I'm on the phone.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Just a minute.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I don't know.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Give me a moment.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "One second.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "I'll be right with you.",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Can you wait?",
+       "type": "non_directed_phrase"
+      },
+      {
+       "text": "Shh, quiet.",
+       "type": "non_directed_phrase"
+      }
+     ],
+     "speech_insert_events_per_minute": 0.7
+    },
+    "channel_effects_config": {
+     "enable_frame_drops": false,
+     "frame_drop_rate": 0.0,
+     "frame_drop_burst_duration_ms": 200.0,
+     "frame_drop_count": 1,
+     "frame_drop_duration_ms": 150
+    }
+   },
+   "synthesis_enabled": true,
+   "transcription_enabled": false
+  },
+  "tau2_burst_files": [
+   "siren.wav",
+   "engine_idling.wav",
+   "ringing_phone.wav",
+   "car_horn.wav",
+   "dog_bark.wav"
+  ],
+  "turn_taking": {
+   "tick_duration_s": 0.2,
+   "wait_to_respond_other_ticks": 5,
+   "wait_to_respond_self_ticks": 25,
+   "yield_when_interrupted_ticks": 5,
+   "yield_when_interrupting_ticks": 25,
+   "backchannel_min_ticks": 15,
+   "backchannel_max_ticks": 60,
+   "backchannel_poisson_rate": 0.1,
+   "use_llm_backchannel": true,
+   "interruption_check_interval_ticks": 10,
+   "enable_user_initiated_interruption": true,
+   "integration_ticks": 2,
+   "silence_annotation_threshold_ticks": 20,
+   "max_steps_seconds": 1200
+  }
+ },
+ "steps": [
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "I ne",
+   "tool_calls": [],
+   "audio": "bcc27e65fc0de4e903e6b8bea9f4960d8cd333654c73e47c340ecec2a75317c0",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ed t",
+   "tool_calls": [],
+   "audio": "543266cbef2330afde20639de7ecb11e1f6048434ea572c70f9029887d8ac8b1",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "o ch",
+   "tool_calls": [],
+   "audio": "64323f9114265f3d24f000eea3822a91c1f102c01e59fbc74f44a96f9a5864ce",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ange",
+   "tool_calls": [],
+   "audio": "f43016e9c98586320c3aa316453be9b3be2ca33a4926c9719235048477e3065e",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " the",
+   "tool_calls": [],
+   "audio": "a42cc6ac808d72a8353f37e21c25637aace4127244db05b90867e4c158a3e6cd",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " dat",
+   "tool_calls": [],
+   "audio": "f5fecde3fdaf5682c06bbd2b226a99274db67ea8ddd6dbc96281ce429cbe9c90",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "e of",
+   "tool_calls": [],
+   "audio": "543266cbef2330afde20639de7ecb11e1f6048434ea572c70f9029887d8ac8b1",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " my ",
+   "tool_calls": [],
+   "audio": "64323f9114265f3d24f000eea3822a91c1f102c01e59fbc74f44a96f9a5864ce",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "flig",
+   "tool_calls": [],
+   "audio": "f43016e9c98586320c3aa316453be9b3be2ca33a4926c9719235048477e3065e",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ht, ",
+   "tool_calls": [],
+   "audio": "a42cc6ac808d72a8353f37e21c25637aace4127244db05b90867e4c158a3e6cd",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "plea",
+   "tool_calls": [],
+   "audio": "f5fecde3fdaf5682c06bbd2b226a99274db67ea8ddd6dbc96281ce429cbe9c90",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "se.",
+   "tool_calls": [],
+   "audio": "b6f8d9f11b674a22ec1accfc71bfc64561d46c15727b9e19c9c544fca6d4a2d7",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    0
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "2870ed0448d9c7b6f998f008aba5d687bc4d695ffcc420073f85ba70ebc700fd",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": {
+     "burst_noise_file": null,
+     "speech_insert": {
+      "text": ".[sniffle][sniffle][sniffle]",
+      "type": "vocal_tic"
+     }
+    },
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "5d439c9e79c82a2f864aab1ccdeda98d27d1e04bb181c60780e18b2292fe6b1c",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "6a4cc572b75c17a7848c4bd3aa1473816487599f2d43d7bcff115cf7ed08544b",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "c1cc950cd6c89a01aa88591dd347f779e3be94f8c60754d09c573beb2a0de2ce",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "9b60a195f248f07a0bddd1ac0f00a4609242133c9ec68ef27ce62ed43372ebfb",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "4db8f9e5d097c62602e10985af3bf2dbd3f4979982e24b3fc5e70d05a6230fa3",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "5d439c9e79c82a2f864aab1ccdeda98d27d1e04bb181c60780e18b2292fe6b1c",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "5089d4a7a8b6783f46e3f675e915e0e7da88210023edf190155c0734203d133f",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "backchannel",
+   "speech": true,
+   "text": "uh-",
+   "tool_calls": [],
+   "audio": "27da9e32ae1d368064e7f9dbb65777fc64d7f6f4ed4b9af56f081b33d1d064fe",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    1
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "huh",
+   "tool_calls": [],
+   "audio": "c947877a611c193452fc69f436bc631ac69c06733a0ac9f22e1d595f0fe1b977",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    1
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "Sorr",
+   "tool_calls": [],
+   "audio": "6fdd052d802815dbad661b13f5e99345bd77ad58f71c00579e087069fcdfb21c",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "y to",
+   "tool_calls": [],
+   "audio": "0507ba08fec9f866163b80bf08cc39a75de988cfb872b60f56d3a44e146161ed",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " cut",
+   "tool_calls": [],
+   "audio": "d11b8b4780ceb118fd5d5d2917e2781048a18502206a744f141ee12256c2168a",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " in,",
+   "tool_calls": [],
+   "audio": "474dd8efd011a1958852c6766456085e4714aed5a24c2f97a0aa4a3cf5f8dc50",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " but",
+   "tool_calls": [],
+   "audio": "34a28793b273b91bc3c153cd1800864aa60c7bb97a9d5ce7c7a904904c909d46",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " is ",
+   "tool_calls": [],
+   "audio": "9baf0a482113738e87784d2c41e83fdb81aa5f428bd31d30a072250f5ea46522",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "that",
+   "tool_calls": [],
+   "audio": "0507ba08fec9f866163b80bf08cc39a75de988cfb872b60f56d3a44e146161ed",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " cha",
+   "tool_calls": [],
+   "audio": "d11b8b4780ceb118fd5d5d2917e2781048a18502206a744f141ee12256c2168a",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "nge ",
+   "tool_calls": [],
+   "audio": "474dd8efd011a1958852c6766456085e4714aed5a24c2f97a0aa4a3cf5f8dc50",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "fee ",
+   "tool_calls": [],
+   "audio": "34a28793b273b91bc3c153cd1800864aa60c7bb97a9d5ce7c7a904904c909d46",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "refu",
+   "tool_calls": [],
+   "audio": "9baf0a482113738e87784d2c41e83fdb81aa5f428bd31d30a072250f5ea46522",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ndab",
+   "tool_calls": [],
+   "audio": "0507ba08fec9f866163b80bf08cc39a75de988cfb872b60f56d3a44e146161ed",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "le?",
+   "tool_calls": [],
+   "audio": "cda4e9c177c9c6e1bd0ab384afee970a32607c41ebf33f3cf2a3f200e983a502",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    2
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "generate_message",
+   "speech": false,
+   "text": null,
+   "tool_calls": [
+    "check_status"
+   ],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": null,
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "Okay",
+   "tool_calls": [],
+   "audio": "2f65bf39d90d8f4a5f0e22f8389c2fac591f102c9818f9a398b0411e3a9ce60e",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": ", it",
+   "tool_calls": [],
+   "audio": "fbc33df2ecf6a3a0ba88110a7ef5ef973aacddd6d35c1ed8fd4108f502413796",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " say",
+   "tool_calls": [],
+   "audio": "6dfede68e7a17178c5872ba6f45481d050dff567dcd6e204df55f9c7a4fdcdb3",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "s it",
+   "tool_calls": [],
+   "audio": "79bb77a9e5abd4d0782d86274f430dc7b18d977fb4f53827c26635dffabfccd9",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " is",
+   "tool_calls": [],
+   "audio": "4ab4a919177bdc61d9592b32f5ca86a2bff249acca4a42dab775ca0947237cf9",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": " con",
+   "tool_calls": [],
+   "audio": "4af42e7982a887c0d8cd0176f3d49df044f542d8e0f059716b3c960d640f9a02",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "firm",
+   "tool_calls": [],
+   "audio": "fbc33df2ecf6a3a0ba88110a7ef5ef973aacddd6d35c1ed8fd4108f502413796",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ed n",
+   "tool_calls": [],
+   "audio": "6dfede68e7a17178c5872ba6f45481d050dff567dcd6e204df55f9c7a4fdcdb3",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "keep_talking",
+   "speech": true,
+   "text": "ow.",
+   "tool_calls": [],
+   "audio": "c225cc57cb72081c11ee3f3187c2909cfd6a017ed7239bdf60b03fd5748ba49c",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": [
+    3
+   ],
+   "effects": {
+    "speech_effects": {
+     "dynamic_muffling_enabled": false,
+     "speech_insert": null
+    },
+    "source_effects": null,
+    "channel_effects": {
+     "frame_drops_enabled": false,
+     "frame_drop_ms": 0
+    }
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "wait",
+   "speech": false,
+   "text": "",
+   "tool_calls": [],
+   "audio": "eac3349c2bcfb43181c9c4487645d3bd386076fa7f517dc8c1e871fba4fc8ba5",
+   "audio_len": 1600,
+   "stop": false,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  },
+  {
+   "action": "generate_message",
+   "speech": true,
+   "text": "Great, thank you so much. ###STOP###",
+   "tool_calls": [],
+   "audio": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "audio_len": 0,
+   "stop": true,
+   "utterance": null,
+   "effects": {
+    "speech_effects": null,
+    "source_effects": null,
+    "channel_effects": null
+   }
+  }
+ ],
+ "decisions": [
+  {
+   "step": 9,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 9,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  },
+  {
+   "step": 49,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is \n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 49,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is \n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  },
+  {
+   "step": 59,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 59,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  },
+  {
+   "step": 69,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 69,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  },
+  {
+   "step": 79,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference applies. I can look at options for  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 79,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference applies. I can look at options for  [CURRENTLY SPEAKING, INCOMPLETE]\n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  },
+  {
+   "step": 99,
+   "kind": "backchannel",
+   "prompt": "You simulate a natural listener who occasionally says \"uh-huh\" or \"mm-hmm\" to show they're following along.\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference applies. I can look at options for you. Let me pull up your reservation and \nUSER: Sorry to cut in, but is that change fee refundable?\nASSISTANT: check the flights on the \n</conversation_history>\n\nThe agent is still speaking [CURRENTLY SPEAKING, INCOMPLETE]. Ignore the trailing incomplete word/phrase \u2014 focus only on the COMPLETE sentences delivered so far in the agent's current turn.\n\nContinuers (\"uh-huh\", \"mm-hmm\", \"yeah\") are brief sounds that mean \"I'm listening, keep going.\" They:\n- Happen naturally during extended speech\n- Show engagement without interrupting\n- Are NOT responses to specific content \u2014 just signals of attention\n\nSay YES if:\n- The agent has completed at least 2 full, substantive sentences in their current turn\n  (Short phrases like \"Thanks for your patience\" or \"Let me check on that\" don't count as substantive)\n- The user hasn't spoken or backchanneled recently (check the last 3 exchanges for ANY user sound including \"mm-hmm\", \"uh-huh\", \"okay\")\n- It would feel natural to briefly signal \"I'm still here\"\n\nSay NO if:\n- The agent just started speaking (fewer than 2 substantive sentences)\n- The user spoke OR backchanneled within the last 2-3 exchanges\n- The agent's current turn contains or ends with a question\n- The agent is wrapping up or about to finish their thought\n\nFrequency guidance:\n- Continuers are occasional, not constant\n- Even when conditions seem right, real listeners only backchannel sometimes\n- Aim for roughly 1 continuer per 4-6 sentences of extended agent speech\n- When in doubt, say NO \u2014 silence is also natural\n- Too few continuers is better than too many\n\nExamples:\n\nAGENT: \"Hi there! How can I hel [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (just started)\n\nAGENT: \"Thanks for your patience. [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (only 1 short sentence, not substantive enough)\n\nAGENT: \"Sure, I can help with that. First I'll need to verify your account. Could you provide your email or your name and zi [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (agent is asking a question)\n\nAGENT: \"No problem. We can use your name and zip code instead. Let me look that up for you. I'll check our system now and see if I can fin [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (3 substantive sentences, agent explaining process)\n\nAGENT: \"I found your order. It includes a keyboard, thermostat, and headphones. The order was delivered last Tuesday. Now for the exchange, we have a few opti [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 YES (extended explanation with specific details)\n\n[If user said \"mm-hmm\" 2 exchanges ago]\nAGENT: \"...and those are the available options. Now I'll need your input on which [CURRENTLY SPEAKING, INCOMPLETE]\"\n\u2192 NO (user backchanneled recently, don't do it again so soon)\n\nRespond with ONLY \"YES\" or \"NO\".\n"
+  },
+  {
+   "step": 99,
+   "kind": "interrupt",
+   "prompt": "You are analyzing a conversation to decide if the user should interrupt the agent.\n\nConversation history (most recent at bottom):\n\n<conversation_history>\nASSISTANT: Hi! Thanks for calling. How can I help you today? \nUSER: I need to change the date of my flight, please.\nASSISTANT: Sure. Changing a date is possible. There is a change fee of seventy \nUSER: uh-huh\nASSISTANT: five dollars, and the fare difference applies. I can look at options for you. Let me pull up your reservation and \nUSER: Sorry to cut in, but is that change fee refundable?\nASSISTANT: check the flights on the \n</conversation_history>\n\nThe agent is CURRENTLY speaking (you can see their ongoing speech in the conversation above).\n\nBased on the conversation so far, should the user interrupt the agent NOW?\n\nConsider:\n- Has the user heard enough to understand what the agent is asking or saying?\n- Has the user heard enough to have a response, question, or correction ready?\n- Did the agent just complete the sentence which has all the pertinent information the user was looking for?\n- Do NOT repeatedly interrupt the agent if it has spoken only a few words (say less than 5 words).\n\nRespond with ONLY \"YES\" if the user should interrupt now, or \"NO\" if they should keep listening.\n"
+  }
+ ]
+}

@@ -17,6 +17,7 @@ import json
 import os
 import time
 from collections.abc import AsyncIterator
+from collections.abc import Iterable
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -29,6 +30,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
+from harbor_voice.trajectory.model import UsageRecord
 
 NAME = "openai.llm"
 DEFAULT_MODEL = "gpt-4.1-2025-04-14"
@@ -61,6 +63,28 @@ class ChatReply:
     @property
     def is_tool_call(self) -> bool:
         return bool(self.tool_calls)
+
+
+def usage_record(
+    replies: Iterable[ChatReply], *, component: str, model: str | None = None
+) -> UsageRecord:
+    """Chat completions' tokens, summed: prompt (cached included) and completion."""
+    requests = prompt = cached = completion = 0
+    for reply in replies:
+        usage = reply.usage or {}
+        requests += 1
+        prompt += int(usage.get("prompt_tokens") or 0)
+        completion += int(usage.get("completion_tokens") or 0)
+        details = usage.get("prompt_tokens_details") or {}
+        cached += int(details.get("cached_tokens") or 0)
+    return UsageRecord(
+        component=component,
+        model=model,
+        requests=requests,
+        input_tokens=prompt,
+        cached_input_tokens=cached,
+        output_tokens=completion,
+    )
 
 
 class OpenAILLM:

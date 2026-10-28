@@ -116,6 +116,7 @@ def drive(
             out_dir=out,
             build_agent=trial.build_agent,
             trajectory_path=trajectory,
+            agent=trial.agent_spec(),
         )
     )
     reward = outcome.verified.reward if outcome.verified else None
@@ -193,7 +194,7 @@ def profiles(
         if buildable and not profile.is_buildable:
             continue
         state = "ready" if profile.is_buildable else "not yet"
-        typer.echo(f"{name:<20} [{state:<7}] {profile.reproduces}")
+        typer.echo(f"{name:<20} [{state:<7}] {profile.description}")
         if profile.note:
             typer.echo(f"{'':<20}  note: {profile.note}")
         for layer, readers in summarise(profile).paired_metrics.items():

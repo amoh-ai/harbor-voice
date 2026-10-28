@@ -21,7 +21,7 @@ caller in its default voice, and nothing downstream would know. That is the
 same failure as on the L3 side — asking for 15 dB SNR and
 reporting 15 dB whatever came out — so it gets the same treatment: the plan
 records what was **asked for** and what was **honoured**, and a run under
-``eva_a`` whose TTS ignored the accent says so rather than claiming the
+``accented`` whose TTS ignored the accent says so rather than claiming the
 condition.
 
 This is enforced through an optional protocol rather than a required one.
@@ -39,9 +39,9 @@ accent.
 
 That is a constraint of their provisioning, not of the idea, and splitting the
 axes by where they land — voice at synthesis, behaviour at the content source —
-makes them independent here for free. The ``eva_a`` profile stays faithful to
-whatever EVA actually ran, for parity; the layer does not inherit the
-restriction.
+makes them independent here for free. An EVA adapter's profiles can stay
+faithful to whatever EVA actually ran, for parity; the layer does not inherit
+the restriction.
 """
 
 from __future__ import annotations

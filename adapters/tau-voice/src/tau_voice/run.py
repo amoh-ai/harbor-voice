@@ -11,6 +11,7 @@ The step log goes back to the sidecar's ``/close``; grading is the verifier's.
 from __future__ import annotations
 
 import json
+import tempfile
 import wave
 from collections.abc import Awaitable
 from collections.abc import Callable
@@ -23,8 +24,17 @@ from typing import Any
 
 from harbor_voice.audio.format import AudioFormat
 from tau_voice.content import Tau2Content
+from tau_voice.content import Tau2Listener
+from harbor_voice.providers.openai.llm import usage_record as chat_usage
+from harbor.models.trajectories.trajectory import Trajectory
+from harbor_voice.trajectory.model import UsageRecord
+from harbor_voice.trajectory.model import VoiceTrajectory
+from harbor_voice.trajectory.model import merge_usage
 from tau_voice.client import Sidecar
 from tau_voice.client import SidecarError
+from tau_voice.effects import Tau2CallerEffects
+from tau_voice.main import HALLUCINATION_RETRIES
+from tau_voice.main import PRESETS
 from tau_voice.telephony import Tau2Telephony
 from tau_voice.telephony import ulaw_to_pcm16
 from harbor_voice.ids import PartyId
@@ -38,14 +48,19 @@ from harbor_voice.simulator import UniversalSimulator
 from tau_voice.voice import SimulatorVoice
 from harbor_voice.providers.cache import BlobCache
 from harbor_voice.providers.elevenlabs import ElevenLabsTTS
+from harbor_voice.providers.openai.live import LIVE_AUDIO
+from harbor_voice.providers.openai.live import LiveSettings
+from harbor_voice.providers.openai.live import OpenAILiveTransport
 from harbor_voice.providers.openai.llm import OpenAILLM
 from harbor_voice.providers.openai.realtime import TELEPHONY
 from harbor_voice.providers.openai.realtime import OpenAIRealtimeTransport
 from harbor_voice.providers.tools import ToolInvocation
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.providers.tools import ToolSpec
-from tau_voice.caller import PatientPolicy
 from tau_voice.caller import ReactiveCaller
+from tau_voice.caller import ReactivePolicy
+from tau_voice.caller import tau2_backchannels
+from tau_voice.agent_steps import LiveAgentStepper
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
 from tau_voice.stepped_call import CallResult
@@ -55,8 +70,9 @@ from tau_voice.stepped_call import Termination
 from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.base import VoiceTransport
 
-AgentFactory = Callable[[ToolRouter, str], VoiceTransport]
-"""``(tools, system_prompt) -> agent transport``."""
+AgentFactory = Callable[..., VoiceTransport]
+"""``(tools, system_prompt, **overrides) -> agent transport``; for OpenAI Live
+the overrides are tau2's backend prompt and voice."""
 
 SYNTHESIS = AudioFormat(sample_rate_hz=16_000)
 """tau2's ``DEFAULT_PCM_SAMPLE_RATE``: the caller is synthesised at 16 kHz."""
@@ -68,11 +84,10 @@ def caller_simulator(
     """The caller's voice: a ``UniversalSimulator`` with tau2's phone line.
 
     16 kHz (tau2's synthesis rate); the persona's ElevenLabs voice through our
-    L1 layer; no signal layers for ``control``; tau2's telephony as the wire
-    encoder. ``regular`` adds tau2's effects as layers here.
+    L1 layer; no signal layers; tau2's telephony as the wire encoder. tau2's
+    effects (every preset but ``control``) run per step around this chain,
+    in :class:`~tau_voice.voice.SimulatorVoice` — see :mod:`tau_voice.effects`.
     """
-    if complexity != "control":
-        raise NotImplementedError(f"{complexity!r} effects are not mapped yet")
     pipeline = PerturbationPipeline(
         (),
         seeds=SeedSet.derive(seed),
@@ -89,6 +104,26 @@ def caller_simulator(
         fmt=SYNTHESIS,
         source_kind=SourceKind.LLM,
     )
+
+
+async def tau2_effects(
+    sidecar: Sidecar, user_info: Mapping[str, Any], *, step_s: float, folder: Path
+) -> Tau2CallerEffects:
+    """tau2's effects for this call, its noise files fetched into ``folder``."""
+    effects = Tau2CallerEffects(
+        user_info["voice_settings"],
+        turn_burst_files=user_info["tau2_burst_files"],
+        step_s=step_s,
+    )
+    for kind, name in effects.needed_assets:
+        if Path(name).name != name:
+            raise SidecarError(f"unexpected tau2 noise file name {name!r}")
+        path = folder / kind / name
+        if not path.is_file():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(await sidecar.asset(kind, name))
+        effects.assets[name] = path
+    return effects
 
 
 @dataclass(slots=True)
@@ -167,36 +202,65 @@ async def run_task(
     agent_factory: AgentFactory | None = None,
     synthesis_cache: Path | None = None,
     hallucination_feedback: str | None = None,
+    user_llm: str | None = None,
     max_steps: int | None = None,
     attempt_index: int = 0,
+    live_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one task end to end; returns the run summary written to ``out_dir``.
 
     ``agent_factory`` builds the agent under test from the tools and the
     benchmark's system prompt; harbor-voice's driver passes one built from the
     task's ``[agent]``. Without one, it is OpenAI Realtime — tau2's default.
+
+    ``live_config`` (tau2's ``--live-config``) says the agent is OpenAI Live:
+    tau2 renders its two prompts, and the call steps as tau2's Live adapter
+    does (:class:`~tau_voice.agent_steps.LiveAgentStepper`, real-time pacing).
     """
-    if speech_complexity != "control":
-        raise NotImplementedError(
-            "only the control preset is wired so far; regular needs the reactive "
-            "policy and tau2's effects"
+    if speech_complexity not in PRESETS:
+        raise ValueError(
+            f"unknown speech complexity {speech_complexity!r}; tau2's: {', '.join(PRESETS)}"
         )
     out_dir.mkdir(parents=True, exist_ok=True)
     sidecar = Sidecar(sidecar_url)
+    scratch = tempfile.TemporaryDirectory(prefix="tau-voice-")
     try:
         task = await sidecar.open(
             domain=domain,
             task_id=task_id,
             speech_complexity=speech_complexity,
             seed=seed,
+            user_llm=user_llm,
             hallucination_feedback=hallucination_feedback,
+            live_config=live_config,
+            agent_model=agent_model,
         )
         agent_info, user_info = task["agent"], task["user"]
+        live = agent_info.get("live")
         turns = user_info["turn_taking"]
 
         executor = SidecarToolExecutor(sidecar, _specs(agent_info["tools"]))
         router = ToolRouter(executor)
-        if agent_factory is not None:
+        if live is not None and agent_factory is not None:
+            transport = agent_factory(
+                router,
+                live["frontend_prompt"],
+                backend_instructions=live["backend_prompt"],
+                voice=live["voice"],
+            )
+        elif live is not None:
+            transport = OpenAILiveTransport(
+                party=PartyId("agent"),
+                model=agent_model or agent_info["default_model"],
+                system_prompt=live["frontend_prompt"],
+                tools=router,
+                settings=LiveSettings(
+                    backend_model=live["backend_model"],
+                    voice=live["voice"],
+                    backend_instructions=live["backend_prompt"],
+                ),
+            )
+        elif agent_factory is not None:
             transport = agent_factory(router, agent_info["system_prompt"])
         else:
             transport = OpenAIRealtimeTransport(
@@ -216,16 +280,42 @@ async def run_task(
             seed=seed,
             complexity=speech_complexity,
         )
-        voice = SimulatorVoice(simulator, step_s=turns["tick_duration_s"])
+        effects = None
+        if speech_complexity != "control":
+            effects = await tau2_effects(
+                sidecar,
+                user_info,
+                step_s=turns["tick_duration_s"],
+                folder=(synthesis_cache or Path(scratch.name)) / "tau2-noise",
+            )
+
+            async def synthesize(text: str) -> bytes:
+                return (await simulator.prepare(text)).pcm
+
+            await effects.open(synthesize, voice_id=user_info["voice_id"])
+        voice = SimulatorVoice(
+            simulator, step_s=turns["tick_duration_s"], effects=effects
+        )
+        if not turns["use_llm_backchannel"] and turns["backchannel_min_ticks"]:
+            raise NotImplementedError(
+                "tau2's Poisson backchannels (no preset uses them)"
+            )
+        listener = None
+        if turns["enable_user_initiated_interruption"] or turns["use_llm_backchannel"]:
+            listener = Tau2Listener(sidecar)
+        voice_seed = user_info["voice_settings"]["speech_environment"]["voice_seed"]
         caller = ReactiveCaller(
             content=content,
             voice=voice,
-            policy=PatientPolicy(
+            policy=ReactivePolicy(
                 wait_other=turns["wait_to_respond_other_ticks"],
                 wait_self=turns["wait_to_respond_self_ticks"],
                 yield_when_interrupted=turns["yield_when_interrupted_ticks"],
                 yield_when_interrupting=turns["yield_when_interrupting_ticks"],
+                listener=listener,
+                check_interval=turns["interruption_check_interval_ticks"],
             ),
+            backchannels=tau2_backchannels(voice_seed),
         )
 
         async def user_tools(
@@ -233,27 +323,48 @@ async def run_task(
         ) -> tuple[CallerToolResult, ...]:
             return await content.run_tools(calls, step=step)
 
+        wire = LIVE_AUDIO if live is not None else TELEPHONY
         await transport.open(
-            SessionConfig(
-                party=PartyId("agent"), audio_in=TELEPHONY, audio_out=TELEPHONY
-            )
+            SessionConfig(party=PartyId("agent"), audio_in=wire, audio_out=wire)
         )
         try:
+            step_s = turns["tick_duration_s"]
             call = SteppedCall(
                 caller=caller,
                 transport=transport,
                 run_user_tools=user_tools,
                 audio_format=TELEPHONY,
-                step_s=turns["tick_duration_s"],
-                max_steps=max_steps
-                or int(turns["max_steps_seconds"] / turns["tick_duration_s"]),
+                step_s=step_s,
+                max_steps=max_steps or int(turns["max_steps_seconds"] / step_s),
+                **(
+                    {
+                        "stepper": LiveAgentStepper(
+                            bytes_per_step=int(TELEPHONY.sample_rate_hz * step_s),
+                            bytes_per_second=TELEPHONY.sample_rate_hz,
+                        ),
+                        "realtime_pacing": True,
+                        "send_format": LIVE_AUDIO,
+                    }
+                    if live is not None
+                    else {}
+                ),
             )
             executor.call = call
             result = await call.run()
         finally:
             await transport.close()
 
-        closed = await sidecar.close(_close_body(result, turns["tick_duration_s"]))
+        close = _close_body(result, turns["tick_duration_s"])
+        if effects is not None:
+            close["effect_timeline"] = effects.close()
+        closed = await sidecar.close(close)
+        usage = call_usage(
+            transport=transport,
+            content=content,
+            listener=listener,
+            tts=tts,
+            caller_llm=user_info["llm"],
+        )
         summary = {
             "domain": domain,
             "task_id": task_id,
@@ -273,10 +384,12 @@ async def run_task(
             "wall_s": round(result.wall_s, 1),
             "truncations": len(result.truncations),
             "caller_llm_calls": len(content.exchanges),
-            "tts_characters_billed": tts.characters_billed,
+            "usage": [u.model_dump(exclude_none=True) for u in usage],
             "caller_plan": simulator.pipeline.as_record().as_dict(),
             "caller_lines": len(simulator.utterances),
             "caller_lines_cut_off": sum(1 for u in simulator.utterances if u.truncated),
+            "caller_effects": effects.summary() if effects is not None else None,
+            "caller_reactions": listener.summary() if listener is not None else None,
             "sidecar_state": closed,
         }
         _write(out_dir, result, summary)
@@ -302,6 +415,47 @@ async def run_task(
         return summary
     finally:
         await sidecar.aclose()
+        scratch.cleanup()
+
+
+def call_usage(
+    *,
+    transport: Any,
+    content: Tau2Content,
+    listener: Tau2Listener | None,
+    tts: Any,
+    caller_llm: str,
+) -> list[UsageRecord]:
+    """What the call consumed, part by part, in tokens and characters.
+
+    The agent's comes from its transport, where the transport meters it (the
+    OpenAI Realtime one does); the caller's LLM, its decisions and its TTS
+    from the caller's side.
+    """
+    usage: list[UsageRecord] = []
+    records = getattr(transport, "usage_records", None)
+    record = getattr(transport, "usage_record", None)
+    if callable(records):
+        usage.extend(records("agent"))
+    elif callable(record):
+        usage.append(record("agent"))
+    usage.append(
+        chat_usage(
+            (e.reply for e in content.exchanges),
+            component="caller.llm",
+            model=caller_llm,
+        )
+    )
+    if listener is not None:
+        usage.append(listener.usage_record())
+    usage.append(
+        UsageRecord(
+            component="caller.tts",
+            model=getattr(tts, "model", None),
+            characters=tts.characters_billed,
+        )
+    )
+    return usage
 
 
 Grader = Callable[[Path], Awaitable[Mapping[str, Any]]]
@@ -310,9 +464,6 @@ Grader = Callable[[Path], Awaitable[Mapping[str, Any]]]
 It runs the verifier where the sidecar's state lives (``tests/evaluate.py``
 in the sidecar image) and copies what it needs into the attempt directory.
 """
-
-HALLUCINATION_RETRIES = 3
-"""tau2's ``RunConfig.hallucination_retries`` default."""
 
 
 async def run_trial(
@@ -336,6 +487,7 @@ async def run_trial(
     run = attempt or run_task
     feedback: str | None = None
     attempts: list[dict[str, Any]] = []
+    summaries: list[Mapping[str, Any]] = []
     graded: Mapping[str, Any] = {}
     report = on_progress or (lambda message: None)
     for n in range(hallucination_retries + 1):
@@ -349,6 +501,10 @@ async def run_trial(
             **task,
         )
         graded = await grade(attempt_dir)
+        grading = [UsageRecord.model_validate(u) for u in graded.get("usage") or []]
+        if grading:
+            summary = _add_usage(attempt_dir, summary, grading)
+        summaries.append(summary)
         found = bool((graded.get("hallucination") or {}).get("found"))
         attempts.append(
             {
@@ -380,6 +536,15 @@ async def run_trial(
         "reward": graded.get("reward"),
         "reward_info": graded.get("reward_info"),
         "final_attempt": attempts[-1]["attempt"],
+        # Every attempt consumed tokens, the set-aside ones included.
+        "usage": [
+            u.model_dump(exclude_none=True)
+            for u in merge_usage(
+                UsageRecord.model_validate(record)
+                for summary in summaries
+                for record in summary.get("usage") or []
+            )
+        ],
         "hallucination_retries_used": len(attempts) - 1,
         "attempts": attempts,
     }
@@ -388,20 +553,58 @@ async def run_trial(
     return trial
 
 
+def _add_usage(
+    attempt_dir: Path, summary: Mapping[str, Any], records: Sequence[UsageRecord]
+) -> dict[str, Any]:
+    """Grading's own LLM calls, added to the attempt's record once graded:
+    its ``summary.json`` and its ATIF-voice trajectory, as far as they exist."""
+    summary = {
+        **summary,
+        "usage": [
+            *(summary.get("usage") or []),
+            *(u.model_dump(exclude_none=True) for u in records),
+        ],
+    }
+    path = attempt_dir / "summary.json"
+    if path.exists():
+        path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    atif = attempt_dir / "trajectory.json"
+    if atif.exists():
+        voice = VoiceTrajectory.from_atif(
+            Trajectory.model_validate_json(atif.read_text(encoding="utf-8"))
+        )
+        voice = voice.model_copy(update={"usage": (*voice.usage, *records)})
+        atif.write_text(voice.to_atif().model_dump_json(indent=2), encoding="utf-8")
+    return summary
+
+
 def _close_body(result: CallResult, step_s: float) -> dict[str, Any]:
+    """The step log for ``/close``: both chunks of every step, as tau2 records
+    them, with the fields its interaction metrics read."""
     steps = []
     for log in result.steps:
         user = log.user
+        effects = user.effects or {}
+        agent = log.agent
         steps.append(
             {
                 "step": log.step,
                 "t_s": log.t_s,
-                "user": {"text": user.text, "speech": user.speech}
-                if user.is_meaningful
-                else None,
-                "agent": {"text": log.agent_text, "speech": log.agent_speech}
-                if (log.agent_text or log.agent_speech)
-                else None,
+                "user": {
+                    "text": user.text if user.is_meaningful else None,
+                    "speech": user.speech,
+                    "action": user.action.value if user.action else None,
+                    "utterance_id": user.utterance_id,
+                    "speech_effects": effects.get("speech_effects"),
+                    "source_effects": effects.get("source_effects"),
+                    "channel_effects": effects.get("channel_effects"),
+                },
+                "agent": {
+                    "text": log.agent_text,
+                    "speech": log.agent_speech,
+                    "utterance_ids": list(agent.utterances) if agent else None,
+                    "raw_data": agent.raw_data() if agent else None,
+                },
             }
         )
     return {

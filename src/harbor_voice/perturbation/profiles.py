@@ -1,17 +1,22 @@
-"""Named conditions, so a port can reproduce its paper.
+"""Named conditions: a fixed set of perturbation layers under one name.
 
-A profile is a **published name for a set of perturbation layers**. The point
-is comparability: ``eva_b`` has to mean the same thing in our run and in the
-paper's, and "we added some background noise at about 15 dB" does not survive
-contact with a reviewer.
+A profile is a **reproducible condition**. ``background_noise`` means the
+same layers at the same parameters in every run, so two runs under it are
+comparable, and ``summarise`` says which metrics it moves. "Some background
+noise at about 15 dB" does not survive contact with a reviewer; a name does.
 
-Several profiles name layers that do not exist yet (L1 persona, L2 speech,
-L5 conversation, L6 world). They are **declared
-anyway**, and refuse to build, following the same rule as an unimplemented
-provider: the name is real, its layer list is real, ``doctor`` and ``profiles``
-can report on it, and only construction fails. A profile quietly missing from
-the list would be read as "that condition is not supported", which is a
-different and wrong claim from "not yet".
+**Core's profiles are generic**, named for what they do. A benchmark's own
+conditions — EVA's condition B, FDB's overlap set — belong to that
+benchmark's adapter, which registers them (:func:`register_profile`) with the
+benchmark's exact parameters, built from core layers. An adapter that
+reproduces its benchmark another way registers none: tau-voice runs tau2's
+own speech complexities through tau2's own effects code.
+
+A profile may be **declared before it can be built** — a layer not
+implemented yet, a corpus not available. It still lists, ``doctor`` reports
+it, and only construction fails: "not yet" and "not supported" are different
+answers, and a condition quietly missing from the list would give the wrong
+one.
 """
 
 from __future__ import annotations
@@ -34,14 +39,16 @@ from harbor_voice.perturbation.persona import Accent
 from harbor_voice.perturbation.persona import PersonaPlan
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.perturbation.plan import PerturbationPipeline
-from harbor_voice.perturbation.speech import SpeechPlan
-from harbor_voice.perturbation.speech import VocalTics
 
 Builder = Callable[[SeedSet], PerturbationPipeline]
 
 
 class UnknownProfile(LookupError):
     """No profile is registered under that name."""
+
+
+class DuplicateProfile(ValueError):
+    """A profile is already registered under that name."""
 
 
 class ProfileNotBuildable(NotImplementedError):
@@ -54,7 +61,8 @@ class Profile:
 
     name: str
     layers: tuple[LayerKey, ...]
-    reproduces: str
+    description: str
+    """What the condition is, in a line (``harbor-voice profiles`` shows it)."""
     build: Builder | None = None
     note: str = ""
 
@@ -81,10 +89,9 @@ class Profile:
                 deserves the second one.
 
                 The reason comes from :attr:`note` when there is one. Inferring
-                it from the layer list was right while whole layers were
-                unbuilt and became wrong the moment one was not: ``fdb_disfluent``
-                declares L2 and L5, both of which now exist, and is unbuildable
-                because nobody has the recorded corpus.
+                it from the layer list is right while a layer is unbuilt and
+                wrong once it is not: a condition can need a recorded corpus
+                although every layer it names exists.
         """
         if self.build is None:
             reason = self.note or (
@@ -110,31 +117,32 @@ def _telephony(seeds: SeedSet) -> PerturbationPipeline:
     )
 
 
-def _eva_b(seeds: SeedSet) -> PerturbationPipeline:
-    return PerturbationPipeline(
-        [
-            BackgroundBed(
-                source=synthetic_bed(seconds=10.0, seed=7),
-                target_snr_db=15.0,
-                snr_drift_db=3.0,
-                variation_speed=0.1,
-            )
-        ],
-        seeds=seeds,
-        plan_id=PlanId("eva_b"),
+def _bed() -> BackgroundBed:
+    """A room at 15 dB SNR that drifts ±3 dB, slowly."""
+    return BackgroundBed(
+        source=synthetic_bed(seconds=10.0, seed=7),
+        target_snr_db=15.0,
+        snr_drift_db=3.0,
+        variation_speed=0.1,
     )
 
 
-def _fdb_overlap(seeds: SeedSet) -> PerturbationPipeline:
+def _background_noise(seeds: SeedSet) -> PerturbationPipeline:
+    return PerturbationPipeline(
+        [_bed()], seeds=seeds, plan_id=PlanId("background_noise")
+    )
+
+
+def _overlap(seeds: SeedSet) -> PerturbationPipeline:
     """L5 only — the line is clean and the *conversation* is the perturbation.
 
     Nothing here degrades a sample, which is the point: an agent that handles
-    a pristine line perfectly can still talk over its caller, and FDB v1.5
-    exists because that failure is invisible to every signal-level condition.
+    a pristine line perfectly can still talk over its caller, and that
+    failure is invisible to every signal-level condition.
     """
     return PerturbationPipeline(
         seeds=seeds,
-        plan_id=PlanId("fdb_overlap"),
+        plan_id=PlanId("overlap"),
         conversation=ConversationPlan.of(
             ProbeKind.INTERRUPTION, ProbeKind.BACKCHANNEL, seeds=seeds
         ),
@@ -142,7 +150,8 @@ def _fdb_overlap(seeds: SeedSet) -> PerturbationPipeline:
 
 
 def _selectivity_probes(seeds: SeedSet) -> PerturbationPipeline:
-    """The three things an agent should hear and ignore — tau's S_BC/S_VT/S_ND.
+    """The three things an agent should hear and keep talking through: a
+    backchannel, a vocal tic, and speech not directed at it.
 
     No interruption layer, deliberately. Mixing one in would mean every turn
     carried both a probe the agent should answer and probes it should ignore,
@@ -160,60 +169,29 @@ def _selectivity_probes(seeds: SeedSet) -> PerturbationPipeline:
     )
 
 
-def _eva_accent(seeds: SeedSet) -> PerturbationPipeline:
-    """EVA condition A — an accented caller on an otherwise clean line.
+ACCENT = Accent.INDIAN
+"""The accent of the generic accented conditions: one fixed choice, so the
+condition means the same in every run. Another accent is another condition —
+register it as a profile of its own."""
 
-    Pins ``accent`` and not ``behaviour``, which is EVA's own constraint:
-    ``PerturbationConfig`` makes the two mutually exclusive because each maps
-    onto a pre-provisioned ElevenLabs agent ID and a call gets one ID. A
-    behaviour variant is therefore a *different* EVA condition, not a second
-    axis of this one.
 
-    Note:
-        Which accent EVA's published condition A uses is **unconfirmed** —
-        their four are french, indian, spanish and chinese. It must be read
-        off the paper before this profile is used for a parity claim.
-    """
+def _accented(seeds: SeedSet) -> PerturbationPipeline:
+    """An accented caller on an otherwise clean line: accent only, no change
+    of behaviour, so a difference is the accent's."""
     return PerturbationPipeline(
         seeds=seeds,
-        plan_id=PlanId("eva_a"),
-        persona=PersonaPlan(voice=VoiceSelection(accent=Accent.INDIAN)),
+        plan_id=PlanId("accented"),
+        persona=PersonaPlan(voice=VoiceSelection(accent=ACCENT)),
     )
 
 
-def _eva_accent_plus_bed(seeds: SeedSet) -> PerturbationPipeline:
-    """EVA condition A+B — the accented caller, now in a noisy room."""
+def _accented_noisy(seeds: SeedSet) -> PerturbationPipeline:
+    """The accented caller, now in a noisy room."""
     return PerturbationPipeline(
-        [
-            BackgroundBed(
-                source=synthetic_bed(seconds=10.0, seed=7),
-                target_snr_db=15.0,
-                snr_drift_db=3.0,
-                variation_speed=0.1,
-            )
-        ],
+        [_bed()],
         seeds=seeds,
-        plan_id=PlanId("eva_a_plus_b"),
-        persona=PersonaPlan(voice=VoiceSelection(accent=Accent.INDIAN)),
-    )
-
-
-def _tau_voice_default(seeds: SeedSet) -> PerturbationPipeline:
-    """tau-voice's default condition — tics, a room, and a telephone line."""
-    return PerturbationPipeline(
-        [
-            BackgroundBed(
-                source=synthetic_bed(seconds=10.0, seed=7),
-                target_snr_db=15.0,
-                snr_drift_db=2.0,
-                variation_speed=0.1,
-            ),
-            MuLawCodec(),
-            GilbertElliottLoss(rate=0.02, burst_duration_ms=200.0),
-        ],
-        seeds=seeds,
-        plan_id=PlanId("tau_voice_default"),
-        speech=SpeechPlan([VocalTics()], seeds=seeds),
+        plan_id=PlanId("accented_noisy"),
+        persona=PersonaPlan(voice=VoiceSelection(accent=ACCENT)),
     )
 
 
@@ -245,75 +223,74 @@ PROFILES: dict[str, Profile] = {
         Profile(
             name="clean",
             layers=(),
-            reproduces="every baseline",
+            description="no perturbation: the baseline",
             build=_clean,
             note="the reference every robustness delta is measured against",
         ),
         Profile(
             name="telephony",
             layers=_keys("L4.codec", "L4.frame_loss"),
-            reproduces="real-world PSTN",
+            description="a phone line: mu-law 8 kHz with burst loss",
             build=_telephony,
-            note="mu-law 8 kHz plus burst loss",
         ),
         Profile(
-            name="eva_b",
+            name="background_noise",
             layers=_keys("L3.background_bed"),
-            reproduces="EVA condition B",
-            build=_eva_b,
+            description="a noisy room: a background bed at 15 dB SNR",
+            build=_background_noise,
         ),
         Profile(
             name="noisy_line",
             layers=_keys("L3.background_bed", "L4.codec", "L4.frame_loss"),
-            reproduces="a call from a noisy room over a bad line",
+            description="a call from a noisy room over a bad line",
             build=_noisy_line,
         ),
         Profile(
-            name="eva_a",
+            name="accented",
             layers=_keys("L1.accent"),
-            reproduces="EVA condition A",
-            build=_eva_accent,
-            note="accent only; EVA makes accent and behaviour exclusive, and "
-            "which accent condition A pins is unconfirmed",
+            description=f"an accented caller ({ACCENT.value}) on a clean line",
+            build=_accented,
         ),
         Profile(
-            name="eva_a_plus_b",
+            name="accented_noisy",
             layers=_keys("L1.accent", "L3.background_bed"),
-            reproduces="EVA condition A+B",
-            build=_eva_accent_plus_bed,
+            description=f"an accented caller ({ACCENT.value}) in a noisy room",
+            build=_accented_noisy,
         ),
         Profile(
-            name="tau_voice_default",
-            layers=_keys(
-                "L2.vocal_tics", "L3.background_bed", "L4.codec", "L4.frame_loss"
-            ),
-            reproduces="tau-voice",
-            build=_tau_voice_default,
-        ),
-        Profile(
-            name="fdb_overlap",
+            name="overlap",
             layers=_keys("L5.interruption", "L5.backchannel"),
-            reproduces="FDB v1.5",
-            build=_fdb_overlap,
+            description="a caller who interrupts and backchannels",
+            build=_overlap,
             note="a clean line; the conversation is the perturbation",
         ),
         Profile(
             name="selectivity_probes",
             layers=_keys("L5.backchannel", "L5.vocal_tic", "L5.non_directed"),
-            reproduces="tau-voice selectivity (S_BC, S_VT, S_ND)",
+            description="sounds the agent should hear and keep talking through",
             build=_selectivity_probes,
-            note="things the agent should hear and keep talking through",
-        ),
-        Profile(
-            name="fdb_disfluent",
-            layers=_keys("L2.disfluency", "L5.interruption"),
-            reproduces="FDB v3",
-            note="needs FDB-v3's recorded disfluency corpus, which is "
-            "CC BY-NC 4.0. The L2 text layers exist; their docs are "
-            "explicit that a synthesised 'um' is not a substitute",
+            note="a backchannel, a vocal tic, speech not directed at the agent",
         ),
     )
 }
+"""Core's generic conditions; adapters add their own with :func:`register_profile`."""
+
+
+def register_profile(profile: Profile, *, replace: bool = False) -> Profile:
+    """Make a condition available by name — an adapter's, at import.
+
+    A benchmark adapter registers its benchmark's conditions here, built from
+    core layers at the benchmark's parameters, so ``voice.toml``'s
+    ``profile``, ``doctor`` and ``harbor-voice profiles`` know them like core's.
+
+    Raises:
+        DuplicateProfile: The name is taken and ``replace`` is not set; two
+            conditions under one name would make results under it ambiguous.
+    """
+    if profile.name in PROFILES and not replace:
+        raise DuplicateProfile(f"a profile named {profile.name!r} is registered")
+    PROFILES[profile.name] = profile
+    return profile
 
 
 def get_profile(name: str) -> Profile:

@@ -21,6 +21,7 @@ import json
 import shlex
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -131,20 +132,26 @@ def build_wheels(modules: list[str], out_dir: Path) -> list[Wheel]:
 WHEELS_IN_ENV = "/installed-agent/wheels"
 
 
-async def install_into(environment: Any, wheels: list[Wheel]) -> None:
+async def install_into(
+    environment: Any, wheels: list[Wheel], *, extras: Sequence[str] = ()
+) -> None:
     """Upload the wheels into ``main`` and ``uv pip install`` them as root.
 
     harbor-voice's own wheel brings its ``voice`` extra when its distribution
-    declares one.
+    declares one, and ``extras``, the ones the agent under test needs
+    (``live`` for OpenAI Live), when declared.
     """
     voice = distribution_of("harbor_voice")
-    extras = importlib.metadata.metadata(voice).get_all("Provides-Extra") or []
+    declared = importlib.metadata.metadata(voice).get_all("Provides-Extra") or []
+    wanted = [e for e in dict.fromkeys(("voice", *extras)) if e in declared]
     await environment.exec(f"mkdir -p {WHEELS_IN_ENV}", user="root")
     targets = []
     for wheel in wheels:
         target = f"{WHEELS_IN_ENV}/{wheel.path.name}"
         await environment.upload_file(wheel.path, target)
-        extra = "[voice]" if wheel.distribution == voice and "voice" in extras else ""
+        extra = (
+            f"[{','.join(wanted)}]" if wheel.distribution == voice and wanted else ""
+        )
         targets.append(shlex.quote(target + extra))
     result = await environment.exec(
         "uv pip install --system --quiet " + " ".join(targets),

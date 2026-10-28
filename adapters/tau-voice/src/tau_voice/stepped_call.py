@@ -104,7 +104,8 @@ UserTools = Callable[
 class SteppedCall:
     """Run one call between a :class:`ReactiveCaller` and an agent transport.
 
-    The transport must declare ``EVENT_STREAM`` and ``TRUNCATE`` and be open.
+    The transport must declare ``EVENT_STREAM`` and be open, and
+    ``TRUNCATE`` too when the stepper cuts the agent off on a barge-in.
 
     Args:
         run_user_tools: Executes the caller's own tool calls made at a step.
@@ -112,6 +113,14 @@ class SteppedCall:
         packet_ms: Pacing of caller audio within a step; tau2's VoIP interval.
         max_steps: tau2's ``max_steps_ticks`` (1200 s / 0.2 s).
         audio_format: Of the wire, both ways; the transport's ``audio_in``.
+        stepper: The provider's tick (:class:`AgentStepper`, tau2's Realtime
+            adapter, by default; :class:`LiveAgentStepper` for OpenAI Live).
+            A stepper with ``convert_input`` turns each step of caller audio
+            into the provider's format, sent whole (``send_format``), as
+            tau2's Live adapter queues a tick at once for WebRTC to clock.
+        realtime_pacing: tau2's ``realtime_pacing``: steps start on a fixed
+            schedule rather than when the last one ended, so after a pause
+            (the caller thinking) they run back to back until caught up.
     """
 
     def __init__(
@@ -127,15 +136,35 @@ class SteppedCall:
         max_steps: int = 6000,
         greeting: str | None = GREETING,
         party: PartyId = PartyId("caller"),
+        stepper: AgentStepper | None = None,
+        realtime_pacing: bool = False,
+        send_format: AudioFormat | None = None,
     ) -> None:
         caps = transport.capabilities
-        for op in (OptionalOp.EVENT_STREAM, OptionalOp.TRUNCATE):
+        step_bytes = (
+            int(audio_format.sample_rate_hz * step_s) * audio_format.bytes_per_sample
+        )
+        self.stepper = stepper or AgentStepper(
+            bytes_per_step=step_bytes,
+            bytes_per_second=audio_format.sample_rate_hz
+            * audio_format.bytes_per_sample,
+        )
+        needed = [OptionalOp.EVENT_STREAM]
+        if self.stepper.truncates:
+            needed.append(OptionalOp.TRUNCATE)
+        for op in needed:
             if not caps.supports(op):
                 raise ValueError(
                     f"{type(transport).__name__} does not declare {op.value}; a "
                     f"stepped call needs the agent's output in arrival order and "
                     f"a way to truncate it"
                 )
+        self._convert = getattr(self.stepper, "convert_input", None)
+        if self._convert is not None and send_format is None:
+            raise ValueError("a stepper that converts caller audio needs send_format")
+        self.send_format = send_format
+        self.realtime_pacing = realtime_pacing
+        self._next_start: float | None = None
         self.caller = caller
         self.transport = transport
         self.run_user_tools = run_user_tools
@@ -143,17 +172,10 @@ class SteppedCall:
         self.gate = gate or StepGate()
         self.step_s = step_s
         self.packet_bytes = audio_format.frame_bytes(packet_ms)
-        self.step_bytes = (
-            int(audio_format.sample_rate_hz * step_s) * audio_format.bytes_per_sample
-        )
+        self.step_bytes = step_bytes
         self.max_steps = max_steps
         self.greeting = greeting
         self.party = party
-        self.stepper = AgentStepper(
-            bytes_per_step=self.step_bytes,
-            bytes_per_second=audio_format.sample_rate_hz
-            * audio_format.bytes_per_sample,
-        )
         self._stop: Termination | None = None
         self._incoming: list[StreamEvent] = []
         self._seq = 0
@@ -246,14 +268,24 @@ class SteppedCall:
         """tau2's ``_async_run_tick`` for one step, real time."""
         loop = asyncio.get_running_loop()
         tick_start = loop.time()
+        if self.realtime_pacing:
+            if self._next_start is not None:
+                tick_start = self._next_start
+            self._next_start = tick_start + self.step_s
         # Tool results from the last step are answered first, as tau2 flushes
         # them before sending this step's audio.
         await self.gate.advance(k)
         self._window = k
         self.stepper.begin()
-        await self._send(audio)
+        if self._convert is not None:
+            await self._send_whole(self._convert(audio))
+        else:
+            await self._send(audio)
         remaining = self.step_s - (loop.time() - tick_start)
-        if remaining > 0:
+        if self.realtime_pacing:
+            # tau2 still listens 10 ms when a step starts late (catching up).
+            await asyncio.sleep(max(0.01, remaining))
+        elif remaining > 0:
             await asyncio.sleep(remaining)
         events, self._incoming = self._incoming, []
         for event in events:
@@ -295,6 +327,22 @@ class SteppedCall:
                 self.packet_bytes
                 / (self.fmt.sample_rate_hz * self.fmt.bytes_per_sample)
             )
+
+    async def _send_whole(self, audio: bytes) -> None:
+        """One step at once, in the provider's format (``send_audio_instant``)."""
+        if not audio:
+            return
+        assert self.send_format is not None
+        await self.transport.tx(
+            AudioFrame(
+                pcm=audio,
+                seq=self._seq,
+                party=self.party,
+                t_produced=0.0,
+                fmt=self.send_format,
+            )
+        )
+        self._seq += 1
 
     async def _read(self) -> None:
         async for event in self.transport.events():

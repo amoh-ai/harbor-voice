@@ -372,12 +372,12 @@ class TestSchedulingIsSeededAndDeclaredUpFront:
 
 class TestL5SitsBesideTheSignalChain:
     def test_it_degrades_nothing(self) -> None:
-        pipeline = get_profile("fdb_overlap").pipeline(SeedSet.derive(1))
+        pipeline = get_profile("overlap").pipeline(SeedSet.derive(1))
         assert pipeline.is_clean, "no layer here touches a sample"
         assert not pipeline.is_unperturbed, "but the profile is not `clean`"
 
     def test_it_still_reaches_metric_applicability(self) -> None:
-        pipeline = get_profile("fdb_overlap").pipeline(SeedSet.derive(1))
+        pipeline = get_profile("overlap").pipeline(SeedSet.derive(1))
         assert {str(k) for k in pipeline.active_layers} == {
             "L5.interruption",
             "L5.backchannel",

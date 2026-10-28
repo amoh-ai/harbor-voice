@@ -21,6 +21,7 @@ data for ours.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import StrEnum
 from typing import Any
 
@@ -29,6 +30,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 
 from harbor.models.trajectories.agent import Agent
+from harbor.models.trajectories.final_metrics import FinalMetrics
 from harbor.models.trajectories.metrics import Metrics
 from harbor.models.trajectories.step import Step
 from harbor.models.trajectories.trajectory import Trajectory
@@ -251,6 +253,62 @@ class ValidityRecord(BaseModel):
         return tuple(c.detail or c.name for c in self.failed)
 
 
+class UsageRecord(BaseModel):
+    """What one part of a call consumed, in the units it is billed in.
+
+    Tokens, characters and billed seconds only, never dollars: prices change
+    and differ by account, a count does not. ``None`` means the part does not
+    meter in that unit, not that it used none.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    component: str
+    """What consumed it, e.g. ``agent``, ``caller.llm``, ``caller.tts``."""
+    model: str | None = None
+    requests: int | None = None
+    input_tokens: int | None = None
+    """All input tokens, cached and audio included."""
+    cached_input_tokens: int | None = None
+    output_tokens: int | None = None
+    """All output tokens, audio included."""
+    input_audio_tokens: int | None = None
+    output_audio_tokens: int | None = None
+    characters: int | None = None
+    """For a TTS billed per character."""
+    seconds: float | None = None
+    """For a part billed by duration, as the provider reports it (OpenAI
+    Live's voice session: ``usage.seconds``)."""
+
+
+def merge_usage(records: Iterable[UsageRecord]) -> tuple[UsageRecord, ...]:
+    """Sum records per (component, model), in first-seen order — e.g. a
+    trial's attempts. A count stays ``None`` only if every record lacks it."""
+    merged: dict[tuple[str, str | None], UsageRecord] = {}
+    counts = (
+        "requests",
+        "input_tokens",
+        "cached_input_tokens",
+        "output_tokens",
+        "input_audio_tokens",
+        "output_audio_tokens",
+        "characters",
+        "seconds",
+    )
+    for record in records:
+        key = (record.component, record.model)
+        seen = merged.get(key)
+        if seen is None:
+            merged[key] = record
+            continue
+        update: dict[str, int | float | None] = {}
+        for name in counts:
+            a, b = getattr(seen, name), getattr(record, name)
+            update[name] = None if a is None and b is None else (a or 0) + (b or 0)
+        merged[key] = seen.model_copy(update=update)
+    return tuple(merged.values())
+
+
 class Artifacts(BaseModel):
     """Where the audio went. Content-addressed, tier-gated."""
 
@@ -289,6 +347,10 @@ class VoiceTrajectory(BaseModel):
     validity: ValidityRecord = Field(default_factory=ValidityRecord)
 
     simulator_fidelity: dict[str, Any] = Field(default_factory=dict)
+
+    usage: tuple[UsageRecord, ...] = ()
+    """What each part of the call consumed: the agent, the caller's LLM, its
+    TTS. ATIF's ``final_metrics`` carries the token totals."""
 
     # ------------------------------------------------------------ queries
 
@@ -399,7 +461,30 @@ class VoiceTrajectory(BaseModel):
                 model_name=self.model,
             ),
             steps=steps,
+            final_metrics=self._final_metrics(len(steps)),
             extra={VOICE_EXTRA_KEY: self.model_dump(mode="json")},
+        )
+
+    def _final_metrics(self, steps: int) -> FinalMetrics:
+        """Token totals over every metered part of the call; no cost.
+
+        A total is ``None`` when no part meters that unit, rather than a zero
+        that would claim it was counted.
+        """
+
+        def total(field: str) -> int | None:
+            counts = [getattr(u, field) for u in self.usage]
+            known = [c for c in counts if c is not None]
+            return sum(known) if known else None
+
+        return FinalMetrics(
+            total_prompt_tokens=total("input_tokens"),
+            total_completion_tokens=total("output_tokens"),
+            total_cached_tokens=total("cached_input_tokens"),
+            total_steps=steps,
+            extra={"usage": [u.model_dump(exclude_none=True) for u in self.usage]}
+            if self.usage
+            else None,
         )
 
     @classmethod

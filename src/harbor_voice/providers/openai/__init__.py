@@ -17,8 +17,13 @@ __all__ = ["OPENAI_LLM_SPEC", "ChatReply", "ChatToolCall", "OpenAILLM"]
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add every OpenAI provider to a registry. See ``aws.register_all``."""
+    from harbor_voice.providers.openai import live
     from harbor_voice.providers.openai import llm
     from harbor_voice.providers.openai import realtime
 
-    for spec, build in (*llm.REGISTRATIONS, *realtime.REGISTRATIONS):
+    for spec, build in (
+        *llm.REGISTRATIONS,
+        *realtime.REGISTRATIONS,
+        *live.REGISTRATIONS,
+    ):
         registry.register(spec, build)

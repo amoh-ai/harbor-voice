@@ -141,6 +141,34 @@ async def test_install_puts_harbor_voice_into_main(
     assert ("harbor-0.0.whl[voice]" in command) is with_extra
 
 
+@pytest.mark.parametrize(
+    ("declared", "suffix"),
+    [
+        (["live", "voice"], "[voice,live]"),
+        (["live"], "[live]"),  # public: voice deps are core
+        ([], ""),  # an older harbor-voice without the extra
+    ],
+)
+async def test_install_brings_the_extra_the_agent_needs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    declared: list[str],
+    suffix: str,
+) -> None:
+    """OpenAI Live's WebRTC is the ``live`` extra; ``main`` gets it with Live."""
+    metadata = types.SimpleNamespace(get_all=lambda key: declared)
+    monkeypatch.setattr(install.importlib.metadata, "metadata", lambda dist: metadata)
+    environment = _Environment()
+    agent = _agent(tmp_path, model_name="openai.live/gpt-live-1")
+    assert agent.agent_extras() == ["live"]
+    await agent.install(environment)  # type: ignore[arg-type]
+    (command,) = [
+        c[1] for c in environment.calls if c[0] == "exec" and "uv pip" in c[1]
+    ]
+    assert command.rstrip("'").endswith(f"harbor-0.0.whl{suffix}")
+    assert _agent(tmp_path, model_name="offline.echo-s2s").agent_extras() == []
+
+
 async def test_run_installs_the_driver_and_drives_the_call(tmp_path: Path) -> None:
     environment = _Environment()
     agent = _agent(tmp_path, model_name="offline.echo-s2s", seed=626729)

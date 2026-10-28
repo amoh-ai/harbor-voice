@@ -181,3 +181,55 @@ async def test_a_sidecar_refusal_is_an_error_not_a_silent_default() -> None:
     client, _ = _client(lambda _: httpx.Response(409, text="no open session"))
     with pytest.raises(SidecarError, match="409"):
         await Sidecar("http://sidecar", client=client).user_context(STEPS, None)
+
+
+async def test_the_listener_counts_the_decision_models_tokens() -> None:
+    from tau_voice.caller import CallerState
+    from tau_voice.content import Tau2Listener
+
+    class FakeSidecar:
+        async def decide(self, steps, pending):
+            return {
+                "should_interrupt": False,
+                "should_backchannel": True,
+                "interrupt_usage": {"prompt_tokens": 900, "completion_tokens": 1},
+                "backchannel_usage": {"prompt_tokens": 950, "completion_tokens": 1},
+            }
+
+    listener = Tau2Listener(FakeSidecar())  # type: ignore[arg-type]
+    state = CallerState(heard_buffer=[Heard("so the fee is", True)])
+    reaction = await listener.react(state)
+    await listener.react(state)
+    assert reaction.backchannel and not reaction.interrupt
+    record = listener.usage_record()
+    assert (record.component, record.requests) == ("caller.decisions", 4)
+    assert (record.input_tokens, record.output_tokens) == (3700, 4)
+    assert listener.summary() == {"checks": 2, "interrupt": 0, "backchannel": 2}
+
+
+async def test_the_listener_names_tau2s_decision_model_and_its_cache() -> None:
+    from tau_voice.caller import CallerState
+    from tau_voice.content import Tau2Listener
+
+    class FakeSidecar:
+        async def decide(self, steps, pending):
+            return {
+                "should_interrupt": False,
+                "should_backchannel": False,
+                "interrupt_usage": {
+                    "prompt_tokens": 900,
+                    "completion_tokens": 1,
+                    "cached_tokens": 768,
+                },
+                "backchannel_usage": None,
+                "model": "gpt-4.1",
+            }
+
+    listener = Tau2Listener(FakeSidecar())  # type: ignore[arg-type]
+    await listener.react(CallerState(heard_buffer=[Heard("one moment", True)]))
+    record = listener.usage_record()
+    assert (record.model, record.input_tokens, record.cached_input_tokens) == (
+        "gpt-4.1",
+        900,
+        768,
+    )

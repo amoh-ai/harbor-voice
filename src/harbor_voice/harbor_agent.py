@@ -166,11 +166,18 @@ class VoiceCallAgent(BaseInstalledAgent):
             )
         return AgentSpec(pipeline=Pipeline.S2S, s2s=self.model_name).model_dump_json()
 
+    def agent_extras(self) -> list[str]:
+        """harbor-voice extras the agent under test needs (``live`` for Live)."""
+        from harbor_voice.trial import AgentSpec
+        from harbor_voice.trial import required_extras
+
+        return required_extras(AgentSpec.model_validate_json(self.agent_spec_json()))
+
     @override
     async def install(self, environment: BaseEnvironment) -> None:
         started = time.monotonic()
         wheel = await asyncio.to_thread(_wheels.get, "harbor_voice")
-        await install.install_into(environment, [wheel])
+        await install.install_into(environment, [wheel], extras=self.agent_extras())
         self.logger.info(
             f"install: {wheel.distribution} {wheel.version} into main "
             f"({time.monotonic() - started:.0f} s)"

@@ -48,6 +48,7 @@ from harbor_voice.perturbation.profiles import ProfileNotBuildable
 from harbor_voice.perturbation.profiles import ProfileSummary
 from harbor_voice.perturbation.profiles import UnknownProfile
 from harbor_voice.perturbation.profiles import get_profile
+from harbor_voice.perturbation.profiles import register_profile
 from harbor_voice.perturbation.profiles import profile_names
 from harbor_voice.perturbation.profiles import summarise
 from harbor_voice.perturbation.speech import DynamicMuffling
@@ -72,6 +73,7 @@ __all__ = [
     "UnknownProfile",
     "get_profile",
     "profile_names",
+    "register_profile",
     "summarise",
     "TELEPHONY_HZ",
     "Accent",

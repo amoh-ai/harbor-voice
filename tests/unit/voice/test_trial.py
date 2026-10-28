@@ -59,7 +59,7 @@ LONG = (
 """Long enough that the reply outlasts a probe scheduled a second in.
 
 ToneTTS runs at 20 ms a character, so a short script produces a reply that
-ends before `fdb_overlap`'s interruption fires at 1.0 s -- the probe is then
+ends before `overlap`'s interruption fires at 1.0 s -- the probe is then
 correctly recorded as never having landed, and a test asserting the
 barge-in metric would be asserting against a run that had no barge-in.
 """
@@ -69,7 +69,7 @@ def _duplex_config() -> VoiceTaskConfig:
     """Full duplex, with replies long enough for both probes to land."""
     return _config(
         duplex=Duplex.FULL,
-        profile="fdb_overlap",
+        profile="overlap",
         idle_s=0.2,
         agent=AgentSpec(
             pipeline=Pipeline.CASCADE,

@@ -41,9 +41,13 @@ class OutputAudio:
 class OutputTranscript:
     """A transcript delta for one of the agent's own utterances."""
 
-    utterance: str
+    utterance: str | None
     delta: str
     t: float
+    audio_position: int | None = None
+    """Bytes of agent audio (``audio_out``) received before this delta, for a
+    provider that places its transcript on the audio timeline rather than per
+    utterance (OpenAI Live): the delta is spoken once playback reaches it."""
 
 
 @dataclass(frozen=True, slots=True)

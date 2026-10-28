@@ -81,3 +81,40 @@ def test_results_unpack_on_windows_despite_telecom_task_ids(tmp_path) -> None:  
     assert (tmp_path / "smoke-telecom" / "results.json").read_bytes() == b"{}"
     (wav,) = (tmp_path / "smoke-telecom" / "artifacts").glob("*/audio.wav")
     assert "|" not in wav.parent.name and wav.read_bytes() == b"wav"
+
+
+def test_the_preset_is_passed_through() -> None:
+    command = tau2_command(
+        "airline",
+        model="m",
+        split="test",
+        trials=1,
+        seed=300,
+        concurrency=1,
+        review_model="r",
+        save_to="s",
+        complexity="control_audio",
+        user_llm="gpt-4.1-mini-2025-04-14",
+    )
+    assert _flags(command)["--speech-complexity"] == "control_audio"
+    assert _flags(command)["--user-llm"] == "gpt-4.1-mini-2025-04-14"
+
+
+def test_openai_live_runs_as_tau2s_live_provider_without_realtime_generation() -> None:
+    command = tau2_command(
+        "airline",
+        model="gpt-live-1",
+        split="test",
+        trials=1,
+        seed=300,
+        concurrency=1,
+        review_model="r",
+        save_to="s",
+        live_config={"backend_model": "gpt-6-luna"},
+    )
+    flags = _flags(command)
+    assert flags["--audio-native-provider"] == "openai_live"
+    assert flags["--audio-native-model"] == "gpt-live-1"
+    assert flags["--live-config"] == '{"backend_model": "gpt-6-luna"}'
+    # tau2 turns real-time user generation on for Live; our caller does not.
+    assert "--no-realtime-generation" in flags

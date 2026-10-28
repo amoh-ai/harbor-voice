@@ -12,12 +12,17 @@ from harbor_voice.capabilities import Requirement
 from harbor_voice.capabilities import TurnControl
 from harbor_voice.doctor import Severity
 from harbor_voice.doctor import diagnose
+from harbor_voice.capabilities import LayerKey
 from harbor_voice.perturbation import SeedSet
+from harbor_voice.perturbation import profiles
 from harbor_voice.perturbation.profiles import PROFILES
+from harbor_voice.perturbation.profiles import DuplicateProfile
+from harbor_voice.perturbation.profiles import Profile
 from harbor_voice.perturbation.profiles import ProfileNotBuildable
 from harbor_voice.perturbation.profiles import UnknownProfile
 from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.perturbation.profiles import profile_names
+from harbor_voice.perturbation.profiles import register_profile
 from harbor_voice.perturbation.profiles import summarise
 
 pytestmark = pytest.mark.unit
@@ -37,20 +42,55 @@ def s2s(**over: object) -> Capabilities:
     return Capabilities(**base)
 
 
-class TestProfilesAreNamedConditions:
-    def test_unbuilt_layers_are_declared_not_hidden(self) -> None:
-        """'Not supported' and 'not yet' are different claims."""
-        names = profile_names()
-        assert "fdb_disfluent" in names
-        assert "fdb_disfluent" not in profile_names(buildable_only=True)
+@pytest.fixture
+def declared(monkeypatch: pytest.MonkeyPatch) -> Profile:
+    """A condition an adapter declares before it can build it."""
+    profile = Profile(
+        name="needs_corpus",
+        layers=(LayerKey.parse("L2.disfluency"),),
+        description="disfluent speech from a recorded corpus",
+        note="needs a recorded disfluency corpus",
+    )
+    monkeypatch.setitem(PROFILES, profile.name, profile)
+    return profile
 
-    def test_an_unbuildable_profile_says_which_layer_is_missing(self) -> None:
+
+class TestProfilesAreNamedConditions:
+    def test_unbuilt_layers_are_declared_not_hidden(self, declared: Profile) -> None:
+        """'Not supported' and 'not yet' are different claims."""
+        assert declared.name in profile_names()
+        assert declared.name not in profile_names(buildable_only=True)
+
+    def test_an_unbuildable_profile_says_which_layer_is_missing(
+        self, declared: Profile
+    ) -> None:
         with pytest.raises(ProfileNotBuildable, match=r"corpus"):
-            get_profile("fdb_disfluent").pipeline(SeedSet.derive(1))
+            get_profile(declared.name).pipeline(SeedSet.derive(1))
+
+    def test_core_profiles_are_generic(self) -> None:
+        """A benchmark's own conditions belong to its adapter."""
+        for name in PROFILES:
+            assert not name.startswith(("eva", "fdb", "tau")), name
+
+    def test_an_adapter_registers_its_own(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(profiles, "PROFILES", dict(PROFILES))
+        mine = Profile(
+            name="bench_b",
+            layers=get_profile("background_noise").layers,
+            description="a benchmark's condition B",
+            build=get_profile("background_noise").build,
+        )
+        assert register_profile(mine) is mine
+        assert get_profile("bench_b") is mine
+        with pytest.raises(DuplicateProfile):
+            register_profile(mine)
+        assert register_profile(mine, replace=True) is mine
 
     def test_l5_profiles_build_now_that_the_layer_exists(self) -> None:
         """Adding L5 moved these from declared to buildable; nothing else did."""
-        for name in ("fdb_overlap", "selectivity_probes"):
+        for name in ("overlap", "selectivity_probes"):
             pipeline = get_profile(name).pipeline(SeedSet.derive(1))
             assert not pipeline.conversation.is_empty
             assert pipeline.is_clean, "L5 degrades no signal"
@@ -89,8 +129,8 @@ class TestDoctorPredictsTheRun:
         assert len(errors) == 2
         assert not report.ok
 
-    def test_an_unbuildable_profile_blocks(self) -> None:
-        report = diagnose(capabilities=s2s(), profile="fdb_disfluent")
+    def test_an_unbuildable_profile_blocks(self, declared: Profile) -> None:
+        report = diagnose(capabilities=s2s(), profile=declared.name)
         blocked = report.of(Severity.BLOCKED)
         assert len(blocked) == 1
         assert "corpus" in blocked[0].detail
@@ -141,17 +181,19 @@ class TestTheCli:
 
         return CliRunner().invoke(voice_app, list(args))
 
-    def test_profiles_lists_conditions_and_their_readers(self) -> None:
+    def test_profiles_lists_conditions_and_their_readers(
+        self, declared: Profile
+    ) -> None:
         result = self._run("profiles")
         assert result.exit_code == 0
         assert "telephony" in result.stdout
-        assert "fdb_overlap" in result.stdout
+        assert "overlap" in result.stdout
         assert "not yet" in result.stdout
 
-    def test_profiles_can_hide_what_cannot_run_here(self) -> None:
+    def test_profiles_can_hide_what_cannot_run_here(self, declared: Profile) -> None:
         result = self._run("profiles", "--buildable")
         assert "telephony" in result.stdout
-        assert "fdb_disfluent" not in result.stdout
+        assert declared.name not in result.stdout
 
     def test_caps_separates_attested_claims_from_unverified_ones(self) -> None:
         """The offline set is attested outright — there is no network between
@@ -184,8 +226,10 @@ class TestTheCli:
         assert "divergence.wer_said_heard" in result.stdout
         assert "moved by:" in result.stdout
 
-    def test_doctor_exits_nonzero_on_a_broken_configuration(self) -> None:
-        result = self._run("doctor", "--profile", "fdb_disfluent")
+    def test_doctor_exits_nonzero_on_a_broken_configuration(
+        self, declared: Profile
+    ) -> None:
+        result = self._run("doctor", "--profile", declared.name)
         assert result.exit_code == 1
         assert "BLOCKED" in result.stdout
 

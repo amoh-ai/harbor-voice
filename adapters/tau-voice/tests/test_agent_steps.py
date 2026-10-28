@@ -52,6 +52,7 @@ def test_matches_tau2(name: str) -> None:
         assert step.was_truncated is expected["was_truncated"]
         assert step.truncated_bytes == expected["truncated_audio_bytes"]
         assert list(step.utterances) == expected["utterances"]
+        assert step.raw_data() == expected["raw_data"]
         assert [
             {"utterance": t.utterance, "audio_end_ms": t.audio_end_ms}
             for t in truncations
@@ -70,3 +71,23 @@ def test_the_truncation_point_is_always_one_full_step() -> None:
     stepper.begin()
     stepper.feed(OutputAudio(b"\x01" * 100, "a", 0.0))
     assert stepper.feed(InputSpeech(True, 10, 0.0)) == Truncation("a", 200)
+
+
+LIVE_GOLDEN = json.loads(
+    (Path(__file__).parent / "fixtures" / "tau2_live_steps.json").read_text(
+        encoding="utf-8"
+    )
+)
+
+
+def test_the_live_stepper_matches_tau2s_live_adapter() -> None:
+    """tau2's DiscreteTimeOpenAILiveAdapter: converted audio both ways, the
+    transcript released by audio position, speech by amplitude, no truncation."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    from tau2_live_steps_cases import run_ours
+
+    ours = run_ours()
+    for n, (got, want) in enumerate(zip(ours, LIVE_GOLDEN["steps"], strict=True)):
+        assert got == want, f"step {n}"

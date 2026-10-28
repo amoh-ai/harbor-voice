@@ -1,0 +1,1727 @@
+{
+ "result": {
+  "event_counts": {
+   "burst_noise": 9,
+   "frame_drop": 43,
+   "out_of_turn_speech": 12
+  },
+  "lines": [
+   [
+    "checked bag because my daughter .[sniffle][sniffle][sniffle] is traveling",
+    false
+   ],
+   [
+    "traveling with me and we have two .[cough][cough][cough] suitcases",
+    false
+   ],
+   [
+    "I need to change my flight to next Tuesday morning",
+    false
+   ],
+   [
+    "bag because my",
+    false
+   ],
+   [
+    "and also check whether the reservation includes a checked bag",
+    false
+   ],
+   [
+    "also check whether the reservation includes .[cough][cough][cough] a checked bag because my",
+    true
+   ],
+   [
+    "a checked .[sniffle][sniffle][sniffle] bag because my daughter",
+    true
+   ],
+   [
+    "daughter is traveling with me .[cough][cough][cough] and",
+    false
+   ],
+   [
+    "Tuesday morning please and also",
+    false
+   ],
+   [
+    "is .[sniffle][sniffle][sniffle] traveling with me",
+    false
+   ],
+   [
+    "checked bag because my daughter is traveling with me and we have",
+    false
+   ],
+   [
+    "my .[sniffle][sniffle][sniffle] flight to next Tuesday",
+    true
+   ],
+   [
+    "I need to change .[cough][cough][cough] my flight",
+    false
+   ],
+   [
+    "flight to next Tuesday .[cough][cough][cough] morning",
+    false
+   ],
+   [
+    "to next Tuesday morning please and also check whether the reservation",
+    false
+   ],
+   [
+    "flight to next Tuesday morning please",
+    false
+   ],
+   [
+    "morning please and",
+    false
+   ],
+   [
+    "check whether .[cough][cough][cough] the reservation includes",
+    false
+   ],
+   [
+    "Tuesday morning please and",
+    true
+   ],
+   [
+    "with me and we have two suitcases",
+    true
+   ],
+   [
+    "checked bag because my daughter is traveling with .[cough][cough][cough] me and we have two",
+    false
+   ],
+   [
+    "to change my flight to next Tuesday",
+    false
+   ],
+   [
+    "with me and we have two suitcases",
+    false
+   ],
+   [
+    "my daughter is traveling .[sniffle][sniffle][sniffle] with me and we",
+    true
+   ]
+  ],
+  "step_digests": [
+   "952d6f8725b6",
+   "97f2898ebcd7",
+   "dadcda979766",
+   "39a84db58ff0",
+   "44e1029c7157",
+   "d306c228ac83",
+   "52f64e81c0bd",
+   "a42945448f1e",
+   "dfa31f381f80",
+   "edb8362aa980",
+   "465f2b35f4f9",
+   "6fa80acb56f0",
+   "242b90327406",
+   "82a61ee2a795",
+   "046f2967959a",
+   "4e3e8023232b",
+   "9df33d76b344",
+   "d11e1df6f4d7",
+   "9a5c6187832f",
+   "5cb41660bd25",
+   "1bc67b84d140",
+   "ddb0adacf288",
+   "cf0cb8641077",
+   "7ee3c0b39efd",
+   "d18c33c4d1cf",
+   "1f87f55e8d7f",
+   "c6112e579650",
+   "db1276cb2977",
+   "8b5d0da6e0a7",
+   "97bbd8f7dd1f",
+   "deb2a4d79a2c",
+   "4b51a29133d5",
+   "c640fe1fbde6",
+   "8382b5f6b230",
+   "e335f3d49d7b",
+   "04e2f59c5a28",
+   "47dd9c4b34f4",
+   "1d8614c28580",
+   "c91a69dabf75",
+   "102ed089bf23",
+   "a876ea093a49",
+   "97dd625a2b12",
+   "da7443e2bef5",
+   "4f181b69a4f6",
+   "0c23cae79318",
+   "2b9bb1b1fc4f",
+   "37bf9a9a1583",
+   "0df321949bca",
+   "c7b1e2a64106",
+   "05420409e620",
+   "b44b88eacd47",
+   "d49b2b93481f",
+   "8a15b786856c",
+   "05f6f9a0475b",
+   "c8fa84ea131e",
+   "41c5a2082c01",
+   "7a8be160d8a1",
+   "19ebeb39db21",
+   "ea7e2c033b96",
+   "e29e3f49a995",
+   "4d5815d0b6a1",
+   "7a42406092f7",
+   "62aa51b98894",
+   "39d89a670b6e",
+   "e7817d0f4fa1",
+   "04b5d3330778",
+   "1ecda96e994b",
+   "3c8d735d4327",
+   "a88100b82f2e",
+   "585f6742c2f5",
+   "e4396c881a85",
+   "81c7e89473e9",
+   "1e7080fae2dc",
+   "449911698229",
+   "81f3b9eec6c5",
+   "480d0b7b374e",
+   "caf88c5ad8cc",
+   "e8a3d5ef5d31",
+   "0e3850bb2561",
+   "a85c9f286f4e",
+   "a9586a7d417e",
+   "8bee48aeb6df",
+   "81606fb1b907",
+   "927a3863427b",
+   "b8b27acc7060",
+   "b7b31597393e",
+   "7dd07b3f0d25",
+   "c90ab8b3ea36",
+   "2e70cc40c1fb",
+   "9123ee54ed5e",
+   "fbfe5ae6cffe",
+   "a2987ae94a86",
+   "ea4e41392298",
+   "dc7c12d6a7b2",
+   "b436397dc49a",
+   "4a3b01ba7d32",
+   "89616109d859",
+   "deacd98ef2ff",
+   "cdad0d8aa7d1",
+   "04277b4aa4c6",
+   "1d361696271c",
+   "ab908bbac5c8",
+   "a5bd34074b18",
+   "3b716ecb2566",
+   "67d5d87d0a7b",
+   "5bfb9ee91d7d",
+   "b11095d10f5d",
+   "88263a799056",
+   "7d14a8f9b600",
+   "e2743a14090b",
+   "20bcaf731850",
+   "0cc97091b52c",
+   "dc05b002a3d6",
+   "44b92939df34",
+   "ace17c3d4644",
+   "679931d13dde",
+   "a14a593d70aa",
+   "1fc2cc485303",
+   "03cdd7529553",
+   "1a046cc9a3e3",
+   "c43bbfae4253",
+   "c4eabe00488b",
+   "98525289ae13",
+   "baf4d9bf1126",
+   "85ad8b3632bc",
+   "3da4d0779164",
+   "d2f99ba76356",
+   "f7a2c5159285",
+   "06b3e0b6b4dd",
+   "4ef45d3ec15a",
+   "4a96a106270d",
+   "cd5b9fa3017b",
+   "bcdddedb3058",
+   "58dc6aeea812",
+   "9bfc7c528372",
+   "694f66fbb21b",
+   "e1595a117f90",
+   "2f2c34dcf39d",
+   "b534336f82d9",
+   "0dff8360b80d",
+   "3d17593a7244",
+   "9342bd211652",
+   "c0ba2f172bc7",
+   "cf9a26824bea",
+   "e8f0228c1b71",
+   "580391957cd9",
+   "71072bdb34d7",
+   "a45609bdfbee",
+   "2d1b69e9af67",
+   "24b6adea7c0d",
+   "1e08fcccfeab",
+   "f5db64d48cb4",
+   "b947e777cf6f",
+   "ec1e4be12356",
+   "5b433468d19e",
+   "274bede7c70e",
+   "3962d9d3aa92",
+   "9a30c457141c",
+   "bf80df10a987",
+   "a4a318717b7b",
+   "9490b6e14259",
+   "6b21188325dc",
+   "e9b3c29fa2ea",
+   "42a3cf7f5a1e",
+   "d709ede09eea",
+   "2c3952510053",
+   "c251dfca616a",
+   "1389814d19b9",
+   "183b16a57734",
+   "078c0f09ff99",
+   "598fa30c2da6",
+   "0aab8e818157",
+   "d948ba99f7af",
+   "faaf03b1034d",
+   "aada75bbfeaf",
+   "e412c73ad082",
+   "ac5180235dd1",
+   "dc32cc4aa780",
+   "510ed9d5e2e9",
+   "cf7ac36e7e0b",
+   "9f4100dd96b1",
+   "edb990de9835",
+   "d7effe047648",
+   "355150899b8c",
+   "0d294fe272fc",
+   "afd6b5ad7775",
+   "c1481bb7b1ba",
+   "0daaa368fa2b",
+   "53690df9d434",
+   "dfbcdfe0c19b",
+   "a8c454d95b70",
+   "9b72a812d686",
+   "705984b7d8d2",
+   "88c34e6a2c06",
+   "2d21f5e7b5de",
+   "084f0797fed0",
+   "29b44958d5f4",
+   "014d50c344c9",
+   "1d7a4364b064",
+   "38167691a3cf",
+   "4893a61bdf37",
+   "128dc5105e82",
+   "a9a5754ac8b7",
+   "c7b7959388c1",
+   "ffdcd3928da7",
+   "13c7ef9008ed",
+   "5b213de2dbb1",
+   "183bfcbdb217",
+   "ff90322b5ab1",
+   "6d60eb1d1f55",
+   "aecbad57b9e5",
+   "97956cb541df",
+   "2dcf49e7d5b9",
+   "a081d83f293d",
+   "e3e3fcd69d43",
+   "df2fa08b9224",
+   "59e0b4be4d05",
+   "3466dbcda539",
+   "604932aedcea",
+   "4581f1cceca7",
+   "da9c91191ea5",
+   "b604b965efee",
+   "b43c422238e5",
+   "ba8513cb319b",
+   "f7caf2e3bf66",
+   "79ec813035f4",
+   "a29087391db7",
+   "94b1ec0cb8a5",
+   "c114e066b079",
+   "305b91578c75",
+   "1cc22fd48f5b",
+   "cb7e9170d358",
+   "1ee304e0a3a3",
+   "9e5efe772f55",
+   "b9e6348ae692",
+   "2f1af834f366",
+   "fd366b5b39f5",
+   "5fef320d620c",
+   "8582fc74d442",
+   "0a9e8c149bc7",
+   "4d57e56c6c34",
+   "8b91fcf46568",
+   "29d54ce84185",
+   "3a5c2d833d54",
+   "12283bbfc3ec",
+   "9d333f5ad2a1",
+   "ee636439e226",
+   "6801b4125367",
+   "541a242c97c0",
+   "897586c6836d",
+   "1604974d90ba",
+   "0a5b866e04fc",
+   "b4dcdd157c28",
+   "a1ed0d96dc08",
+   "713272926cb6",
+   "f88ccd0b6c63",
+   "84686d4d3642",
+   "7d54f3ac9b80",
+   "bca38f4a8740",
+   "ea61d9231b25",
+   "8e207b86b359",
+   "fb1b791f73e6",
+   "e5ce5c46dfbe",
+   "a1e0cdd2e52b",
+   "c25043ff3af0",
+   "e03e38f98c8d",
+   "f4abb4729737",
+   "aa6e8d3e8ad7",
+   "a8700825660a",
+   "1fdf65c62df9",
+   "0a4ad6d886bd",
+   "12ff977dd3d3",
+   "cc276b178643",
+   "c57f3744422a",
+   "aabeeb5c52f7",
+   "99dc47cd8aad",
+   "86f2d4eddce1",
+   "f1c4b0520f97",
+   "33e8b86a7e02",
+   "cb76f9277a97",
+   "9b0fbc63a13f",
+   "aa32ccb20523",
+   "95f026bc8c39",
+   "d5dbd4acce82",
+   "c4791f563813",
+   "a74fd2c2c23a",
+   "cbdfbac345e2",
+   "94df4f289cc8",
+   "72428f98d99d",
+   "2b7377737559",
+   "fa8c69840e51",
+   "51c59668fcfb",
+   "bdccfc5b9fb2",
+   "6d406c46dda7",
+   "027c6fc82e17",
+   "5c735506477d",
+   "c23cb4be4a57",
+   "405ea241918c",
+   "8b509528b65e",
+   "002602917e81",
+   "51198aaba750",
+   "4d0eddc4ad3b",
+   "c3a7265dc7bb",
+   "ffc1cebf6585",
+   "78aa0ec3805c",
+   "c25a748af3b5",
+   "12957ef4bc58",
+   "db81b3e6f3f9",
+   "4658f53394ff",
+   "73d5dd5f3770",
+   "8c89ce5969c9",
+   "60f927ce0c0d",
+   "821bbdcde20e",
+   "1f36c708cfa8",
+   "2a824351b60d",
+   "de7d3b18f5f9",
+   "adb39e242e6f",
+   "8dd23223a777",
+   "cf9b8187704a",
+   "a4eeeafff212",
+   "e59d5e6946cc",
+   "b4fab64dc4c1",
+   "fa399292dd12",
+   "053007dd160f",
+   "4bf4cc306eff",
+   "0740a2f263c4",
+   "0c06e34f6424",
+   "f1954cfa37bf",
+   "bb2ac74168ee",
+   "5813c6ba8a7c",
+   "2289c045fb92",
+   "79a75d6744e2",
+   "348e6c1428a5",
+   "9d8e04f9052e",
+   "2595fe8de2c2",
+   "cc81720b595a",
+   "604f4955a7c5",
+   "6fd7706898c0",
+   "f10ad5cd76f9",
+   "364129630c85",
+   "16bad542a8a4",
+   "0523d54dac8e",
+   "c4b723f04603",
+   "6610e9a20949",
+   "061a13378737",
+   "68251d4dbc45",
+   "b56f2056f94e",
+   "c0bd7d4c1697",
+   "8e11264bf1a4",
+   "3b914cf2aeae",
+   "d2cabefa0faf",
+   "dd097a19e3e7",
+   "00b044918503",
+   "de6685d7dd29",
+   "9215cd18883a",
+   "11890fa1e592",
+   "8cd1e6f37d38",
+   "958150a65742",
+   "257f8a7df963",
+   "77f3cd605d76",
+   "aa9d4cd87893",
+   "16dc685a163d",
+   "2329e18d705e",
+   "75bab3532a8a",
+   "5c58d8e798aa",
+   "6fd1238cc13d",
+   "ca350360d692",
+   "9121f190f008",
+   "ad9564e312f1",
+   "47fbe95e403e",
+   "746bcd76e63c",
+   "1636d64cc956",
+   "98f2ccfa0c05",
+   "0a309058aff3",
+   "e9ab9da64200",
+   "a933b9b6557b",
+   "f515b93305aa",
+   "1d1c9dc7266d",
+   "919b27d828da",
+   "ae3c6e0a2b3d",
+   "d6004b1ca76a",
+   "c034173d6d54",
+   "e16c6c17dc39",
+   "378e8d525828",
+   "2e894f239f3e",
+   "7ab4401204a0",
+   "2b3da82e346a",
+   "480f846fc8e0",
+   "0a998405f9e4",
+   "aabfe16ba4e1",
+   "4a758587918f",
+   "749fab7cd2ab",
+   "7d38fffa0dd6",
+   "5645762e18ff",
+   "d4cc98d050b2",
+   "e212692dff29",
+   "c124ee738dd5",
+   "b965eb32dfea",
+   "d17a58edccc5",
+   "565289ea89d1",
+   "f99e026a897c",
+   "96cd0e6729ca",
+   "73aba50b7608",
+   "cd3ce38021e5",
+   "797d1d95ae5c",
+   "7674d0bb707a",
+   "2ff878f8de0a",
+   "c9be26036f09",
+   "591cfbfd81c6",
+   "e3bc5ba0d91b",
+   "c8cf4c612af1",
+   "c867c5d2cac6",
+   "14407f686cec",
+   "fca28a000f13",
+   "549b9f5df97d",
+   "baeb695cacff",
+   "c57e019d390c",
+   "a8b9855fb28d",
+   "2101aa79da1f",
+   "e35b353819df",
+   "b52f4ab76468",
+   "a02df8be5361",
+   "4784b6e8daf2",
+   "52b86fd2ab21",
+   "1b73c859ed4f",
+   "a1a67d9c6454",
+   "7eb576a5232b",
+   "4fe72d53814e",
+   "84d6b480a10b",
+   "be06261f3458",
+   "f1e32748ff80",
+   "89fd9c5d8524",
+   "f2def1b4439c",
+   "3c9eba02aa34",
+   "008f7bccbfa6",
+   "837c17208a67",
+   "3c84723914dd",
+   "2045b2231056",
+   "e06ee6760100",
+   "2a7dee61a539",
+   "97385a3062c6",
+   "42870c666be4",
+   "2a34b92c4652",
+   "946c122342ee",
+   "7ad512593bc1",
+   "24c107beb264",
+   "50b3d30e1902",
+   "ff40c5a0a092",
+   "ae954540de41",
+   "5a009c69be98",
+   "0b3ca7758537",
+   "b1949feab453",
+   "56bce25c7bb1",
+   "876c53ed2c70",
+   "2a861ecc1f70",
+   "3853812c1b87",
+   "1e13ff61a4cd",
+   "b6c1858f6165",
+   "bfd2ccb16817",
+   "25abaede1858",
+   "ecf394bc8c07",
+   "5bbc0db8373a",
+   "576abef39c8b",
+   "f32d9a917975",
+   "38947d9a3ce6",
+   "ca5d89aaf638",
+   "6a95f8a54319",
+   "99412294e979",
+   "39721ce1d486",
+   "29e637bc640c",
+   "f2429c067416",
+   "ce23311534f9",
+   "4c4c8a7c655e",
+   "aec0634c3cf2",
+   "5bc97518c3de",
+   "8d8eb336077e",
+   "e69c7254f816",
+   "4d64ac5c88ae",
+   "79bf32767042",
+   "f1aa64208368",
+   "6e6901fcb78d",
+   "7c764d2a36eb",
+   "15b3661f1201",
+   "ea3ac55e43a3",
+   "a46c81170e3f",
+   "d32f5d2b2f1e",
+   "96b34d1539a2",
+   "edf88fdcce54",
+   "370c3fb486c4",
+   "094b468fd359",
+   "bdc8dab03771",
+   "527db5005172",
+   "f9215ed71326",
+   "b8818b0c52f1",
+   "f695a73492e0",
+   "becd0b78abd7",
+   "bd2432b329a7",
+   "6e05975312e1",
+   "d4def4971665",
+   "5cc9dc08ccb7",
+   "2384951e621a",
+   "16d973ff621b",
+   "32e3949c2c01",
+   "5772f8386818",
+   "11a623cc66e7",
+   "b075cb9e2ff5",
+   "7684f973b270",
+   "5d6af3cc6ebc",
+   "94a0ed02f477",
+   "7bd8fe248066",
+   "fe58557ccb61",
+   "9517999c20ae",
+   "2ae50bbcaa75",
+   "de303dfcf8c8",
+   "d6f5d261471e",
+   "c53ea300f5bc",
+   "9393cea70a5d",
+   "18e16ae81373",
+   "75fbbecfdddf",
+   "57acb8a28d6d",
+   "8541d25db62a",
+   "65dd2ff25d8c",
+   "1de933b9b24a",
+   "24da3b376eb1",
+   "203bc7fb32cc",
+   "805649e3ed64",
+   "52c692c351ab",
+   "6e9d0ecd27e5",
+   "eab82ef6f940",
+   "fc67295944eb",
+   "9003bf97a5b2",
+   "554f0934197d",
+   "132c574870ce",
+   "63dba1c0207d",
+   "702d288bc1eb",
+   "38d800e18deb",
+   "7ddcd9282f68",
+   "4421d2cc6bb7",
+   "1961c7816545",
+   "1b26278ba55b",
+   "1c4ba8f25bf9",
+   "a815b9e3fd12",
+   "a171d68ac12a",
+   "69853cb324e5",
+   "3622ef3d7b53",
+   "700854bb082a",
+   "1ea92d411d46",
+   "b3efeb03fce1",
+   "f84a97f5fac9",
+   "8fa33d0b0b31",
+   "c617756402fa",
+   "c22fc1bc93ad",
+   "ddd78809bb7d",
+   "d7415cbc93e1",
+   "4f1f87abc317",
+   "05d3a89fa083",
+   "5eb64c99edda",
+   "0eaf6cac185e",
+   "1fcb640f0abc",
+   "03d8f6db172b",
+   "e89c0e8c2505",
+   "c6cc8d1eb168",
+   "22332fe836a1",
+   "23e4b7a0d428",
+   "6257e9f11124",
+   "5bc3ca27887a",
+   "9d674b0c1b18",
+   "c2e80e71e49b",
+   "257d699ae865",
+   "ca7eb839e5a7",
+   "d16ce1fb4e45",
+   "5f5d851e513a",
+   "c9905070946e",
+   "87221186cd66",
+   "97a742b9c089",
+   "465782fb2f40",
+   "b9a04d744ccc",
+   "e27b4436cefe",
+   "55becd955c74",
+   "a764be2fe407",
+   "6424bee7583a",
+   "6a51bcdfb591",
+   "cf7dbd9f2e04",
+   "dc707c58721d",
+   "6ab051fae681",
+   "c4077a324236",
+   "103d91e14bb8",
+   "3c6aa502e6c3",
+   "4476e2ff3889",
+   "21f7cef50f28",
+   "6ecd77e70c0a",
+   "54b5cab73c54",
+   "50f2501587cb",
+   "f1b445511d45",
+   "0a6221e4555a",
+   "dcf69c6539ab",
+   "b8d8bc954f2c",
+   "3d391eba811a",
+   "4bf66c50dd25",
+   "6f1137c91fed",
+   "9fe6d7e54860",
+   "f2c5606af33a",
+   "b527307fc58a",
+   "9bfc12caed5d",
+   "da78d25860f3",
+   "c86c91fb5f23",
+   "b6a06fd11930",
+   "3ce99efd5040",
+   "4cbb3a5c7ef0",
+   "fbf1b284673d",
+   "956ed822e891",
+   "97eb3397fb53",
+   "7f88a1f2eb69",
+   "1c9c3d8dd33f",
+   "d187fb5c6142",
+   "a70a89e6c7d4",
+   "397f4c75540f",
+   "67473e817ba6",
+   "f3b529a74376",
+   "ad7d89f2fbc5",
+   "573eb6d4909e",
+   "8cbd3143ff59",
+   "c3b09476a08f",
+   "968b16b1b7bf",
+   "90d287b7a47a",
+   "ad1933426296",
+   "b28831c16426",
+   "60927552991e",
+   "7ccb39abf38c",
+   "efb99ebc389c",
+   "73952abc09e5",
+   "91313eaca3df",
+   "1f1b8c1e7b11",
+   "cbc589bebcfd",
+   "45674fd5fed8",
+   "b11e73b1d2b7",
+   "bb371d7073df",
+   "f23a4a6e5314",
+   "7daa91df8848",
+   "bd5cda5bc9aa",
+   "88163dee9ed0",
+   "1001db23482e",
+   "399c15e952fa",
+   "261e8ee069f9",
+   "772437e63e64",
+   "afbb595d694d",
+   "bf6cc6359de2",
+   "1a9b3801dc17",
+   "0d2310fe9802",
+   "69b9093d90cc",
+   "82beca6f2cbf",
+   "7eb391035a4c",
+   "75f851e4a3ad",
+   "c9b6d8b7c707",
+   "af09600a7e82",
+   "6cd15fa63b8c",
+   "228f6e200de1",
+   "a42d55c9d550",
+   "e03b0fbffa7d",
+   "d37a40fab35f",
+   "0d5b260ec4e4",
+   "779f9c63d27a",
+   "b43ad09ac59a",
+   "277bfc738efd",
+   "84fff1f956ab",
+   "cf93be39f019",
+   "4b474c4ecf47",
+   "e32e0f1ea0e0",
+   "19f47b1eb207",
+   "16cd827de936",
+   "1c8044709323",
+   "28d711087738",
+   "fc120d38bcbe",
+   "28ef73c949f2",
+   "13a76c844f0f",
+   "ddc8560250e0",
+   "e4686a76dd4c",
+   "0ee931f2c92a",
+   "8aacf98a4fe2",
+   "10b3a46204ed",
+   "38701aed50f2",
+   "3c41134793ff",
+   "833d52550530",
+   "59634be753c1",
+   "7faefd08f3d6",
+   "42a65d5d39a1",
+   "878ceb9df021",
+   "2c17223a4fd5",
+   "80eaabcd2145",
+   "b907bf62b8af",
+   "590c2eac4908",
+   "1a44462e1e28",
+   "473e3663d678",
+   "3c6b8b957427",
+   "6b184a3f18f6",
+   "4225bea497c9",
+   "0f057872a843",
+   "e366c5937724",
+   "c00c33263812",
+   "7c100ef75614",
+   "ba5d95631dc6",
+   "1e2d27cd061d",
+   "5e8e285453ea",
+   "7f66f8d3fbef",
+   "376790a6ebf6",
+   "a2deda8e25b5",
+   "6fcf72e8cb45",
+   "dceefdd38a56",
+   "79b003289bb7",
+   "f3f3e027ce23",
+   "03e6e8ea4355",
+   "b8dbf8a9f570",
+   "4ebc13be8bb3",
+   "75520237d300",
+   "6901b667f35b",
+   "610786f0c92b",
+   "2e6dd82cc2f5",
+   "7a1d5e505ce1",
+   "ffbfabf31959",
+   "cd8bc75d3ae5",
+   "a296f9bf6110",
+   "99e0546534ba",
+   "66aefc7ff594",
+   "bbe40aa2d41e",
+   "cd3ea5802857",
+   "4818d40ec0ce",
+   "8da817194ed9",
+   "e2f95ca43447",
+   "12d95c51dbe4",
+   "52e64124b474",
+   "576f6e5228f6"
+  ],
+  "step_effects": "65bc01b7b167aa5d6ead7eb05c6e0e23eacd939b2824d53f939bc8447b4778e0",
+  "step_effects_carried": {
+   "channel_effects": 265,
+   "source_effects": 21,
+   "speech_effects": 238
+  },
+  "steps": 731,
+  "texts": "7a39732dc44a626d26b0af94a193d08990bc7d13d300048c70e7051442c0ef69",
+  "timeline": {
+   "events": [
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 3950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 3800
+    },
+    {
+     "duration_ms": 400,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 8000,
+     "params": {
+      "text": "One second.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 7600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 8150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 8000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 11750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 11600
+    },
+    {
+     "duration_ms": 800,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 15400,
+     "params": {
+      "text": "I'll be right with you.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 14600
+    },
+    {
+     "duration_ms": 800,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 17400,
+     "params": {
+      "text": "I'll be right with you.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 16600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 19150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 19000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 19550,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 19400
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 20750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 20600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 21950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 21800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 31950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 31800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 36150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 36000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 41550,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 41400
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 43350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 43200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 45150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 45000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 46950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 46800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 50750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 50600
+    },
+    {
+     "duration_ms": 600,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 54400,
+     "params": {
+      "text": "Give me a moment.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 53800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 53950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 53800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 55350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 55200
+    },
+    {
+     "duration_ms": 1600,
+     "effect_type": "burst_noise",
+     "end_ms": 58400,
+     "params": {
+      "file": "fx_dog.wav"
+     },
+     "participant": "user",
+     "start_ms": 56800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 57150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 57000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 59950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 59800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 61350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 61200
+    },
+    {
+     "duration_ms": 1200,
+     "effect_type": "burst_noise",
+     "end_ms": 65200,
+     "params": {
+      "file": "fx_door.wav"
+     },
+     "participant": "user",
+     "start_ms": 64000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 72550,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 72400
+    },
+    {
+     "duration_ms": 1600,
+     "effect_type": "burst_noise",
+     "end_ms": 75800,
+     "params": {
+      "file": "fx_dog.wav"
+     },
+     "participant": "user",
+     "start_ms": 74200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 75350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 75200
+    },
+    {
+     "duration_ms": 1000,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 79000,
+     "params": {
+      "text": ".[sniffle][sniffle][sniffle]",
+      "type": "vocal_tic"
+     },
+     "participant": "user",
+     "start_ms": 78000
+    },
+    {
+     "duration_ms": 1200,
+     "effect_type": "burst_noise",
+     "end_ms": 80200,
+     "params": {
+      "file": "fx_door.wav"
+     },
+     "participant": "user",
+     "start_ms": 79000
+    },
+    {
+     "duration_ms": 400,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 81600,
+     "params": {
+      "text": "Can you wait?",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 81200
+    },
+    {
+     "duration_ms": 800,
+     "effect_type": "burst_noise",
+     "end_ms": 85800,
+     "params": {
+      "file": "fx_horn.wav"
+     },
+     "participant": "user",
+     "start_ms": 85000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 86350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 86200
+    },
+    {
+     "duration_ms": 1000,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 92400,
+     "params": {
+      "text": ".[sniffle][sniffle][sniffle]",
+      "type": "vocal_tic"
+     },
+     "participant": "user",
+     "start_ms": 91400
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 91750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 91600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 93150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 93000
+    },
+    {
+     "duration_ms": 800,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 98400,
+     "params": {
+      "text": "I'll be right with you.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 97600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 100750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 100600
+    },
+    {
+     "duration_ms": 1200,
+     "effect_type": "burst_noise",
+     "end_ms": 102400,
+     "params": {
+      "file": "fx_door.wav"
+     },
+     "participant": "user",
+     "start_ms": 101200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 101750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 101600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 102550,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 102400
+    },
+    {
+     "duration_ms": 1200,
+     "effect_type": "burst_noise",
+     "end_ms": 104000,
+     "params": {
+      "file": "fx_door.wav"
+     },
+     "participant": "user",
+     "start_ms": 102800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 105750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 105600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 106150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 106000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 106550,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 106400
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 107150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 107000
+    },
+    {
+     "duration_ms": 200,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 107600,
+     "params": {
+      "text": "Hold on a second.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 107400
+    },
+    {
+     "duration_ms": 400,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 115200,
+     "params": {
+      "text": "Can you wait?",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 114800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 115750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 115600
+    },
+    {
+     "duration_ms": 800,
+     "effect_type": "burst_noise",
+     "end_ms": 118800,
+     "params": {
+      "file": "fx_horn.wav"
+     },
+     "participant": "user",
+     "start_ms": 118000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 118950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 118800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 119950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 119800
+    },
+    {
+     "duration_ms": 23200,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 146200,
+     "params": {
+      "text": "Hold on a second.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 123000
+    },
+    {
+     "duration_ms": 600,
+     "effect_type": "out_of_turn_speech",
+     "end_ms": 123800,
+     "params": {
+      "text": "Hold on a second.",
+      "type": "non_directed_phrase"
+     },
+     "participant": "user",
+     "start_ms": 123200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 124750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 124600
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 127750,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 127600
+    },
+    {
+     "duration_ms": 1200,
+     "effect_type": "burst_noise",
+     "end_ms": 129200,
+     "params": {
+      "file": "fx_door.wav"
+     },
+     "participant": "user",
+     "start_ms": 128000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 128150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 128000
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 138950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 138800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 141950,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 141800
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 142350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 142200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 144350,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 144200
+    },
+    {
+     "duration_ms": 150,
+     "effect_type": "frame_drop",
+     "end_ms": 146150,
+     "params": {
+      "duration_ms": 150
+     },
+     "participant": "user",
+     "start_ms": 146000
+    }
+   ]
+  },
+  "wire": "fd05ea4a306d36ed4fa5eccb1189825b6b115ce08f26927aa24e8e5f525c693b"
+ },
+ "tau2_burst_files": [
+  "siren.wav",
+  "engine_idling.wav",
+  "ringing_phone.wav",
+  "car_horn.wav",
+  "dog_bark.wav"
+ ],
+ "voice_settings": {
+  "output_dir": null,
+  "speech_environment": {
+   "backchannel_min_threshold": 3,
+   "background_noise_file": "fx_bed.wav",
+   "burst_noise_files": [
+    "fx_horn.wav",
+    "fx_door.wav",
+    "fx_dog.wav"
+   ],
+   "channel_effects_config": {
+    "enable_frame_drops": true,
+    "frame_drop_burst_duration_ms": 100.0,
+    "frame_drop_count": 1,
+    "frame_drop_duration_ms": 150,
+    "frame_drop_rate": 0.05
+   },
+   "complexity": "regular",
+   "enable_interruptions": true,
+   "environment": "indoor",
+   "persona_name": "wei_lin",
+   "snr_speech_reference_rms": 3000.0,
+   "source_effects_config": {
+    "burst_noise_events_per_minute": 6.0,
+    "burst_snr_range_db": [
+     -5.0,
+     10.0
+    ],
+    "enable_background_noise": true,
+    "enable_burst_noise": true,
+    "noise_snr_db": 15.0,
+    "noise_snr_drift_db": 3.0,
+    "noise_variation_speed": 0.5
+   },
+   "speech_effects_config": {
+    "enable_dynamic_muffling": true,
+    "enable_non_directed_phrases": true,
+    "enable_vocal_tics": true,
+    "min_words_for_vocal_tics": 3,
+    "muffle_cutoff_freq": 1500.0,
+    "muffle_probability": 0.2,
+    "muffle_segment_count": 1,
+    "muffle_segment_duration_ms": 500,
+    "muffle_transition_ms": 100,
+    "non_directed_phrases": [
+     {
+      "text": "Not now.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Hold on a second.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I'm on the phone.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Just a minute.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I don't know.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Give me a moment.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "One second.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I'll be right with you.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Can you wait?",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Shh, quiet.",
+      "type": "non_directed_phrase"
+     }
+    ],
+    "speech_insert_events_per_minute": 6.0,
+    "vocal_tics": [
+     {
+      "text": ".[cough][cough][cough]",
+      "type": "vocal_tic"
+     },
+     {
+      "text": ".[sneeze][sneeze][sneeze]",
+      "type": "vocal_tic"
+     },
+     {
+      "text": ".[sniffle][sniffle][sniffle]",
+      "type": "vocal_tic"
+     }
+    ]
+   },
+   "telephony_enabled": true,
+   "use_llm_backchannel": true,
+   "voice_id": "GQ2S7ULnVjrOALFRfnsh",
+   "voice_seed": 213402
+  },
+  "synthesis_config": {
+   "channel_effects_config": {
+    "enable_frame_drops": true,
+    "frame_drop_burst_duration_ms": 100.0,
+    "frame_drop_count": 1,
+    "frame_drop_duration_ms": 150,
+    "frame_drop_rate": 0.05
+   },
+   "provider": "elevenlabs",
+   "provider_config": {
+    "api_key": null,
+    "audio_tags_probability": 0.2,
+    "insert_audio_tags": true,
+    "model_id": "eleven_v3",
+    "seed": null,
+    "voice_id": null,
+    "voice_settings": {
+     "similarity_boost": 0.75,
+     "stability": 0.5,
+     "style": 0.0,
+     "use_speaker_boost": false
+    }
+   },
+   "source_effects_config": {
+    "burst_noise_events_per_minute": 6.0,
+    "burst_snr_range_db": [
+     -5.0,
+     10.0
+    ],
+    "enable_background_noise": true,
+    "enable_burst_noise": true,
+    "noise_snr_db": 15.0,
+    "noise_snr_drift_db": 3.0,
+    "noise_variation_speed": 0.5
+   },
+   "speech_effects_config": {
+    "enable_dynamic_muffling": true,
+    "enable_non_directed_phrases": true,
+    "enable_vocal_tics": true,
+    "min_words_for_vocal_tics": 3,
+    "muffle_cutoff_freq": 1500.0,
+    "muffle_probability": 0.2,
+    "muffle_segment_count": 1,
+    "muffle_segment_duration_ms": 500,
+    "muffle_transition_ms": 100,
+    "non_directed_phrases": [
+     {
+      "text": "Not now.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Hold on a second.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I'm on the phone.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Just a minute.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I don't know.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Give me a moment.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "One second.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "I'll be right with you.",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Can you wait?",
+      "type": "non_directed_phrase"
+     },
+     {
+      "text": "Shh, quiet.",
+      "type": "non_directed_phrase"
+     }
+    ],
+    "speech_insert_events_per_minute": 6.0,
+    "vocal_tics": [
+     {
+      "text": ".[cough][cough][cough]",
+      "type": "vocal_tic"
+     },
+     {
+      "text": ".[sneeze][sneeze][sneeze]",
+      "type": "vocal_tic"
+     },
+     {
+      "text": ".[sniffle][sniffle][sniffle]",
+      "type": "vocal_tic"
+     }
+    ]
+   }
+  },
+  "synthesis_enabled": true,
+  "transcription_config": null,
+  "transcription_enabled": false
+ }
+}

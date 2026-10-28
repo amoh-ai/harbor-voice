@@ -321,12 +321,12 @@ class TestNovaSonicVoiceSelection:
         assert tts.select_voice(VoiceSelection(voice_id="amy")) is True
         assert tts.voice == "amy"
 
-    def test_eva_a_through_this_tts_records_that_it_missed(self) -> None:
-        """The honest outcome: the run happens and does not claim condition A."""
+    def test_an_accent_through_this_tts_records_that_it_missed(self) -> None:
+        """The honest outcome: the run happens and does not claim the accent."""
         from harbor_voice.perturbation import SeedSet
         from harbor_voice.perturbation import get_profile
 
-        pipeline = get_profile("eva_a").pipeline(SeedSet.derive(1))
+        pipeline = get_profile("accented").pipeline(SeedSet.derive(1))
         pipeline.persona.apply_to_tts(bedrock.NovaSonicTTS())
         record = pipeline.as_record().as_dict()["layers"]
         assert record["L1.accent"]["achieved"] == {"voice_honoured": 0.0}

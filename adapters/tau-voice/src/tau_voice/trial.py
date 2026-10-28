@@ -25,16 +25,37 @@ from harbor.models.trajectories.trajectory import Trajectory
 from harbor_voice.driver import VerifierResult
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.trajectory.model import VoiceTrajectory
+from harbor_voice.trial import AgentSpec
 from harbor_voice.transport.base import VoiceTransport
 
 from tau_voice.client import Sidecar
-from tau_voice.run import HALLUCINATION_RETRIES
+from tau_voice.main import HALLUCINATION_RETRIES
 from tau_voice.run import run_trial
 
 SIDECAR_URL = "http://tau2:8000"
 """The sidecar by compose service name, inside the environment's network."""
 
 CACHE_ENV = "HARBOR_VOICE_TTS_CACHE"
+
+
+LIVE = "openai.live"
+
+
+def live_config(agent: AgentSpec | None) -> dict[str, Any] | None:
+    """tau2's ``--live-config`` for an OpenAI Live agent, from its settings.
+
+    The backend model is the agent's (``[agent.config.s2s] backend_model``);
+    tau2 renders both prompts from it and the system prompt.
+    """
+    if agent is None or not agent.s2s or agent.s2s.partition("/")[0] != LIVE:
+        return None
+    settings = agent.config.get("s2s", {})
+    if not settings.get("backend_model"):
+        raise ValueError(f"{LIVE} needs backend_model in the agent's s2s config")
+    config = {"backend_model": settings["backend_model"]}
+    if settings.get("voice"):
+        config["voice"] = settings["voice"]
+    return config
 
 
 def synthesis_cache() -> Path:
@@ -61,8 +82,12 @@ async def drive(ctx: DriverContext) -> DriverOutcome:
         )
         return result
 
-    def agent(router: ToolRouter, system_prompt: str) -> VoiceTransport:
-        return ctx.build_agent(tools=router, system_prompt=system_prompt)
+    def agent(
+        router: ToolRouter, system_prompt: str, **overrides: Any
+    ) -> VoiceTransport:
+        return ctx.build_agent(tools=router, system_prompt=system_prompt, **overrides)
+
+    live = live_config(ctx.agent)
 
     trial = await run_trial(
         grade=grade,
@@ -75,7 +100,14 @@ async def drive(ctx: DriverContext) -> DriverOutcome:
         domain=str(config["domain"]),
         task_id=str(config["task_id"]),
         speech_complexity=str(config.get("speech_complexity", "control")),
+        # tau2's --user-llm; absent, tau2's default caller model.
+        user_llm=config.get("user_llm"),
         agent_factory=agent,
+        live_config=live,
+        # Live's frontend model, for tau2's own record of the session.
+        agent_model=(ctx.agent.s2s or "").partition("/")[2] or None
+        if live is not None and ctx.agent is not None
+        else None,
         synthesis_cache=synthesis_cache(),
         on_progress=ctx.progress,
     )

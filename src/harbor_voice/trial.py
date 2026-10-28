@@ -542,6 +542,7 @@ class VoiceTrial:
             task_dir=self._task_dir,
             out_dir=out_dir,
             build_agent=self.build_agent,
+            agent=agent,
         )
         verified = outcome.verified
         del call
@@ -736,6 +737,26 @@ def _registry() -> ProviderRegistry:
 
 _VENDORS = ("aws", "elevenlabs", "openai")
 """Provider packages registered lazily; each has a ``register_all``."""
+
+
+def required_extras(spec: AgentSpec) -> list[str]:
+    """harbor-voice extras the agent's providers declare (``requires_extra``).
+
+    A provider the registry cannot resolve here needs nothing named; building
+    it will say what is missing.
+    """
+    registry = _registry()
+    extras: list[str] = []
+    for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
+        if not name:
+            continue
+        try:
+            registration, _ = registry.resolve(name)
+        except Exception:  # noqa: BLE001 - see above
+            continue
+        if registration.spec.requires_extra:
+            extras.append(registration.spec.requires_extra)
+    return list(dict.fromkeys(extras))
 
 
 def _heard(turns: Sequence[Turn]) -> list[str]:

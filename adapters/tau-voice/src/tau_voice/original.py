@@ -24,19 +24,21 @@ import os
 import shlex
 import tarfile
 import time
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from tau_voice.images import SIDECAR
 from tau_voice.main import DOMAINS
+from tau_voice.main import PRESETS
 from tau_voice.main import REVIEW_MODEL
 from tau_voice.main import TAU2_RUN_SEED
+from tau_voice.main import VOICE_ENV
 
 ENV_NAMES = (
     "OPENAI_API_KEY",  # the agent under test, the caller's LLM
     "ELEVENLABS_API_KEY",  # the caller's voice
-    "TAU2_VOICE_ID_MATT_DELANEY",
-    "TAU2_VOICE_ID_LISA_BRENNER",
+    *VOICE_ENV,  # every persona's voice
     "AWS_ACCESS_KEY_ID",  # the reviewer, on Bedrock
     "AWS_SECRET_ACCESS_KEY",
     "AWS_REGION",
@@ -56,16 +58,34 @@ def tau2_command(
     save_to: str,
     hallucination_retries: int = 3,
     task_ids: list[str] | None = None,
+    complexity: str = "control",
+    user_llm: str | None = None,
+    live_config: Mapping[str, Any] | None = None,
 ) -> str:
-    """tau2's own run, in the mode the harbor side reproduces."""
+    """tau2's own run, in the mode the harbor side reproduces.
+
+    ``live_config`` runs OpenAI Live (``openai_live``) with tau2's real-time
+    user generation off, as harbor-voice's caller runs.
+    """
+    provider = (
+        [
+            "--audio-native-provider",
+            "openai_live",
+            "--live-config",
+            json.dumps(dict(live_config), sort_keys=True),
+            "--no-realtime-generation",
+        ]
+        if live_config is not None
+        else ["--audio-native-provider", "openai"]
+    )
     return shlex.join(
         [
             "tau2", "run",
             "--domain", domain,
             "--audio-native",
-            "--audio-native-provider", "openai",
+            *provider,
             "--audio-native-model", model,
-            "--speech-complexity", "control",
+            "--speech-complexity", complexity,
             "--task-split-name", split,
             "--num-trials", str(trials),
             "--seed", str(seed),
@@ -77,6 +97,7 @@ def tau2_command(
             # Explicit ids, never --num-tasks: tau2 orders tasks by its task
             # file, the converter by the split file, so "the first N" differ.
             *(["--task-ids", *task_ids] if task_ids else []),
+            *(["--user-llm", user_llm] if user_llm else []),
         ]
     )  # fmt: skip
 
@@ -94,7 +115,7 @@ for s in json.loads(sys.argv[1]):
     rewards = [e["reward"] for e in index if e.get("reward") is not None]
     discarded = os.path.join(s["dir"], "hallucination_discarded")
     print(json.dumps({
-        "domain": s["domain"], "done": len(index), "expected": expected,
+        "domain": s.get("label", s["domain"]), "done": len(index), "expected": expected,
         "reward": statistics.fmean(rewards) if rewards else None,
         "ungraded": len(index) - len(rewards),
         "reruns": len(os.listdir(discarded)) if os.path.isdir(discarded) else 0,
@@ -121,7 +142,7 @@ def progress_lines(sandbox: Any, specs: list[dict[str, Any]]) -> list[str]:
             continue
         reward = "n/a" if s["reward"] is None else f"{s['reward']:.3f}"
         lines.append(
-            f"{s['domain']:<8} {s['done']}/{s['expected']} sims · reward {reward}"
+            f"{s['domain']:<16} {s['done']}/{s['expected']} sims · reward {reward}"
             f" · reruns {s['reruns']} · ungraded {s['ungraded']}"
             f" · agent cost ${s['agent_cost']:.2f}"
         )
@@ -129,6 +150,11 @@ def progress_lines(sandbox: Any, specs: list[dict[str, Any]]) -> list[str]:
 
 
 _UNPORTABLE = re.compile(r'[<>:"|?*]')
+
+
+def portable(path: str) -> str:
+    """``path`` with what Windows cannot hold in a name replaced by ``_``."""
+    return _UNPORTABLE.sub("_", path)
 
 
 def unpack(data: bytes, out: Path) -> None:
@@ -140,7 +166,7 @@ def unpack(data: bytes, out: Path) -> None:
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
         members = archive.getmembers()
         for member in members:
-            member.name = _UNPORTABLE.sub("_", member.name)
+            member.name = portable(member.name)
         archive.extractall(out, members=members, filter="data")
 
 
@@ -148,8 +174,10 @@ def sandbox_env() -> dict[str, str]:
     missing = [name for name in ENV_NAMES if not os.environ.get(name)]
     if missing:
         raise SystemExit(f"set these first: {', '.join(missing)}")
-    env = {name: os.environ[name] for name in ENV_NAMES}
+    env: dict[str, str] = {name: os.environ[name] for name in ENV_NAMES}
     env["AWS_REGION_NAME"] = env["AWS_REGION"]  # litellm's Bedrock region
+    # Same as the sidecar image: tau2's effect seed uses hash(task.id).
+    env["PYTHONHASHSEED"] = "0"
     return env
 
 
@@ -167,6 +195,8 @@ def run(
     keep: bool = False,
     poll_s: float = 60.0,
     task_ids: list[str] | None = None,
+    complexity: str = "control",
+    user_llm: str | None = None,
 ) -> None:
     from daytona import CreateSandboxFromImageParams
     from daytona import Daytona
@@ -203,6 +233,8 @@ def run(
                 review_model=review_model,
                 save_to=f"{label}-{domain}",
                 task_ids=task_ids,
+                complexity=complexity,
+                user_llm=user_llm,
             )
             response = sandbox.process.execute_session_command(
                 session,
@@ -285,6 +317,8 @@ def main(argv: list[str]) -> None:
     parser.add_argument(
         "--task-ids", nargs="+", help="only these tasks (one domain; smoke runs)"
     )
+    parser.add_argument("--complexity", default="control", choices=PRESETS)
+    parser.add_argument("--user-llm", help="tau2's --user-llm (default: tau2's)")
     args = parser.parse_args(argv)
     run(
         domains=args.domains,
@@ -298,4 +332,6 @@ def main(argv: list[str]) -> None:
         out=args.out,
         keep=args.keep,
         task_ids=args.task_ids,
+        complexity=args.complexity,
+        user_llm=args.user_llm,
     )
