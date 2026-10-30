@@ -110,3 +110,26 @@ def test_tokens_count_every_attempt_on_both_sides(tmp_path) -> None:
     original = original_tokens([save], "regular")
     assert original["agent_input"] == 50  # the rerun set aside counts too
     assert original["caller_input"] == 14
+
+
+def test_the_parity_entry_names_the_agent_the_jobs_ran(tmp_path) -> None:
+    import json
+
+    from tau_voice.compare import harbor_model
+
+    def job(name: str, s2s: str, backend: str | None) -> object:
+        folder = tmp_path / name
+        folder.mkdir()
+        config = {"s2s": {"backend_model": backend}} if backend else {}
+        agent_json = json.dumps({"pipeline": "s2s", "s2s": s2s, "config": config})
+        agents = [{"model_name": s2s, "kwargs": {"seed": 1, "agent_json": agent_json}}]
+        (folder / "config.json").write_text(json.dumps({"agents": agents}))
+        return folder
+
+    live = job("control", "openai.live/gpt-live-1", "gpt-6-luna")
+    assert harbor_model([live]) == "openai.live/gpt-live-1 (backend gpt-6-luna)"
+    realtime = job("other", "openai.realtime/gpt-realtime-1.5", None)
+    assert harbor_model([realtime]) == "openai.realtime/gpt-realtime-1.5"
+    assert harbor_model([tmp_path / "missing"]) is None
+    with pytest.raises(SystemExit, match="different agents"):
+        harbor_model([live, realtime])

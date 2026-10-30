@@ -1,7 +1,8 @@
 """Parity: the harbor side against tau2's own run, in harbor's format.
 
 Reads harbor job folders (``harbor-voice jobs start``) and tau2 result folders
-(``tau-voice original``), and reports, per domain and overall:
+(tau2's ``--save-to`` folders, :func:`tau_voice.original.tau2_command`), and
+reports, per domain and overall:
 
 - **average reward** (Pass^1): the mean over graded tasks in each run, then
   mean ± sample SEM over runs, as harbor's ``parity_experiment.json`` states it;
@@ -19,9 +20,9 @@ One speech complexity at a time: ``--complexity`` keeps that preset's
 records when the folders hold several. Errored trials (no grade) are left
 out of the averages and counted, as tau2 leaves infrastructure errors out::
 
-    tau-voice compare --harbor jobs/parity --original parity/original \\
-        --complexity regular --metrics parity/metrics-regular.json \\
-        --out parity/parity_experiment-regular.json
+    tau-voice compare --harbor jobs/parity-regular --original tau2-saves \\
+        --complexity regular --metrics metrics-regular.json \\
+        --out parity_experiment-regular.json
 """
 
 from __future__ import annotations
@@ -207,6 +208,35 @@ def original_tokens(
                 total["caller_input"] += usage.get("prompt_tokens") or 0
                 total["caller_output"] += usage.get("completion_tokens") or 0
     return total
+
+
+def harbor_model(job_dirs: Iterable[Path]) -> str | None:
+    """The agent under test, as the harbor jobs recorded it (``config.json``):
+    ``openai.live/gpt-live-1 (backend gpt-6-luna)``.
+
+    Read from the run rather than given on the command line, which once
+    labelled a Live run with the flag's ``gpt-realtime-1.5`` default. ``None``
+    when no job records one; an error when the jobs disagree, since one
+    parity entry names one model.
+    """
+    models: set[str] = set()
+    for job in job_dirs:
+        config = job / "config.json"
+        if not config.exists():
+            continue
+        for agent in _json(config).get("agents") or []:
+            name = agent.get("model_name")
+            if not name:
+                continue
+            spec = json.loads((agent.get("kwargs") or {}).get("agent_json") or "{}")
+            backend = ((spec.get("config") or {}).get("s2s") or {}).get("backend_model")
+            models.add(f"{name} (backend {backend})" if backend else name)
+    if len(models) > 1:
+        raise SystemExit(
+            f"the harbor jobs ran different agents ({', '.join(sorted(models))}); "
+            "compare one at a time, or name it with --model"
+        )
+    return next(iter(models), None)
 
 
 def token_table(tokens: dict[str, dict[str, int]]) -> str:
@@ -413,14 +443,17 @@ def main(argv: list[str]) -> None:
     parser.add_argument(
         "--metrics", type=Path, help="interaction_metrics.py output to report too"
     )
-    parser.add_argument("--model", default="gpt-realtime-1.5")
+    parser.add_argument(
+        "--model", help="the agent under test (default: what the harbor jobs ran)"
+    )
     parser.add_argument("--agent", default="harbor-voice@0.1.0")
     parser.add_argument("--notes", default="")
     parser.add_argument("--out", type=Path, help="write parity_experiment.json here")
     args = parser.parse_args(argv)
 
     # A harbor job folder has job.log; its trial folders have trial.log.
-    harbor = harbor_records(_found(args.harbor, "job.log"))
+    jobs = _found(args.harbor, "job.log")
+    harbor = harbor_records(jobs)
     original = original_records(_found(args.original, "results.json"))
     if args.complexity:
         harbor = [r for r in harbor if r.complexity == args.complexity]
@@ -428,7 +461,7 @@ def main(argv: list[str]) -> None:
     report = compare(harbor, original, args.runs)
     print(table(report, args.runs))
     tokens = {
-        "harbor": harbor_tokens(_found(args.harbor, "job.log"), args.complexity),
+        "harbor": harbor_tokens(jobs, args.complexity),
         "original": original_tokens(
             _found(args.original, "results.json"), args.complexity
         ),
@@ -440,13 +473,16 @@ def main(argv: list[str]) -> None:
         print()
         print(interaction_table(interaction))
     if args.out:
+        model = args.model or harbor_model(jobs)
+        if model is None:
+            raise SystemExit("no harbor job records its agent; name it with --model")
         tasks = len(
             {(r.domain, r.task_id) for r in original}
             | {(r.domain, r.task_id) for r in harbor}
         )
         entry = parity_experiment(
             report,
-            model=args.model,
+            model=model,
             agent=args.agent,
             runs=args.runs,
             tasks=tasks,

@@ -416,15 +416,15 @@ def main(argv: list[str] | None = None) -> None:
     if argv[:1] == ["job-config"]:
         write_job_config(argv[1:])
         return
+    if argv[:1] == ["sample"]:
+        from tau_voice import sample
+
+        sample.main(argv[1:])
+        return
     if argv[:1] == ["compare"]:
         from tau_voice import compare
 
         compare.main(argv[1:])
-        return
-    if argv[:1] == ["original"]:
-        from tau_voice import original
-
-        original.main(argv[1:])
         return
     parser = argparse.ArgumentParser(description=_first_line(__doc__))
     parser.add_argument("--tau2-root", type=Path, required=True)

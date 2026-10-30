@@ -7,8 +7,8 @@ runner and environments. The same command runs a call on your laptop's
 Docker or on Daytona or EC2.
 
 > Status: pre-release (0.1.0). The tau-voice adapter runs end to end on
-> Docker and Daytona; parity results against the original tau2-bench are in
-> progress.
+> Docker and Daytona; its parity results against the original tau2-bench are
+> in [adapters/tau-voice/PARITY.md](adapters/tau-voice/PARITY.md).
 
 ## What it does
 
@@ -197,7 +197,7 @@ the last one counts.
 | `harbor-voice report` | roll a job up and diff profiles against the baseline |
 | `harbor-voice conformance` | provider conformance suite |
 | `harbor-voice drive` | runs a task's call driver; what `VoiceCallAgent` runs inside `main` |
-| `tau-voice …` | convert tasks, `build-image`, `job-config` |
+| `tau-voice …` | convert tasks, `build-image`, `job-config`; parity: `sample`, `compare` |
 
 Agents are named `provider/model`, e.g. `openai.realtime/gpt-realtime-1.5` or
 `aws.nova-sonic/<model>`.

@@ -5,8 +5,7 @@ The panel of the tau-voice paper — L_R and L_Y (latency), R_R and R_Y
 (selectivity) — per domain and averaged over domains, computed with
 ``tau2.metrics.voice_interaction_metrics`` on tau2's own simulations and on
 the harbor side's (each trial's final attempt, as the sidecar's ``/close``
-recorded it). It needs tau2, so it runs in the sidecar image or on the
-parity runner::
+recorded it). It needs tau2, so it runs in the sidecar image::
 
     python interaction_metrics.py --complexity regular \\
         --harbor <harbor job dir>... --original <tau2 save dir>... -o metrics.json

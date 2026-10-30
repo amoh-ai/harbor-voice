@@ -64,25 +64,6 @@ def test_a_smoke_run_names_its_tasks() -> None:
     assert parts[at + 1 : at + 3] == ["2", "6"]
 
 
-def test_results_unpack_on_windows_despite_telecom_task_ids(tmp_path) -> None:  # noqa: ANN001
-    import io
-    import tarfile
-
-    from tau_voice.original import unpack
-
-    name = "smoke-telecom/artifacts/task_[mobile]x|y[PERSONA:Easy]/audio.wav"
-    buffer = io.BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
-        for path, body in ((name, b"wav"), ("smoke-telecom/results.json", b"{}")):
-            info = tarfile.TarInfo(path)
-            info.size = len(body)
-            archive.addfile(info, io.BytesIO(body))
-    unpack(buffer.getvalue(), tmp_path)
-    assert (tmp_path / "smoke-telecom" / "results.json").read_bytes() == b"{}"
-    (wav,) = (tmp_path / "smoke-telecom" / "artifacts").glob("*/audio.wav")
-    assert "|" not in wav.parent.name and wav.read_bytes() == b"wav"
-
-
 def test_the_preset_is_passed_through() -> None:
     command = tau2_command(
         "airline",
