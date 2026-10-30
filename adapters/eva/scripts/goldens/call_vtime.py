@@ -11,9 +11,9 @@ and harbor is a difference in what the code does.
 
 How it works:
 
-- ``time.time``, ``time.monotonic`` and ``time.perf_counter`` return their
-  values at start plus the virtual seconds elapsed; the event loop's
-  ``time()`` is virtual too;
+- ``time.time`` returns its value at start (or ``epoch0``) plus the virtual
+  seconds elapsed; ``time.monotonic``, ``time.perf_counter`` and the event
+  loop's ``time()`` return :data:`MONOTONIC0` plus them;
 - when the loop would sleep, it first polls real I/O without blocking (EVA's
   bridge and server talk over a real local WebSocket, whose bytes arrive as
   they are sent) and, if none is ready, jumps straight to the next timer;
@@ -36,6 +36,21 @@ from typing import Any
 EXECUTOR_DELAYS: dict[str, float] = {}
 """Virtual seconds a function run in an executor takes, by ``__name__``."""
 
+MONOTONIC0 = 86400.0
+"""What ``time.monotonic``, ``time.perf_counter`` and the loop read at the start.
+
+Fixed, not the machine's uptime. On this clock the agent's 20 ms frames and
+the bridge's 250 ms input ticks fall on the same instant once a second, and
+which timer fires first is decided by how ``origin + elapsed`` rounds: a tick
+then carries 12 frames or 13. With the uptime as the origin the call golden
+passed or failed by machine and by run. Both sides now start here, so they
+round alike: EVA's code recorded afresh at this origin gives the checked-in
+fixture, and harbor's matches it.
+"""
+CLOCK_RESOLUTION = 1e-9
+"""The loop's ``_clock_resolution``: timers this close to now fire together.
+Linux's, where the fixture was recorded; Windows' is 1e-7."""
+
 
 class VirtualClock:
     def __init__(self, epoch0: float | None = None) -> None:
@@ -48,8 +63,8 @@ class VirtualClock:
         """
         self.elapsed = 0.0
         self._epoch0 = time.time() if epoch0 is None else epoch0
-        self._mono0 = time.monotonic()
-        self._perf0 = time.perf_counter()
+        self._mono0 = MONOTONIC0
+        self._perf0 = MONOTONIC0
         self._saved: dict[str, Callable[[], float]] = {}
 
     def __enter__(self) -> VirtualClock:
@@ -70,6 +85,7 @@ class VirtualClock:
     def loop(self) -> asyncio.AbstractEventLoop:
         loop = asyncio.SelectorEventLoop(selectors.SelectSelector())
         loop.time = lambda: self._mono0 + self.elapsed  # type: ignore[method-assign]
+        loop._clock_resolution = CLOCK_RESOLUTION  # type: ignore[attr-defined]
         selector = loop._selector  # type: ignore[attr-defined]
         real_select = selector.select
 
