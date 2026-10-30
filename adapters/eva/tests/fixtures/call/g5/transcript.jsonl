@@ -1,0 +1,10 @@
+{"timestamp": "1793211462881", "type": "assistant", "content": "Hello! How can I help you today?"}
+{"timestamp": "1793211465982", "type": "user", "content": "I need to change my flight."}
+{"timestamp": "1793211468663", "type": "assistant", "content": "Let me check that for you."}
+{"timestamp": "1793211469681", "type": "assistant", "content": "I found your booking: flight 100 to Boston, Monday at 9 AM. Would you like to change it?"}
+{"timestamp": "1793211473972", "type": "user", "content": "Yes, I want to move it to Friday."}
+{"timestamp": "1793211476850", "type": "assistant", "content": "Sure. I can move you to Friday at 9 AM, at 2 [interrupted]"}
+{"timestamp": "1793211479075", "type": "user", "content": "Wait, what about the evening?"}
+{"timestamp": "1793211481512", "type": "assistant", "content": "The evening flight leaves at 6 PM. Shall I book it?"}
+{"timestamp": "1793211485082", "type": "user", "content": "Yes, please. Thanks, goodbye."}
+{"timestamp": "1793211487683", "type": "assistant", "content": "You're all set on the 6 PM flight. Goodbye!"}

@@ -1,0 +1,2419 @@
+{
+  "run_id": "g6-aggregation",
+  "num_draws": 3,
+  "inputs": {
+    "1.1.2/trial_0": {
+      "record_id": "1.1.2/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5184,
+          "normalized_score": 0.5184,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.4019,
+          "normalized_score": 0.4019,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.9662,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "1.1.2/trial_1": {
+      "record_id": "1.1.2/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.9,
+          "normalized_score": 0.9,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.7444,
+          "normalized_score": 0.7444,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.4387,
+          "normalized_score": 0.4387,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.6813,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "1.1.2/trial_2": {
+      "record_id": "1.1.2/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": null,
+          "details": {},
+          "error": "judge failed",
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.9,
+          "normalized_score": 0.9,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.7768,
+          "normalized_score": 0.7768,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.8636,
+          "normalized_score": 0.8636,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.1638,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 344.94,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 16.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "1.2.1/trial_0": {
+      "record_id": "1.2.1/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.9024,
+          "normalized_score": 0.9024,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.6116,
+          "normalized_score": 0.6116,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 0.7345,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 175.21,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 16.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "1.2.1/trial_1": {
+      "record_id": "1.2.1/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.914,
+          "normalized_score": 0.914,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.9389,
+          "normalized_score": 0.9389,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.7168,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 353.16,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 9.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "1.2.1/trial_2": {
+      "record_id": "1.2.1/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.8167,
+          "normalized_score": 0.8167,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.4714,
+          "normalized_score": 0.4714,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.5742,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "2.1.1/trial_0": {
+      "record_id": "2.1.1/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5996,
+          "normalized_score": 0.5996,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.7257,
+          "normalized_score": 0.7257,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.1697,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 321.32,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 12.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "2.1.1/trial_1": {
+      "record_id": "2.1.1/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5063,
+          "normalized_score": 0.5063,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.8446,
+          "normalized_score": 0.8446,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 0.5426,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 213.22,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 20.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "2.1.1/trial_2": {
+      "record_id": "2.1.1/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.0,
+          "normalized_score": null,
+          "details": {},
+          "error": "judge failed",
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.6946,
+          "normalized_score": 0.6946,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.3888,
+          "normalized_score": 0.3888,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.9997,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "3.2.1/trial_0": {
+      "record_id": "3.2.1/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.9905,
+          "normalized_score": 0.9905,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.4717,
+          "normalized_score": 0.4717,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.9481,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 369.83,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 16.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "3.2.1/trial_1": {
+      "record_id": "3.2.1/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.9,
+          "normalized_score": 0.9,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.7132,
+          "normalized_score": 0.7132,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.5124,
+          "normalized_score": 0.5124,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.5413,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 383.4,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 9.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "3.2.1/trial_2": {
+      "record_id": "3.2.1/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5093,
+          "normalized_score": 0.5093,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.6766,
+          "normalized_score": 0.6766,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.1278,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 344.5,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 9.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "5.1.1/trial_0": {
+      "record_id": "5.1.1/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.9635,
+          "normalized_score": 0.9635,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.5952,
+          "normalized_score": 0.5952,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.7135,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 288.7,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 16.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "5.1.1/trial_1": {
+      "record_id": "5.1.1/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.8172,
+          "normalized_score": 0.8172,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.6271,
+          "normalized_score": 0.6271,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 1.4162,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 165.65,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 20.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "5.1.1/trial_2": {
+      "record_id": "5.1.1/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.95,
+          "normalized_score": 0.95,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.823,
+          "normalized_score": 0.823,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.9825,
+          "normalized_score": 0.9825,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.3233,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 164.29,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 19.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "7.4.1/trial_0": {
+      "record_id": "7.4.1/trial_0",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.9,
+          "normalized_score": 0.9,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5151,
+          "normalized_score": 0.5151,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.8415,
+          "normalized_score": 0.8415,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 0.7804,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 321.18,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 11.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "7.4.1/trial_1": {
+      "record_id": "7.4.1/trial_1",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": 0.9,
+          "normalized_score": 0.9,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.5772,
+          "normalized_score": 0.5772,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.4885,
+          "normalized_score": 0.4885,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 0.5371,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 345.74,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 18.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    },
+    "7.4.1/trial_2": {
+      "record_id": "7.4.1/trial_2",
+      "context": {},
+      "metrics": {
+        "task_completion": {
+          "name": "task_completion",
+          "score": 1.0,
+          "normalized_score": 1.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "faithfulness": {
+          "name": "faithfulness",
+          "score": 0.5,
+          "normalized_score": 0.5,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "agent_speech_fidelity": {
+          "name": "agent_speech_fidelity",
+          "score": null,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": true,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conversation_progression": {
+          "name": "conversation_progression",
+          "score": 0.0,
+          "normalized_score": 0.0,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turn_taking": {
+          "name": "turn_taking",
+          "score": 0.6855,
+          "normalized_score": 0.6855,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "conciseness": {
+          "name": "conciseness",
+          "score": 0.9734,
+          "normalized_score": 0.9734,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "response_speed": {
+          "name": "response_speed",
+          "score": 2.2023,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "time_to_completion": {
+          "name": "time_to_completion",
+          "score": 188.14,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        },
+        "turns_to_completion": {
+          "name": "turns_to_completion",
+          "score": 11.0,
+          "normalized_score": null,
+          "details": {},
+          "error": null,
+          "skipped": false,
+          "version": null,
+          "prompt_hash": null,
+          "sub_metrics": null
+        }
+      },
+      "aggregate_metrics": {}
+    }
+  },
+  "aggregates": {
+    "1.1.2/trial_0": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.31666666666666665,
+      "EVA-X_mean": 0.4734333333333333,
+      "EVA-overall_mean": 0.39504999999999996,
+      "EVA-overall_pass": 0.0
+    },
+    "1.1.2/trial_1": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.4666666666666666,
+      "EVA-X_mean": 0.5610333333333334,
+      "EVA-overall_mean": 0.51385,
+      "EVA-overall_pass": 0.0
+    },
+    "1.1.2/trial_2": {
+      "EVA-A_pass": null,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.95,
+      "EVA-X_mean": 0.8801333333333333,
+      "EVA-overall_mean": 0.90808,
+      "EVA-overall_pass": null
+    },
+    "1.2.1/trial_0": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 1.0,
+      "EVA-A_mean": 0.65,
+      "EVA-X_mean": 0.6713333333333334,
+      "EVA-overall_mean": 0.6606666666666667,
+      "EVA-overall_pass": 0.0
+    },
+    "1.2.1/trial_1": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.6666666666666666,
+      "EVA-X_mean": 0.6176333333333334,
+      "EVA-overall_mean": 0.64215,
+      "EVA-overall_pass": 0.0
+    },
+    "1.2.1/trial_2": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.6666666666666666,
+      "EVA-X_mean": 0.4293666666666667,
+      "EVA-overall_mean": 0.5480166666666667,
+      "EVA-overall_pass": 0.0
+    },
+    "2.1.1/trial_0": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 1.0,
+      "EVA-X_mean": 0.7751,
+      "EVA-overall_mean": 0.88755,
+      "EVA-overall_pass": 0.0
+    },
+    "2.1.1/trial_1": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.6666666666666666,
+      "EVA-X_mean": 0.7836333333333334,
+      "EVA-overall_mean": 0.7251499999999999,
+      "EVA-overall_pass": 0.0
+    },
+    "2.1.1/trial_2": {
+      "EVA-A_pass": null,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.475,
+      "EVA-X_mean": 0.6944666666666667,
+      "EVA-overall_mean": 0.60668,
+      "EVA-overall_pass": null
+    },
+    "3.2.1/trial_0": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.9833333333333334,
+      "EVA-X_mean": 0.48740000000000006,
+      "EVA-overall_mean": 0.7353666666666667,
+      "EVA-overall_pass": 0.0
+    },
+    "3.2.1/trial_1": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.7999999999999999,
+      "EVA-X_mean": 0.7418666666666667,
+      "EVA-overall_mean": 0.7709333333333332,
+      "EVA-overall_pass": 0.0
+    },
+    "3.2.1/trial_2": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.8333333333333334,
+      "EVA-X_mean": 0.3953,
+      "EVA-overall_mean": 0.6143166666666667,
+      "EVA-overall_pass": 0.0
+    },
+    "5.1.1/trial_0": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 1.0,
+      "EVA-A_mean": 0.9833333333333334,
+      "EVA-X_mean": 0.6862333333333334,
+      "EVA-overall_mean": 0.8347833333333333,
+      "EVA-overall_pass": 1.0
+    },
+    "5.1.1/trial_1": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 1.0,
+      "EVA-A_mean": 0.8166666666666668,
+      "EVA-X_mean": 0.6481,
+      "EVA-overall_mean": 0.7323833333333334,
+      "EVA-overall_pass": 1.0
+    },
+    "5.1.1/trial_2": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 1.0,
+      "EVA-A_mean": 0.9833333333333334,
+      "EVA-X_mean": 0.7685,
+      "EVA-overall_mean": 0.8759166666666666,
+      "EVA-overall_pass": 1.0
+    },
+    "7.4.1/trial_0": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.7999999999999999,
+      "EVA-X_mean": 0.4522,
+      "EVA-overall_mean": 0.6261,
+      "EVA-overall_pass": 0.0
+    },
+    "7.4.1/trial_1": {
+      "EVA-A_pass": 0.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.9666666666666667,
+      "EVA-X_mean": 0.35523333333333335,
+      "EVA-overall_mean": 0.66095,
+      "EVA-overall_pass": 0.0
+    },
+    "7.4.1/trial_2": {
+      "EVA-A_pass": 1.0,
+      "EVA-X_pass": 0.0,
+      "EVA-A_mean": 0.75,
+      "EVA-X_mean": 0.5529666666666667,
+      "EVA-overall_mean": 0.63178,
+      "EVA-overall_pass": 0.0
+    }
+  },
+  "summary": {
+    "total_records": 18,
+    "data_quality": {
+      "records_with_any_none": 6,
+      "records_with_errors": 2,
+      "records_with_missing": 5,
+      "total_records": 18,
+      "metrics_with_none_scores": {
+        "agent_speech_fidelity": 1,
+        "faithfulness": 2,
+        "time_to_completion": 4,
+        "turns_to_completion": 4
+      },
+      "metrics_with_errors": {
+        "faithfulness": 2
+      },
+      "metrics_with_missing": {
+        "agent_speech_fidelity": 1,
+        "time_to_completion": 4,
+        "turns_to_completion": 4
+      }
+    },
+    "overall_scores": {
+      "EVA-A_pass": {
+        "mean": 0.4375,
+        "count": 16,
+        "none_count": 2,
+        "total_records": 18,
+        "success_rate": 0.4375,
+        "mean_ci_lower": 0.1389,
+        "mean_ci_upper": 0.6944,
+        "mean_ci_n_scenarios": 6
+      },
+      "EVA-X_pass": {
+        "mean": 0.2222,
+        "count": 18,
+        "none_count": 0,
+        "total_records": 18,
+        "success_rate": 0.2222,
+        "mean_ci_lower": 0.0,
+        "mean_ci_upper": 0.5556,
+        "mean_ci_n_scenarios": 6
+      },
+      "EVA-A_mean": {
+        "mean": 0.7653,
+        "count": 18,
+        "none_count": 0,
+        "total_records": 18,
+        "success_rate": 0.8333,
+        "mean_ci_lower": 0.6648,
+        "mean_ci_upper": 0.8603,
+        "mean_ci_n_scenarios": 6
+      },
+      "EVA-X_mean": {
+        "mean": 0.6097,
+        "count": 18,
+        "none_count": 0,
+        "total_records": 18,
+        "success_rate": 0.6667,
+        "mean_ci_lower": 0.5335,
+        "mean_ci_upper": 0.689,
+        "mean_ci_n_scenarios": 6
+      },
+      "EVA-overall_mean": {
+        "mean": 0.6872,
+        "count": 18,
+        "none_count": 0,
+        "total_records": 18,
+        "success_rate": 0.9444,
+        "mean_ci_lower": 0.6317,
+        "mean_ci_upper": 0.7492,
+        "mean_ci_n_scenarios": 6
+      },
+      "EVA-overall_pass": {
+        "mean": 0.1875,
+        "count": 16,
+        "none_count": 2,
+        "total_records": 18,
+        "success_rate": 0.1875,
+        "mean_ci_lower": 0.0,
+        "mean_ci_upper": 0.5,
+        "mean_ci_n_scenarios": 6
+      },
+      "efficiency": {
+        "time_to_completion": {
+          "mean": 284.2343,
+          "min": 164.29,
+          "max": 383.4,
+          "count": 14,
+          "total_records": 18,
+          "higher_is_better": false
+        },
+        "turns_to_completion": {
+          "mean": 14.4286,
+          "min": 9.0,
+          "max": 20.0,
+          "count": 14,
+          "total_records": 18,
+          "higher_is_better": false
+        }
+      },
+      "pass_k": {
+        "EVA-A_pass": {
+          "pass_at_1": 0.5,
+          "pass_at_k": 0.75,
+          "pass_power_k_observed": 0.25,
+          "pass_power_k_theoretical": 0.3333,
+          "k": 3,
+          "count": 4,
+          "pass_at_1_ci_lower": 0.0833,
+          "pass_at_1_ci_upper": 0.8333,
+          "pass_at_k_ci_lower": 0.25,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.0,
+          "pass_power_k_observed_ci_upper": 0.75
+        },
+        "EVA-X_pass": {
+          "pass_at_1": 0.2222,
+          "pass_at_k": 0.3333,
+          "pass_power_k_observed": 0.1667,
+          "pass_power_k_theoretical": 0.1728,
+          "k": 3,
+          "count": 6,
+          "pass_at_1_ci_lower": 0.0,
+          "pass_at_1_ci_upper": 0.5556,
+          "pass_at_k_ci_lower": 0.0,
+          "pass_at_k_ci_upper": 0.6667,
+          "pass_power_k_observed_ci_lower": 0.0,
+          "pass_power_k_observed_ci_upper": 0.5
+        },
+        "EVA-overall_pass": {
+          "pass_at_1": 0.25,
+          "pass_at_k": 0.25,
+          "pass_power_k_observed": 0.25,
+          "pass_power_k_theoretical": 0.25,
+          "k": 3,
+          "count": 4,
+          "pass_at_1_ci_lower": 0.0,
+          "pass_at_1_ci_upper": 0.75,
+          "pass_at_k_ci_lower": 0.0,
+          "pass_at_k_ci_upper": 0.75,
+          "pass_power_k_observed_ci_lower": 0.0,
+          "pass_power_k_observed_ci_upper": 0.75
+        }
+      }
+    },
+    "per_metric": {
+      "agent_speech_fidelity": {
+        "mean": 0.95,
+        "min": 0.9,
+        "max": 1.0,
+        "count": 17,
+        "none_count": 1,
+        "error_count": 0,
+        "missing_count": 1,
+        "total_records": 18,
+        "mean_ci_lower": 0.9222,
+        "mean_ci_upper": 0.9722,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.8,
+          "pass_at_k": 1.0,
+          "pass_power_k_observed": 0.6,
+          "pass_power_k_theoretical": 0.6667,
+          "k": 3,
+          "count": 5,
+          "pass_at_1_ci_lower": 0.5333,
+          "pass_at_1_ci_upper": 1.0,
+          "pass_at_k_ci_lower": 1.0,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.2,
+          "pass_power_k_observed_ci_upper": 1.0
+        }
+      },
+      "conciseness": {
+        "mean": 0.6586,
+        "min": 0.3888,
+        "max": 0.9825,
+        "count": 18,
+        "none_count": 0,
+        "error_count": 0,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 0.594,
+        "mean_ci_upper": 0.7181,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.6667,
+          "pass_at_k": 1.0,
+          "pass_power_k_observed": 0.1667,
+          "pass_power_k_theoretical": 0.3704,
+          "k": 3,
+          "count": 6,
+          "pass_at_1_ci_lower": 0.5,
+          "pass_at_1_ci_upper": 0.8333,
+          "pass_at_k_ci_lower": 1.0,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.0,
+          "pass_power_k_observed_ci_upper": 0.5
+        }
+      },
+      "conversation_progression": {
+        "mean": 0.4444,
+        "min": 0.0,
+        "max": 1.0,
+        "count": 18,
+        "none_count": 0,
+        "error_count": 0,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 0.1944,
+        "mean_ci_upper": 0.7222,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.6111,
+          "pass_at_k": 0.8333,
+          "pass_power_k_observed": 0.5,
+          "pass_power_k_theoretical": 0.5123,
+          "k": 3,
+          "count": 6,
+          "pass_at_1_ci_lower": 0.2778,
+          "pass_at_1_ci_upper": 0.8889,
+          "pass_at_k_ci_lower": 0.5,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.1667,
+          "pass_power_k_observed_ci_upper": 0.8333
+        }
+      },
+      "faithfulness": {
+        "mean": 0.5625,
+        "min": 0.0,
+        "max": 1.0,
+        "count": 16,
+        "none_count": 2,
+        "error_count": 2,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 0.3889,
+        "mean_ci_upper": 0.6944,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.8333,
+          "pass_at_k": 1.0,
+          "pass_power_k_observed": 0.75,
+          "pass_power_k_theoretical": 0.7593,
+          "k": 3,
+          "count": 4,
+          "pass_at_1_ci_lower": 0.5,
+          "pass_at_1_ci_upper": 1.0,
+          "pass_at_k_ci_lower": 1.0,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.25,
+          "pass_power_k_observed_ci_upper": 1.0
+        }
+      },
+      "response_speed": {
+        "mean": 1.6744,
+        "min": 0.5371,
+        "max": 2.9997,
+        "count": 18,
+        "none_count": 0,
+        "error_count": 0,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 1.3881,
+        "mean_ci_upper": 1.962,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": false
+      },
+      "task_completion": {
+        "mean": 0.7778,
+        "min": 0.0,
+        "max": 1.0,
+        "count": 18,
+        "none_count": 0,
+        "error_count": 0,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 0.5556,
+        "mean_ci_upper": 0.9444,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.7778,
+          "pass_at_k": 1.0,
+          "pass_power_k_observed": 0.5,
+          "pass_power_k_theoretical": 0.6049,
+          "k": 3,
+          "count": 6,
+          "pass_at_1_ci_lower": 0.5556,
+          "pass_at_1_ci_upper": 0.9444,
+          "pass_at_k_ci_lower": 1.0,
+          "pass_at_k_ci_upper": 1.0,
+          "pass_power_k_observed_ci_lower": 0.1667,
+          "pass_power_k_observed_ci_upper": 0.8333
+        }
+      },
+      "time_to_completion": {
+        "mean": 284.2343,
+        "min": 164.29,
+        "max": 383.4,
+        "count": 14,
+        "none_count": 4,
+        "error_count": 0,
+        "missing_count": 4,
+        "total_records": 18,
+        "mean_ci_lower": 248.6583,
+        "mean_ci_upper": 331.9572,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": false
+      },
+      "turn_taking": {
+        "mean": 0.726,
+        "min": 0.5063,
+        "max": 0.9905,
+        "count": 18,
+        "none_count": 0,
+        "error_count": 0,
+        "missing_count": 0,
+        "total_records": 18,
+        "mean_ci_lower": 0.6351,
+        "mean_ci_upper": 0.8181,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": true,
+        "pass_k": {
+          "pass_at_1": 0.3889,
+          "pass_at_k": 0.5,
+          "pass_power_k_observed": 0.3333,
+          "pass_power_k_theoretical": 0.3395,
+          "k": 3,
+          "count": 6,
+          "pass_at_1_ci_lower": 0.0556,
+          "pass_at_1_ci_upper": 0.7222,
+          "pass_at_k_ci_lower": 0.1667,
+          "pass_at_k_ci_upper": 0.8333,
+          "pass_power_k_observed_ci_lower": 0.0,
+          "pass_power_k_observed_ci_upper": 0.6667
+        }
+      },
+      "turns_to_completion": {
+        "mean": 14.4286,
+        "min": 9.0,
+        "max": 20.0,
+        "count": 14,
+        "none_count": 4,
+        "error_count": 0,
+        "missing_count": 4,
+        "total_records": 18,
+        "mean_ci_lower": 12.6931,
+        "mean_ci_upper": 16.5833,
+        "mean_ci_n_scenarios": 6,
+        "higher_is_better": false
+      }
+    }
+  }
+}

@@ -50,14 +50,17 @@ __all__ = [
     "Recorder",
     "RecorderConfig",
     "RenderResult",
+    "Segment",
     "StageRecord",
     "TimelineEvent",
     "TokenSpan",
+    "ToolEvent",
     "ValidityCheck",
     "ValidityRecord",
     "VoiceTrajectory",
     "VoiceTurn",
     "downsample_to_fit",
+    "from_timeline",
     "matrix_from",
     "placed_from_frames",
     "render_timeline",
@@ -65,18 +68,29 @@ __all__ = [
 ]
 
 
-_LAZY = {"Recorder", "RecorderConfig", "matrix_from"}
-"""Recorder names, resolved on first touch — see the module docstring."""
+_LAZY = {
+    "Recorder": "recorder",
+    "RecorderConfig": "recorder",
+    "matrix_from": "recorder",
+    "Segment": "timed",
+    "ToolEvent": "timed",
+    "from_timeline": "timed",
+}
+"""Builder names, resolved on first touch — see the module docstring. The
+real-time builder (``timed``) is light, but it is a writer like the
+recorder, so it is reached the same way. ``ToolEvent`` here is the real-time
+one; the lockstep builder's lives in ``trajectory.stepped``."""
 
 
 def __getattr__(name: str) -> object:
     """PEP 562 lazy export, so ``harbor_voice.metrics`` stays light."""
-    if name in _LAZY:
-        from harbor_voice.trajectory import recorder
+    module = _LAZY.get(name)
+    if module is not None:
+        from importlib import import_module
 
-        return getattr(recorder, name)
+        return getattr(import_module(f"{__name__}.{module}"), name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:
-    return sorted(set(__all__) | _LAZY)
+    return sorted(set(__all__) | set(_LAZY))

@@ -7,9 +7,10 @@ The base owns drain-to-tail-silence, floor integration, stage marking, timing
 boundary. An adapter owns four transport methods and a capability declaration.
 
 On timing: every duration here is built from an :class:`Interval`, which cannot
-be constructed without naming both clock domains. Nothing is back-computed
-from byte length, and a turn's *full response latency* cannot end up wearing
-a TTFB name.
+be constructed without naming both clock domains. Nothing is
+back-computed from byte length, and a first turn's *full response latency*
+cannot be reported under a time-to-first-byte name: that class of mistake is
+unavailable here.
 """
 
 from __future__ import annotations

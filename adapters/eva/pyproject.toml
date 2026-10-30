@@ -1,0 +1,26 @@
+[project]
+name = "harbor-voice-eva-adapter"
+version = "0.1.0"
+description = "harbor-voice adapter for EVA (ServiceNow's voice-agent benchmark)."
+requires-python = ">=3.12"
+# harbor-voice itself is the host environment, not a declared dependency, the
+# same arrangement as harbor's own adapters. These are what this adapter adds.
+dependencies = [
+    # EVA's audio conversions (eva/utils/audio_utils.py) are reproduced byte
+    # for byte, so they run on the resampler EVA pins (uv.lock @039efa0a).
+    "soxr==1.0.0",
+    "audioop-lts>=0.2; python_version >= '3.13'",
+]
+
+[project.scripts]
+eva-adapter = "eva_adapter.main:main"
+
+[build-system]
+requires = ["hatchling>=1,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eva_adapter"]
+
+[tool.uv]
+package = true

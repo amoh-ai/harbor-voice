@@ -1,0 +1,3839 @@
+{
+  "language": "en",
+  "records": [
+    {
+      "domain": "airline",
+      "record_id": "1.1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b0117fbc7a728478c4e895ab4ef36ef87b30b3eb59f25ee6acf05681ad45218f",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "d980468c90ed08faa4c958dcede886edd3c6d9274114f326a42bce7bd3e0e3e9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "47a18c7e8f94551434abd1394e511cc8d0e14ab28e0224db51f4dfc6a1078f05",
+      "caller_prompt_chars": 15260,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "068660f9f7e446e327b0d97513f5a30a82d8598530431f80313c6ce965833dbb",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "5491ce1c7540c4355ec1558e874896ee300f85ddbf83e8f1526caaf9afbf726a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3de43580f54f7a0f697df413dc0a01109a6ee52b4f4ccd89779228fda5f869df",
+      "caller_prompt_chars": 15634,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.1.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c6fd7c20e7d158f0b03ce666c9af536de993f03c7403ca612c0a7268ccf97483",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "7bbd7184acd87dba30c4818339b178da79754eb6f7b11a03d10e63edfa8eafc0",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6a4de1a3140f2d089df45cb5bcf8fcbe3fcea3e2b42fe9ece821d0c6ede771f7",
+      "caller_prompt_chars": 15309,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.1.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e6d1884d6cffc7b3fa2a6fc86059e2a31e7639096b7218a2a7cb0227df461536",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "68081a14003acdb4a5fc77899782ab1d152697a33795c053238a70f1503fb861",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "1d7b76a5b60be4cf617da03fb92023a11f77f857ab8113cc06df0fcb331d8669",
+      "caller_prompt_chars": 16281,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5fb334a566c6edb27e2c34960513d8459bb9c5f86f92b97bead152ced2c28ae4",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "785b84b465747b27c4f1940adcdde575e002b009fc36a0c6182fc0ec3b31f586",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5eec2ec96dd8a8c2fe9b0116833b8dd3463428232ec59f2ed376b8139964c49f",
+      "caller_prompt_chars": 14353,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f29cb6e3f9123103d2c86a83874baf8a3f3b355bc35d25eace4d1c6ae3ce365f",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "f168507bd5eebc0d133dbb2aa3d87d817c9108b32faa78e6ab4851db7e53a919",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8ed28eed5400d89c7ab0df0f32b69f1e67f16f2c8b202e27414b000973ddf836",
+      "caller_prompt_chars": 14887,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.2.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "267de9e252f0cb4c24049dba67fec57b62ac825b705576ba9e2c2076d8ea239a",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "2514821a1ed4415d24490b1cf1400a940ce0044daa2b1cfd55da883f4e074bd9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "07a0e6286626c415b5275d64aaa61d3ca5aa0cbce28ff108ed8ba5982f3754fc",
+      "caller_prompt_chars": 15184,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "fdcf6dcc56f373b4034cef8dede32c40fc94db2ceb03c4fedf4dac65ab104ce9",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "aca2242dee128471106eb7f147f9a1c4195891e543f955dd421fff26dc86ef21",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b8f79607939b76c396694754efad19db8eb74ffb132d36403fdaf93789b526b5",
+      "caller_prompt_chars": 14770,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "1.3.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "804bbf1e259b248b3384a599ccf5f239bc7f9fb443b3b5a3407203faefa50f5e",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "658b4e7da81579d63e873e891019aa1339231c4ddc4f4c4d0f300f6d0588aed2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "59b6c9d2b988654aba2e60917298eaf68837d213c34e2f61e9e712fe68fe6f18",
+      "caller_prompt_chars": 15687,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d629c2a0211b3de053b3a5896ef2218b561bebe9e3f4f100dbced9fb6dc67fa4",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "888bcc16ad39444b98013e8611659e93e890af9a8261f196ce4e8fe14faafe47",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e14564400ad31ff03ec5220e8fbf2733151050b9dffbd6d150fddab408afd1f8",
+      "caller_prompt_chars": 14928,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6e98eddfcf6cbb25c191c65249516edac3044c4ce9b4a9ace5739887775d0812",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "2de684cd4dad2536e3cfa62fe30e524664341d456adee2fe3e636366770e8f8b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e62f0f3ae992c1177e9b065988b0f61ea5db772d2a41fc597533a8daa3c424b2",
+      "caller_prompt_chars": 15276,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.1.6",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9ad70173022dc832b083682d33a9ac1098be938ee8ada33b9f85260cc99d4e0b",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "0d433d05d7abc04e620ec30991b6c6e319c99b11b9f03d62afc5b7e84eb63f4f",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6ac50569a63fde9fe5cec97d616e494480a140db56909ef558f7a8c0efedd2d1",
+      "caller_prompt_chars": 14237,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9736d2ed30b50af907845116c34740fa0ec4eb2890a9398298fdf26a7ef83832",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "9369bb63b5d006c827ee9f39729bad462360dc6713f2a91fb704d49dfe8a4e76",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4b4aefa281557da0abf035ccacc0627ac72a6aa35ce460ef4d310ba4d8d8bb92",
+      "caller_prompt_chars": 14769,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.2.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1e76a5e40c8795e050b1519a2642ed2108f5b624d5dffe21a4dcac291253e1b2",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "d99d0b859d567c9b9cf0e931be4b335df5f9c7120987f6dd375cf026f433221d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d53c9c67939020ab60a917289bd6ce2cab69dfa0c0a1300ea84c6558b2cb46c3",
+      "caller_prompt_chars": 14375,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.2.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "15333ccca3b88ee282147785c87f5dc537da18963ff7c09d0c0f4f203e9346d9",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "4cc9d2ec44d91052da46aed070640cac7faf81fd5828e0c1678f36dc69fc1482",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a4b7fffbaecf2040cf22fe4466bfbf1f8012b37cf30848702166d054a150eb61",
+      "caller_prompt_chars": 13984,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.3.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "4a7c4f6597d594cc352f01decffca3a96505d14d1716913573f9387a05f1a70f",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "7bcd5da1ae6132b4d45d5a7fefa733f7d42631ec217b53a7ec40c64bff013a1a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "266ac18a1b28d13d12bf2e57a561b0f114b2f9d3b129d1dc5d67df1cc7ca182a",
+      "caller_prompt_chars": 14915,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.3.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "648fad94e585b326f0bd9bdbd5433ebc897c0766269640e38ab16a71319604a7",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "38abbafed1f1a2e9c64f6f6a97af3a5362828be79be99b6a5dd044e9a7318847",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4ae09b1e34e6c42cf995be370ed10d42fe7abe270e726c009b97a048db6cd373",
+      "caller_prompt_chars": 14989,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.4.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8a9371f791e5511df088c216230471560086304c5ce87033cf6946ee33bad588",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "424e0eea3ce4279a4d4530ca355c4cbf6d05b2137c7e083f80c441ded4e79c6b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "21e002551895c77cd94053b695c3405aac50613c7f53d3bbfa6fcea08197d13b",
+      "caller_prompt_chars": 16012,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "2.4.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b799442962f23927176900fe19bb487ee36be67710656806cb614afd7183778d",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "850da953d85eeba9bb2ee860ba5886758e25052bc6a1b8765be5597508068143",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0b7b9890fa03d2a89fe3814bfb2de3ab250d6416bc54bf68d285e7120b3b939e",
+      "caller_prompt_chars": 15348,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "3.1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "4bf3ec000b19471dd2a36833e3a856c57ea3d3a936faf78324256006710bf701",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "02afb1af2c579be94a5bd9b7d4fad8dad61a291c0cda0a3ddfe9e70b4462c96b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5fcd7d1f226434ebfe1d7f93bde3688dce25b996304853ae06c296487ee839de",
+      "caller_prompt_chars": 15035,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "3.1.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "01f84b5f556f3adbf48de8b2dd0be4b4991dc7247a95335049b83596df2f4f59",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "21e741195c7da7fe4650b1141f3c53f19ca08056b9a244e83248c4b45308cf5e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e147e1999ee2ee442c86bfa8c5538977f9d8cfc7ae8ef0f027b0a082bfefb05e",
+      "caller_prompt_chars": 15590,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "3.3.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "305be855c546a7092e96c1a3550e43bff0dc6614f4d8d1ab06188c054c200403",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "1ceadc44d24046f7b653d1e9f8241c4941a4ab7dc48ff6835625492c0947510a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6a586cf777a0d61d4dc61a149a4912e8d76041ee9f375e72c15259f56deff1e6",
+      "caller_prompt_chars": 15059,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9f7943a926c1790ce7a3cd75fc56a1b35447eb28124024647b93ff58b8287917",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "1296f122869d1869335b052c08568f870bcbb2eb31385d3f253de1dec4d776b6",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "66cf2010cb1d28d51e09b46f09b2b211d9e3dba571763e018f754ef4b46c5643",
+      "caller_prompt_chars": 14839,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d7ec967ca38cc43a83ec4b378b7ffe3c69354cad2ff119560c9f554a31b3a544",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "d7693833e39d94288741d1e9b8cf9afedb4068cb20b4c560ecafb188ade75548",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "023a642eb06129859c0090140c88ea422e8fbcca88d940c6051e3a121cff56f4",
+      "caller_prompt_chars": 14861,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2d329340f0fb9f365e2d38fbe7c0461acc7289b95197111be7b5d9f94cad118f",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "e240c4b03f5777329523730891690095548af13ba65c5aa143a58808c3700566",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "dc9dd957e72939285ebcf576e6a684b792e92e49d7bff2bbadfe3fbadc31e4c4",
+      "caller_prompt_chars": 14639,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.1.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "434157ed4508a82ebfd2a97f468ef68ae26d8268407b6743dd9ef3e40693b9bf",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "48af1bcee81322a191d667644625d2f308d90de7ee3f8f4a8967aefab4921c10",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "dbdb2f1115aa3cb4079bdb9e53b654c3202d79eb04b9dd420fff6ee037112dc2",
+      "caller_prompt_chars": 14482,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2cea2d5dd5e1e1e6f2dec09d7a80874c1bd4ff9b2b0f2d21cdf41e46d4471192",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "e1fba932aadbfa9d9f24b5b7797b3072cb76d1fbeb4a16fd1a5f495943706285",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "baaaaa0a5207787ebb2861f13ee1cffca9bf88a19b844abd7774e3773364bc8d",
+      "caller_prompt_chars": 14431,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.2.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "fd93b6fd9a915805a6a3045b304566e0b24dacd6c9a7a9a43e908b35c9d40db0",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "cd053ef367a691ba00ae7a6f3219815e12998053c40ba321e2f123c2105d2d3c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b1c95597872083d0575f8819ab2d45e88cc85d71e11a90ae1e41efe8e3de8927",
+      "caller_prompt_chars": 14790,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "4.2.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2dc8d1f251eae6250f7e07e597f62b94a004950a5d57431cfa12c72cae13a99a",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "9b60ad43a6ea6628a5ed49c1411de63c3cbb9c8d6b007f9e30b4a3db67a74158",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b2941e50037d76b5db57ebc3a3e146903fd789c113beef31fcecbff4a0aa3f95",
+      "caller_prompt_chars": 14543,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "4613552323e70c0a3f713b3665468a849c1d85187fa8928769bacf06f5781656",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "b5b87e58e2af90bfd61c787f329509dd4b510c742491ee164d045552d374d07c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "ac649ab66f5bbd6dbe263d884a203e89412c037915b84dcae9f172ec936d9b64",
+      "caller_prompt_chars": 14369,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8ca7744316e43dcfee6187bafac9f9a77aa65586e08ed64241bd858e9ed818a0",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "8c28b4b1d70f6a879c6c20a1a71106e163c685272e2352bb7aa2067a3e44b4d9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6b775f35fe715e65bf6e732b30d067c6d6547dd1aab22c032c8a277ea8279863",
+      "caller_prompt_chars": 14246,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "3e025329828457398716b5a929dd05457dd18774c0e27486fa8b9ff899d03805",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "1472036255076521d230c9344b77b46f09623f584163692f157beb2c296305c1",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a629c3c2e3dd7e681930fb82cc96bb9b72f259f6f2c2e0795bfb86fe593fdde0",
+      "caller_prompt_chars": 14727,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.1.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c9290827326fd022db8670663080ad23cf677851afef27c04e25ebc70190daae",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "de5ee4809526ac31529e34a8d8b0bc4acebeea813adca4c512f87f0cedb505af",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d9ab45ea397afaa8d432d90b56545d9fb77c449a0defc3f35e2ea4af92fc0ff9",
+      "caller_prompt_chars": 14406,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "76fb48f5835f28d53453025454f41b7059d10c069f2cab2bb53071b351f0d65a",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "8bfc9d325cfa69a38edd5675bf89e957c8fef13ea5a8ad358948b429f3d01ac8",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "ea56d96205a2c0b557f57b7cba424c6aed3efa9f3cd1cee17c3c96ea2cf4c41e",
+      "caller_prompt_chars": 13699,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5b35f57d7c44b934896c1bffb7d9445636f1566111b5c78fcd51b433fb342cc5",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "0b436e3de2e98f36567161ffc91574878e55bb68fdf3b4b1c1d2f1256a35213a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "87001496b9779db83f3c40328292d388f1b9e4db7dc2e86f9c4aca25605593a8",
+      "caller_prompt_chars": 14638,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.2.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "70e8e2646ba9139af0736d609f38655901e13370ce84fc405e991c537fae87b5",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "3044aee97579b6ac5962c39a9055c05acf2ae9a8ac927414f50d9925ddcd2feb",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b42c3671fbb3998c5056e1fa17f91872fd73290623d8daf5d96b9f34dd5617b9",
+      "caller_prompt_chars": 14992,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "5.2.6",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "0bc15e333228125b72080c45475c08c9654b34af70527ccfaf0460ec8c7ff07f",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "c079c154f706e68142eab1511d18ee56bafdb74f97377545c60e9ad1c287edc9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3b26457c8a5e24b8ccf2325324909a3b898ac0f2b22485fed8a49dacb67c93db",
+      "caller_prompt_chars": 13985,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "6.1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "243051c1dc7da83763faa54c6bbcb856264ccff85a333422cd137f60cbe20a1d",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "f125b4077bb10bac2786bb326431a1588a6ee4e0657b95e172ca9f6a25b713ed",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "1d853286e410817de1f7fb99017998e1fd4cf41e534cf3361ccbf015862b10c8",
+      "caller_prompt_chars": 15082,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "6.1.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "02d834bc7aefbff3a2a1d857e0b9bdf2d20e90b81b3240fb7a160c5bf7ed3d02",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "0fbbccc0f71a57f64f78de3a767bacd0231dca9a3abca638309df7d65054c326",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4ee110f88aa48296077a43c68366c597264ed4deba81ab6cb04ef99c003633e8",
+      "caller_prompt_chars": 14618,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "6.3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "156675371764c8a9e405bf7380cd5a9c7e57273eb7129c1735a64fcd6d6152a8",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "598e17351721d001850b19f02cd48419d7eb677b3041ccfb86f6be79580f26fa",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "291d9aaf926947ae8ae4e53fb9eedeee8213320259500e458c98f55735f312ed",
+      "caller_prompt_chars": 15060,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "6.3.4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8aab5f330e24215b464b7d83bc1606f31c45e165feabe9b567e98e46c3cab2f3",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "92804fffbc6cbaa83582ef139c7957f33c4bfaced856d162c5f3f4202ee3e319",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "42ae93bb45cca13be01715e31a850e8dbba2c8fb8774582eb71f49c2032a5d92",
+      "caller_prompt_chars": 15735,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "0ba9d1b53a78ca65c3f6c967428f804b872055138e176ab5d0d48ea64759d771",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "af3774364f67931ef1c21e14accead5ee327ab0a48faa67682ad5b6c245e6c5b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0b0f7800f967a2ffd9b0e9ccfa86891ee16f2485730fd75cf3d79b797274c099",
+      "caller_prompt_chars": 14413,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a00b45478fd3be33ade5d4c5f4ca962e331075dedab9fcbdc38dcd49cc2384f8",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "e1f4bceec272cd6402bc546bdad953fbbc7d6724c5be1c4dc72295b5dba1c30f",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c53b5cf8605d3106b0526aeab3db06e9d93eeabe510b279ce08d31b94b42a8cf",
+      "caller_prompt_chars": 14978,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "fbd9badd2ee9f525be1f3e1405309bf924f92263f73c803d6417275ebb2cd6a2",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "e91a0326f3fb336fa1c4034d669307e227307a2e15d5ea8f6fddca96db4cb0c3",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "87eddda5251b30f4ee959a40f8c60d97ba982026a61ecb4f8f2e3cf4b9607e8f",
+      "caller_prompt_chars": 13785,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "177c0e4e0b0a0189ad86ba2204884940daadf7f426e585c8b3955551aa70ff4a",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "b1adf3a931d6654a1d8e965fa9c0972896ab9e7415fc2fd1509935337be7aa43",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8817f87d4fb06dec91ff198bd4bd4dbce6954eb85356ec90bf90f969acb101a2",
+      "caller_prompt_chars": 14703,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.6",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "919a03157f63577c4829b7d9ce69634bc5f1cc6878e99afc9990dd14b811652b",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "e4d1853fe37043a88669691cb0a340d93049c36c530fe62b86681bb0f090ce63",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "7b0c3f7eba9b862fc1ecb6819323e4996e23b1a0ff35db11642d889e21735a50",
+      "caller_prompt_chars": 15038,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.8",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ab6ddff8b11ba970b03d492b8e74bb518c5b8dc724fa59f941c69867db91598e",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "7b1e9ada7ae2b1c4d12a2e50f87094a3cd21f2e33e2a5c4b9bc5a5f73f265b0b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8605650108473948df5fb0fbfc832cbd9d61ee9794e3e10f5b48c4b854d65bdf",
+      "caller_prompt_chars": 14767,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.2.9",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "760f9bcdfe12436e8346fe27f024c26210001f8011ed293cdaa042613b9c9c98",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "def61255027f01106c3e54648cc19db14e9ec4df07e02155c86921f6c5eae30c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "1d17652548276adc1893c4aa416df646efe88a6070fd3308f272c398227c56ee",
+      "caller_prompt_chars": 15109,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b9e52b83e897e3387448b42905c09aaa786afe9bf2382ec2048e53aeb1c16867",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "37d4cc10229ef1bdd48e9093a7223f20d0abc0e7178ee259c414ae1dc9ba5534",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c076937525239a56f4f49c52acdcb6ec8c4e183f498e3edeabeef408950beee5",
+      "caller_prompt_chars": 14900,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "airline",
+      "record_id": "7.4.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b45f228e8e57e676aff8a559a6dae3f6307e1deb5dfdf6ee9760d9d7b2497ee1",
+      "tools": "2737acf573ded5c74b7638da867d31ccab29858d3e9338f2db60f1ec8864f823",
+      "tool_count": 15,
+      "session": "3e37ee70ffff440c88adb6b40451f6afe54f47ebc9a982812675a2273ea5216c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9c6e08afd5dcdf33fccc23e31aa667e2047f940753d2238887af9ccf8ae9d685",
+      "caller_prompt_chars": 14199,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b3243c2b6a9f14b6d703df5d0c1854646998a723f4c62af9f876aa3adf2b9e87",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "fcaea6c56f374e149f17ece4f216ff929c6e33d25df824fb87702db63fcb7c25",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8eec35e12a7a9700666691f9ab41b10522ccaa1660ed1872356a1011aac9154a",
+      "caller_prompt_chars": 14668,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "10",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ac9af6d4c265c29d2cea5cdc8e8c46196900a483598055d15945359a1f1cd39a",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "686b53b5283c674674346d9b2a8b34c9abdeca041c9f4713157bc7738f793114",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "736e745d2400e916049ff2b0dd51905f451060e014d9c9020d6d3e3f081d8394",
+      "caller_prompt_chars": 14705,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "100",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "599cd1601fcf65171f767532d4e71112ee856d0991b1b7740a4f92d0d9996765",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "52db2305302decc9cda5ce7fec0a372181e02c357c72ccad8b4f3d6b8b5944c7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "219a482c30a90d6dc64ff8a1e2bbe19e182642c553937a9973200d477dd1f23c",
+      "caller_prompt_chars": 16086,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "101",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "fe58ab54c5a14f5000c8ede937215266387f163b75abfa19ddc08779a9d42afb",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "b044c640abf5a7d29853f4b1295d202fb654b97d00217625d60e866affe6c8d6",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "57de3336fde75d5ac54ac1babca80f46db424e86016e025668d95610c6f8f5d8",
+      "caller_prompt_chars": 15678,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "102",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "bf97feace4e8d6d51e53a082bc492caf5dd7cd98ae3cd9e2b4aa0968fdd4709f",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "e050aa0e2123d2d015ff238a7d676015a65f95157ebc8bb78fa59a6e414c8a9b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2ba714c407b9fc209a0786aa2a434e286ccabc936ef60f4e222b3d4df041ef89",
+      "caller_prompt_chars": 16202,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "103",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "03d5f0de27340076ba5065644f1ca5796023f9023db6351c52c0feb0cc38c36c",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "ac5e099e31897735ea529d202c42bbf575f0a5ba8b468ce20dfa02e6711d1ecf",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d0f6069e44e2e2ce222683611bdc344a7b91b4a65c1d2e662fa06871111b3d89",
+      "caller_prompt_chars": 16060,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "11",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c715987643a7959d5bf6e06abf043628bd6c349be5a1b4bbf1961a808586974b",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "6a11d9fbb72c3a51142431b769e2e4785183b6cb8f235d35436e3c8d3bf22398",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0043dffda9279d2b08d179c02538398e12547b0dffc91e37dbda6e84a78a5cfd",
+      "caller_prompt_chars": 15330,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "12",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "7a8544d3baea699a683fc743515a54483e79e11e330199c02fdf8460469f0abb",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "d184b0eb5a2dc216ce2ad774267ed22dfb150730cd6ca10e13bd0bc40710ccff",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "585ad2812d5bea55fc2935b60d4c6eded23f707b5856ca6fc245a88c9f4b0239",
+      "caller_prompt_chars": 14975,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "13",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2bdf485cf362cdbf40242bca6812ed27a61186ee8c3ada78b6fa5dce38302234",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "25d26798348d473a4c923e48eace5b89208cd32559fe508385c8ea2a5b4c8e83",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "684c7fe7e760a945d66ec89929ca364a0fd98cc320e8abd96e872a75c41fe0c9",
+      "caller_prompt_chars": 14014,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "14",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5c32427486e85aca46de60e18ba4f265d89b3428e42fdb2b0b0781c044d1b3ce",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "52b0352ed9e9f9adca3196ecf1356cf694424f460d564e098f3cfa6dae2e0a1b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "14ed5720f4c1bbe7a65e65e43a82c761593eba7c3165318ae7b025907e081242",
+      "caller_prompt_chars": 14224,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "15",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "453ffbce9692a7bb3d3b5085579d4b2ed88f63fdc169ad4c606b29892eea4aa1",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "e380ba583dcb612bd50ee57c2f7c5c57912598d7423df7301377b7d1f10ba18c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b1cb4afd8b76108878626e9aa3886f1977cc6a204a76dce585d8f1bc387d1345",
+      "caller_prompt_chars": 13965,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "16",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d9b5b0a6dfe77156f59bf1704bf192472454595207534d789fc603588a30ca5c",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "a622c57f57c8c059ad647b6437d2b7dc09ed0065292279d6675836523d4192cc",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e76dc0aa4f900a1b66096115c8b5a98ba3c8b160da6d355108c209b36dd9c008",
+      "caller_prompt_chars": 14873,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "17",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "29b9dd778f29a4174bbb918d9a02301322719fc24dd9450f75544cbabd312ce6",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "5981c585050dde5571a8855fc2a6da29e39a39588d016713760e6b535c4ad96a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "296a96de5ac2b258e8362dfc1c0ed31a141e295ba4e16e89d7123d6605b03679",
+      "caller_prompt_chars": 13501,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "18",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "0e578e9b4c6a039d40667bf2d295aca4854f6661869e4910dd63e33378afab78",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "262fb9f2b7a58a3952cb7197130ae9cd07d000139d45eb2845ef404305a97bfd",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "dc5c6d03baa675832f878287febe66ab7102134fc1a117ece3d1ceb4a671617a",
+      "caller_prompt_chars": 14542,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "19",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c4963629019ed7aca1cb32fff3a38abde6c284912e8e2b41cb9705fcb8817b48",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "f9bdcdb3e17a794de8cfb5cc5ec87eec7ec5b3d885b14fb93591cff47c09bdfa",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0bdf5d77c7f05d0967153da1255b906bb448c017e3f9b2e38ad213b71f648dcf",
+      "caller_prompt_chars": 14845,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "af9f05a0465d28902051363dce943acaa999ae2e6ea1ac9c7182ff3682c2bb58",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "bdd94c0aa625b85a916be75152711ce53e92710b261fb8a898611a01f2ad5270",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "7a89a0f293b99d1a63732c91972f2671c58da3a7ce1a384d7fb32cd1e2e8cbe4",
+      "caller_prompt_chars": 14643,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "20",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c91549d2a3c202e902986e439bd95088a056aba08cca8ab7a84f55d09980786e",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4d0049c6f7ca48c84a2047faa3756d11155fdb55d3b545d86cb47723dbd722a3",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8b0cbf33d7f1ff806fda560fc503f626ad60f7a01ba5ab6027fc5fdf801c58ce",
+      "caller_prompt_chars": 15225,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "21",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e72cac405ae0c42b1b625ec0608fc1d9ad058899e6b13bb0bba520fd390dfe63",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "55f1082df86bfa540c64c61e4ea80327ef8a363a758e4366603a652f32147bd8",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3872894bcf37f4e3ead31a03c42f029cd730aafdd256be8bfd44a1cc24e47bd9",
+      "caller_prompt_chars": 15010,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "22",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "cadbe98d2a6a50bfa167467c8f247ff1503e38fb13cda29b9a4e49b26cbc9da5",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "7564d09119001f24843d72d1b8fe507d27d50d26dc27e61ef39224e30b7f83cd",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4f39ae08942def1fc65d5c121ece5b802e954b54fc91bc8ac6917374384fbb1e",
+      "caller_prompt_chars": 14211,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "23",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "763e7c8d78b3835577db7e0375008629a0a412223bed2599af9e18fac32a40ee",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "32980e4fb0384b967abaa76efd3a0ff2842e64ed5df551339475220aff7b979c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "ccaf1e05caccfcffa988d1de0e6d0b581c8753756eb4aec1b29fb452070862a8",
+      "caller_prompt_chars": 14459,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "24",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "548977979209650510aa209f313af79ae75f9a27bed03fd0c5eb23a5846e7df8",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "6931d115bb06f33642e9b1d505b60f0e8aba966396d6a1277b6e84a849a19c1d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c686f3e2b2005d9540e1efbfea05b078ab8c230870b80d47ec138b96a2243012",
+      "caller_prompt_chars": 15423,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "25",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1175c05e359f32f4fc92e0534179744d85739c09a095510b4cd64653a1a30c78",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "2edb9797a29bd858f64c323582032c948f7ccdd2ec94520b0c5233b8a824a96c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c2eed69162d831699ddc0d00e7afbc34c0946470bd21712a015840545651cbf7",
+      "caller_prompt_chars": 15647,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "26",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "808ca67bcd4c1adf08864c88259248115c06048a2da9ea96f42de6aa03f3bb22",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "d7035b0bbf8453f9d77a101ef59339c6b549b5b993720b48bfed946167e56527",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "7657490329b3b7e330590d2e539f30de1fa8164cd4e5329f0728c484bcbc4a96",
+      "caller_prompt_chars": 14930,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "27",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "837184cafbf431148db0e113163269e754eca69014073f9eb7a193d6f6562ac3",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "1ea3a6bb2ad530b0a718b24f4c8b8c639000a4408cc282a269427c540acd9f4e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "7f529b2d0194718978a1b0a6befbe9adf1dac2d17652955256114999d0da3360",
+      "caller_prompt_chars": 15593,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "28",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "dec0f0923b8fd37d4af7e297e56d03bbf774ddf3894084500793db16fc347d44",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "6c62c202870da25b7d863dd8e02eb0e3512460ca54ff1271fb9dd93211f1373e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c81a7cc35f0557dfa059e64a2f65106418e5c0a2b7d43e3a3c3b9faa20692f5e",
+      "caller_prompt_chars": 15178,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "29",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "408bab99ef91bac3444c14b04976c7206d967681d243203e4be3f8f6f8ef6bb2",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "b3f0eecc28ef22045886ff25cb40c3f7692534cb34a2a6283f89b81e4fa1bd43",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "7ec0984896a68a6c0566e5ea1c0bf853f2b0c3a714f2bb0baf2cc5e383b74fca",
+      "caller_prompt_chars": 15742,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "30",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "10f9e7fed7648a87c7652ed567a497e7042e023516a4269da1f894c5f9ab1a46",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "7f0bb9a752d7c25d1a4c62061f273fdb08e354c5916a3737e3e29a950888c4a7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4ccde070ce264a4eb22a1d40ec39e505c6c3d082fb37795a33b735df116313e4",
+      "caller_prompt_chars": 15590,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "33",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "fb65df1b502b3e97f90c3cd9b4cbba5384f795636f4d0528d4ca1c070ea097da",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "a3ce93f0c5c4ad1613a1af382630fcc89f90e6abf557eddc991f5ca4ca1414d9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "f9af1794b896acdb0f83a71c416f666c39496bbe524ce9d6d7219ca3f91ec9bc",
+      "caller_prompt_chars": 14535,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "35",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "42e399e41618c1f753aaad96f0849debb38e2b0f6040d18ea926a5515f3b8309",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "67fb73df1d307dca613e7a6c45059932232c8ea98ab597ea2ce024294fa048fe",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2ae95c24668d098fd3267bae6216bc5d557ab1e73350080fe8e38c61d69d8918",
+      "caller_prompt_chars": 15999,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "37",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a353ef0dbad215f1679de33b0813fdcda8f1d4b5a3922f229a5b974e858783f1",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "7f3210bd1b06bb2588037c423cc8123792779e339178cd52476447b92bc51d70",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "dc57aad40da62edc8f5becd38558e5c46eace06b34c7d28fc64cca4ebc002b46",
+      "caller_prompt_chars": 16526,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "38",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6144d8c077e8e2de18587ea56abad5d42c3589ee4dc3892d9b652a12bd4f7c5a",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "e67964059021e62bec652cc590204fdd428a2b00e389405c7e54a005d040eaf2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a0fa6095628ae1d12f5791c85720c7554b7dc5604463b6312fb1ee12c31c4ee1",
+      "caller_prompt_chars": 16205,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "39",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "3af55ec72c612a068cd10c5b0e296bcc8f71e9a68da90dc539bd96751ca0b88b",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "f0e030e969808081696e231c766654e32341db0cd835a35325735aff4278848a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8ac7c0f6141caa10ed5b1ae8ea4295db621d550a892ee2e0eb960c10ba159938",
+      "caller_prompt_chars": 15582,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8f982a86f31464233f546395b7ed03b22b867f7f5b6155f91cd6f12f5d834bcb",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "2e1e3a5362ab65e21a86baf62ec06a5d1a0a9ce7108e2ac432448782423d7641",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "24de3f50cb54ebb1d69bf377d5951af49c1a6cf0e7a11dde550ae72f08a334cd",
+      "caller_prompt_chars": 14670,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "40",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "32c2cf564e195c5a6e374812a35c31345b32099f60df2892ad777944c461b13f",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "d2c58d9fbec96c201d3c6bd0387404e0cba804b5b534e3aaef54819f9f93f8ce",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "47c212c39b2e6c9d057324f9c35fe8d35a8bcc58ca87f24c36149b95979d88d3",
+      "caller_prompt_chars": 15096,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "41",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1bf0c46ede66c26f8de244fa3a8c84f83d6b83f2c218b8969c62586693d4b4f2",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "1acf4adb1d69edc8c4b1de1b1b2616e233bd313b05bedbf43247f9a0fb76f867",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c0e6b8039a4605f74a19f0545d53b349c07ae587170e66d03b04f3a9cc439286",
+      "caller_prompt_chars": 15425,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "42",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a92bfce01207bd553491676ad3d90bc23a18cd9b4f0ec440b9d0c7215f82238d",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "ebff2c89b63525e570e9d77b277b7519bdd0d78c1e3379988ba5f44bacdb14bc",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c72c2215e2e68ceae944324686eaf02877d32ebaeec929cf0bcf4ad88898afd7",
+      "caller_prompt_chars": 16627,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "43",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5acb10a32414babae3340b74bceb4d1c227bd0fc320c04c4deb08f8be27a9257",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4d6f20990da15d365eb5dc715b2fc2eab7827a6d86b01e005cb7987f72ddee72",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8ee245a770041661a0e8af2259dbcf80a69b27b9b03734d62603fdbed8493582",
+      "caller_prompt_chars": 15999,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "44",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1505d00a8dfe8baf6f7527a37a8f91287f07bf160350c833b5aeb5d2b15d2a64",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "125b9e0e215e0e32314a5175710043ce7cf332dc16e0c964aa05ce4e87c2818e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e964bfa3aef49c415a5bd2219401579a0855e3f410d557297a16a7698d346cce",
+      "caller_prompt_chars": 15865,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "45",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1791996e91ade1f95e557d3d686b942f7ce22102345b1b8ad5a839098674807a",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "5159cce3de2ded342e66e84c74daed463b0aa0f4fb14bbb283c91812b9e38e41",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "79eb80e08891cc5ed4974bf7b933aa0e2fc36382a0109314f231f212e555cd80",
+      "caller_prompt_chars": 15224,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "46",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2208b3dd1ace35dd04ad0d05e76a8f7ba10430f1d8e911275eb21a2878542e75",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "0513839627072bb0a3f98af93e9ea4f82f0f0909adfc2a48ccea40c0c6222ede",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "41cd040354d3e841e1105d81e5e17dc8cc88949e2c668e2b252d51cb53a01e97",
+      "caller_prompt_chars": 15558,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "7c177d8f103076e92901580c5e1ac56488316983fe41de5c269b70293059ac09",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "1f30a908e6de29db2c6d6e66a50310034734f14008b34193fa4873a54eb29035",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "076343abdfc179e24dc7c56d18a5698a17d721ff1e55cce28bd03e45ebba57fe",
+      "caller_prompt_chars": 15670,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "51",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a09088f74c5a8ec69ab87870bac119138268c884297523386e33d19576230b70",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "5f4ece81e65c53a66b28f8ef7497c1b38e19a7f27792b533f819e5ff8efd9e9a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d959a0f8b8c9514bba0851c178fa71cf6d426caa16d7b5fce7f26670249e4dd6",
+      "caller_prompt_chars": 15837,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "52",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "bffbd7d29e6da83260896953d3d15eafe7e6f7f751f97db49b36beabe7fa1edd",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "163b5f564c74a4703048264b0d1e8b4a32e0629690ef088e7cf435e64f31bf22",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "87b9393d0532727ee30ab1791f1126009c5b810b979b4ad555964aeb1147e02c",
+      "caller_prompt_chars": 15733,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "54",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e1eca00442d8551c2bd7adb454c7070556b1af4c95866e0ca10ed9a3a62040aa",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "afb13ee6c341171475f1f9f90b424286b71a816f101bfd9404c1e6eaa1e03580",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "060dbadae922afe6d81acf487104120353e5e8efb84280bb2fe7fb9d5f447bfc",
+      "caller_prompt_chars": 18405,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "56",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d7a0d98b4a338fdabeb186b4dfc25cdf341ff25665dd0839313a7861de7e394d",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "7e0cc92803813647a4c689ce0448fff441054fdc6d4d92918a14b3178d85abdc",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a46e8a81df483048b85abd86426dcd2670d837c5d93e707483d6a76ae7fe825a",
+      "caller_prompt_chars": 17620,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "58",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ded105377a6e909377d4911e011d2814fefeecc6f97b3b2e3b3570a7a507551d",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "e21edf9f47ccff0c316129f79d31f6a1a78b770e1698f0e35e0f2621d9421d34",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8092bd04a7b9401345a5e304a761c276261de80e71ad15c09b3677983d1fc5db",
+      "caller_prompt_chars": 12785,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "6",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "86b0ab2ac62aca58234fbd382d36044a580ea9919078ad1f1e5339d05372a184",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "7f740f336680484a1c9e29c40a06d54584f08aebc842c12935268c4b087385d0",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8f4f05472fa9ef19608086cb69371a2fe575fd5a88dfa19b58a10a767942e97d",
+      "caller_prompt_chars": 14776,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "60",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c527cec66756f4a62d48016148c32c22bca3ac4a13dad704e802bf18c313d433",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4bf0fbd1ddb3c72f1761c5f1f34f0672efd5934132746f40d7c9b63a88a3c515",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "1761f98d92e1b9f960a33d5f68f99f05ca309ebf1cc9ce73f785d7449c38798f",
+      "caller_prompt_chars": 17867,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "62",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "807cc90d429f8c4fe4b374585420b8279252f18f2543a43014947b5f38554f41",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4f3e181d6fc98ef8222c36c4aa161f206ef734f4c1d6ceb55a95c453242a19b9",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5572ddd85eeaf3f5fa3873838cce75de69451983f4229304bbdb0e7b23e4454e",
+      "caller_prompt_chars": 16817,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "63",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1998a4de66c94266f2f0c4f6cca11044e0e4ae5255546396afbe1f5d13eca436",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "5d5ec4ba1a8d279692915c1d00f0a5bb67f4fbda2c0d84dd5a750571a322aa2f",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "84e56458ae32ef7440c0eb381742182dd5f9b909f8f6c9691d8e235bd6511e56",
+      "caller_prompt_chars": 16475,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "64",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8e50082c2f62b17114f80ba987e70af8980c4b38172571a38f6a93f416bb7ac7",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "c88d37791569c8d6d959f6690b59b01fdd7d38cd3b1b9ce3fc073fc32434714b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3ca7ad4269ada18bf3c4d06faddeeca5eeded4fe93bbf00dad4d779afd6e43b4",
+      "caller_prompt_chars": 16649,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "65",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1ffe103236a666b4c731dd3d47d99988bf458a5d9d293d7328259aa1b19a60b1",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "ef80b4448b7a89ed53e8e0083f5629b62e9d48185bb250353f4597097e0abaff",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9df9eafa3aeaa81b7ef7558eef5062a57ca1756f03851aa1fb1d1dd22831e25f",
+      "caller_prompt_chars": 17149,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "66",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "7de9f22ab86ad26c5518496a3ec2e0600960900f6d8e5df7bb9ce32844eb0551",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "8769c8787dc7c5d1c4352b29a53c6f2f26893938335a250fb81d8c0a1db759ad",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9b9e6df24c687c3a211a45350305792ecde344d4361efb709baee91fad15f526",
+      "caller_prompt_chars": 15767,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "68",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e1a23ba87c6de96fe010c3188803ac5f4685f9a503755a27d3de880eae811452",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "bdcf4268b519f52c21bcbd36da8ee78e511095a487431c73044f9583d6688a63",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "ec46430dbf72c75511331d4e22e63565014467d2a02bbafe1748885bb5b3ccda",
+      "caller_prompt_chars": 17884,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "69",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f0fa4cc10dbcd09fab47c2c6c145e0d0e7abc680918f6d083303f060e48bd365",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "31ed0d15f820dbb8b181e40453bdbde021e02c82e306cb616617b515f79dc6be",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "48af0051e5dc7e8dd383de1afa417522bb95e32f53d3ecfee448c1825f8214ea",
+      "caller_prompt_chars": 16359,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "7",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a4a69c24804a39410c9b0477c666c581b24b51fb99ce5424393a74c1554b5d4f",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "fce829644f39c26234704e700455c06c3d121fd595087ffb3fc968864ee206fa",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9082b3f0a3eba555cd15dc0d334a3023f3f387efb566b31fd39632ac45dbf24a",
+      "caller_prompt_chars": 15088,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "71",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d5d991af3b305f51a5f68f2e99bd0c5b8cdf311010d983676840b5c0f3a862a2",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "d2ba84548e1b009d99461d2ae96a1057563ae20ae39cb17be10c74a9ca8c7138",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "056b29a5d84455738eee10d59874a5d4ba4fa0e8070766495623343ba6772aa0",
+      "caller_prompt_chars": 16844,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "72",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "24df16beb53c96bc869aaa753ace4c830fba035163a402081c6755b4ed5c6f80",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "26cfe3d1b383148d1e0c2796669ffb11f02c927b1deef4265876953fcf25ae5c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "27088082459d3fbe4db0f1d9770f1f3c04bd4c3e28c75e02a325b4169ad98f46",
+      "caller_prompt_chars": 15716,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "73",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "30a6e8f584842ea34333d05195db8e89a419966c87727174b816e2d0fc90f9f0",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "0e157c2295ae154d935dd120bbd6bf1f6fef6f191f7b975603d7364720989678",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b913db5bbc3c8c7dd3a804f529641949aeb653d5ee91a7dfb458b832cffa7e69",
+      "caller_prompt_chars": 16615,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "74",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "be13e4923774bcf82afcff8b2d430adc23a71ff44032c8aab4fa9f7cecfa1f6a",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "903ee5644dde6cbb8d1e21568f851eb19b34529529a01b251cc0ffb8d5e09d43",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2609b7cba05f04b1e321fa6e1ae3d688357eb5c8ca40f3d525dda1008f3594b6",
+      "caller_prompt_chars": 16767,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "75",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a290d317bde12a61f03ed912318cfddaa43b096282d3d115430be50fd4f46e70",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "0318a3488dd2582748978cc0eef56cdfa5be051b3d128cc9b3739fab6097e94a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "1a81ba2f40477e4f39248058efc93279d384ff56a567d327664d02105a616945",
+      "caller_prompt_chars": 17287,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "76",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "35363ee4b3b4e0e3d2387932023398e0780138d791994ea25e0bd4fbbba91b90",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "b6b40baa1e51c64d0ab3aad5da0a9ae20210d87c8fa111099aed04318d410aa7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c9b1d1e0f24ad35bf157908dc0a80c4634319b36136a74dd4f660f767f0e4265",
+      "caller_prompt_chars": 16387,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "77",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "7d65cd5cc104270e7b0a9760aaa271e3a20a26151068c9fdbc741f29fa8f4be5",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "def82e88e6925b0d0fc3fec59dc6e56496477875f0a345453d443fe4cc2f22a1",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "24a7544830fd32b50678c447836a17cfc39240adb8f3954f6f4e22d64acc13b8",
+      "caller_prompt_chars": 17350,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "78",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c537d01cecd45db7fad1ec47e87a80442866223c117d2b106d4354c7394159fc",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "f5785e3a5455a78988d6181eb4c09dd458663ba700ea588b2338db26e19eccc7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "00fbed7500d8f713684e20626fc7b9c23922e7a9e40ddcc72d8009ea2fd061d8",
+      "caller_prompt_chars": 17691,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "79",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1a252614af82890df96a69354f096843f0a590e07c1233960c651b02b7251e6f",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "dd92364d9e8e4e4671e0b99ebd71c053c3d5abe8c2e60baca73fccc466c8069a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a58aee0780d6100adaa6eff9360b4a9a21b226e48160662229fa04b3fbaecd43",
+      "caller_prompt_chars": 17444,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "8",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "de9b7a65c7e34818514b494694286d1a83155628676f8a16abe1db560fcdee26",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4d8e1c0e8e5e7d78061af8f11baba836b69c2d53b9fc01c84da1dd9c3f868a8e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e0e812d52a7778a988e03c171b1462bbd5cf5d5dd0c2ecb2703f321532a6bd74",
+      "caller_prompt_chars": 15002,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "80",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "46c6a73bbcb33be74df53a9b2d2767ba6baddbdc2f3c37d9f4d231835f34569c",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "ad120ea63c526888dac1befb040bcebae35d12004a35dc84f04117fa0f307813",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2bf0b979d0d2dca2ff569cee67664dcc44565aeb0c6da676190c0fed03b73e7b",
+      "caller_prompt_chars": 16434,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "81",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "82b4d36413722d8de0b32f5ecf3f1a76162a45e3943cf916c6d5c3f9d6ab07be",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "4058deb8d80d972c1da8ebd6e222413a58b74f22516c157bfde4fe9b8213c51b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "39f70b06b02a3ef38429313a43c2c5b704369db79db3e83716e2b87c974fc9ed",
+      "caller_prompt_chars": 16821,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "82",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "432d7cf464293e59263dd3a0311036919282e9c539ce510bddb6748b9bb5a149",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "abc80669a141bfdd6c4ba7fa2d497e36e6892bc46e5e73a6a1b38f3051294e5b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "98a874029d1fb495d7828ef58b5b5c227a54e2e022c8577c4e851809197f78de",
+      "caller_prompt_chars": 16741,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "85",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f25d5dcc9c0562d820fa2cbcaa00b63159fa3ea665f46f33fdee185953211f7c",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "58816d80d70331f07093171c5dca2db1d5c401f21ecc597b48677ca2e129dce3",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b99f9b4b3cdae6ab596ca9b60b137eb4d32d5f26e23db4d85eb737c4ed98af81",
+      "caller_prompt_chars": 18447,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "86",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "af5db98410b57c8927dcb89be5886bf72ab7e7cfb6b89cdd42a44cc0d57939a3",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "1f2f42f2b317be0839398e599eadcb8ca60e9d0a82d6b6186033a96368650c23",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e3cb8e96b56b395690676596bec1ecc2985f82178c0c8bd724b1951222613c9e",
+      "caller_prompt_chars": 15841,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "88",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c8fd494025b35ce1b4510b259578a9b02b898530d916ba1d2d0c2c2d0ebc24b5",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "b99a4939302481ad568b325abcb40b6de5d50482756f4e5bfe1f65fb5b28ff7b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a8da50937c529b178ade8df8cd135673f1a7a817cb744eb72acbab5b3c2aa1da",
+      "caller_prompt_chars": 17820,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "89",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6a9b990082121d01b0ee48bb4268703a88a2b4c405e2aa5d48b4c417b8875cb8",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "c7d93cdf91980396888028dbe8bcedea3ec8c81d60ce882ceffb3dd53d0e0b03",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e24ef517588381fdde364d5e2e9f6f947b54da742e575058461c87af16db8af1",
+      "caller_prompt_chars": 16525,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "90",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "3e5e9af7a195c9c220942b362e191f597f05bf89c00cfd6b1c97e3fbcb37fe17",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "bd8caad9ba58cd325a0652fe10252946cdcd784c668a12f082ae5dbe3d8d5e63",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "673c02e97a9bdc1a828a57e48a67afd1b2817559be6033d2422e636f54d6f267",
+      "caller_prompt_chars": 17536,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "91",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "bd1b945bc23f8485d09f66620a30f5c5534113d96dc67a73793d116d9f51e2f0",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "f9e4653c3c7e5492c1fd015505807179a3e2f1d1389c2fe10bb2863fed2035ea",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "bcf30a60657dc373f1e84d05c1d049672cce9410ec73f812df9000304dc9127b",
+      "caller_prompt_chars": 17031,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "95",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e9f7e8e4f33a5598b7ea21851902b9b6e51b083b60426203e2e56b56eda7dcd7",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "e694eafca0f0a6774a5af564100e13ca87d0b16fc029697dd6a3ab651fb2e741",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "74b6391056621118ae29c8341a364aa8ecd31f55639d7074bde7dfb4a596f0d9",
+      "caller_prompt_chars": 14423,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "96",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b7a86fc007e14309d2755b0dbc3c1775bc49c47d7d789e50b22d1641f7e03f43",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "994f876ec7eab8711fb99e625db34ea1c78abfc84faff1aa963c1206b27effea",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "77aa364451a19d76375b65807d2a548fd71a4e241bb04d8abcdd3038fca3bbc6",
+      "caller_prompt_chars": 15926,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "97",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "95419b988bbcb2402607d7dd164057f9ad4ad626307592232b8c91924708f7e1",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "405659f5bde1654be072f959f9ec6f16718b8779e714946aa2a6c5cc9ba050c2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3417fceb57eca35789f469c566ef20581a898e23626053d8ca1197eab66784c2",
+      "caller_prompt_chars": 15521,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "98",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a67bb265583fec8d4135df7bd856804e43860e0e94503b7ccfa605a80a081dcd",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "d6e4643676b04ce0a170c2f00f5c599e82a5e377874aac294f9e1f0d08bbd409",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "52fce498602c0b4718937018926a0ff6eb49b3f97ee07aa52ab8dab98a94bef7",
+      "caller_prompt_chars": 16047,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "itsm",
+      "record_id": "99",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c0acbfaa6f1a2f260af3d056aa07fe46db413b3652146368ed0978c95a75ecf4",
+      "tools": "93355f3087a0ca1f6a278a9c852b7696ead209c41ad77a7381d0523520b742fc",
+      "tool_count": 59,
+      "session": "05cad62a3363e615108b4f2a141ec616340870e0fc29cba182058cde21e68811",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b664fe8eef992965060d38c4845c3e20643fdcc98ade760b107d9216210dc272",
+      "caller_prompt_chars": 15822,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "78aa7c1759097399d4f660872a5ed5ff22138dd6f19b9b1704c4b033cb21ac9a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "92a9c806448d4563a021988a5bbbb717afe8205af271d5e2cb532f125674e9a0",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d68939dbd1359a7398a38ebcbb90b97f06763c9c2764312634de1903d70279eb",
+      "caller_prompt_chars": 15234,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b47a75247f34f7d244b335f790290e7f697614c778107600f4954b080ce8b76a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "b91538ce4bded2f766765f092cdd4ad46bf85c969efdaea479038ca17586b385",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "aa54d5f3d305bd230fdffb1040b8d255e24706e4cb78da434411aaaf3fa8e5f4",
+      "caller_prompt_chars": 15258,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "10.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "07635e97410bbe1f3707f40ba89d955fb340655f12770a996b7c8f4933c2e674",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "ff9d32bcf44d004b14dab0020144ebb7f91a0ca106d168a9fd0cc49d3009988a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "82e826e99c53bc413fab64ae92db547adb6c6faf0499124af044d61f97b32f62",
+      "caller_prompt_chars": 14681,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "10.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "02b01daee35ef86f0bd72a3d2925a15a45f80dcbb4cfdc26e1c8db0936900465",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "5833f163d6f69a538aa5f3444ca550bd8fc4f2921f0c93344fe4e1b7c9bf64a2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "82ed5ffb120800024029af47b41bcd0775ba38201bbec56b118a3baad55d2ede",
+      "caller_prompt_chars": 14843,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "11.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d9ea94f791df733056d1fed9837b047e904fe45468426ee67e557c5cacf4fae9",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "c743d5e475cf8d7f85fa6745485512507241ccf19b5acce5714449131b306a54",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0a7b4cd4712cf44576f223cf0dcc762300a2f66f6a67265c986c755ccc16d455",
+      "caller_prompt_chars": 15696,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "11.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8dc2fe8456bb25c96fefd10967f247033640ea6a60797293acc341b856edacac",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "3b0dfd786fe296ad61a725f6d668ad790a0d9eb864d21b2b447eaabac30c8d1e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "fd6d8bcb99f7cad8d456c00ffdc1a8f8cab6ec0d0e29f0053c2bc091b050eebc",
+      "caller_prompt_chars": 16015,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "12.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "02ae3715e9b5d03f867239f600971f595f175682535df4e97f690733e222cdc4",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "b60f35f8ca1aa1bd583989c1243b1fec9f66cf369a14bb96c80cdd8c1ce40dfc",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "465adc348b09557c45a990e5a9d1ec5ade5f0562c0e175c42650e3c7be26cde5",
+      "caller_prompt_chars": 14836,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "12.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b05cd4cd7864db02b7ac8d96675863269755a499f8fcaa19f74c11ceb1449351",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "d402005cbfcce7e3b6c6e10deb10f9dfb76491eec86f357e9e0dc133df501e23",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5f0fe6291baf76f9c3f439c7064b444b1fe58e60530ea671b92daf467d5d67c6",
+      "caller_prompt_chars": 15188,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ad3aa5295a06c54318ad301324cb6d37cf5cf182c59669fff4d5d4f3249ac517",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "2a703870b6a34a92bc8c5bdc37fb698ded18cf55c98863014ef3ec7e56ddd29d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "a9b42aea6dc458ad5aa609170387efd50e7590fae0e3f825f0f6e2c4a4099d73",
+      "caller_prompt_chars": 15005,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ef2e1743c06e920be6796d9f9b8831941a67c60a07712b83952152ddb594927a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "28353d164b8b4f2dd07f7c55e521f905775f9548d2fbebf255e3eba48b49b0a4",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "948871d4de61c80cdb18001704de011bc92075634c8365ce4b45b3159d3c6a32",
+      "caller_prompt_chars": 15053,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a13ef6e109c9f4cae4bf3bd184d66eccd5be71b4baca27a70b654adcacb51432",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "97a1271ddae81bcfa608c4aa99e2c310ff1799c47683f0e55247f6a5029dcf57",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "92143f00e7099c13d702beda45df70bb8134348306fd82441677af4c7d049049",
+      "caller_prompt_chars": 14934,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "3.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9d50bd729388a2ec1e173db9515637a7de5684e3b2fa5a0e4ca5d33add5d4d68",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "37d45a9904ff9218a169d7f0ad0a84703219e08a3239d930025c0cec6223dcc2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "33d77a60d4cadd0caa41a6fbdec4f7b3f6b47e59f61b3e96f3f07d637f348e48",
+      "caller_prompt_chars": 15786,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "4.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6cd0efbae2e1bcbf790c2db53a9de578e5d2c13247d30da502fa17c4cebc2c29",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "0c5f5c77aa31a5762451ca8ed27b37722466a41eabd1b976a970508db4fb2586",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "eca7ed973e0ba0a2bda0781d5ff47649dc5dbb6781162594015bf5e3907fc0c0",
+      "caller_prompt_chars": 15424,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "4.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e47bd1cf53ac5531675b3cb36ab2efbff4d145b231d9974cb0d5258dd64a5fbc",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "37286d90cf6f47ff26ec486fc571cb01669ce68107bc1a2fbe4393b2d5e608f1",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "abf1e3f94426e8300637d61c1e27d0dfe8597f1d6cf28e8e1dd20862a0d0c6ff",
+      "caller_prompt_chars": 15180,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "5.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "345552b3f2a8ecfecf8aa448f356f7463898747c670a00c785b995ef35e64c69",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "7cf1b1bdb9a624a2fda6f24b869bcf875c7a14df15724014e16ad6e50196ece5",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9d3cd19a32808a2581bec62ece70900a87f318d640b4fbb05738eb5715399558",
+      "caller_prompt_chars": 15470,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "5.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a6d11dc84109b001502d65bba68492921ef126a1db0bd489ff029641609dc8e4",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "b06fe77bd58fcd3caa153084599195b456ba8e5b748243f7286fd2805c851dd6",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "818a1bd5164cb5f1e6c6d0895ff59df1aaf5e229dbbff4f79bf4cdde8e6f9c4f",
+      "caller_prompt_chars": 15454,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "6.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "21d5f68fc534dedd8a6be5fca86d4475ed2e4c69115bf0a613545c27731094c7",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "d9ed207d29a4abb081c2763cc29488b711eb20dc40e5c939e39b503e9bf57802",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2f420528c37915ec530af2e7a66931889dd42315db250d9355549f15fc14adbb",
+      "caller_prompt_chars": 15483,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "6.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e2b1d48386363fe7d01dc7eae434382277eb3331417508a98fce9c20bbda401e",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "fbfaf076970c86841b1e950506e5494e108a09e490ef3617fca7ba3e2529649e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6edaf54f24f3a05aeef6b0fb00c7fc3c2918846bf31e348bcdf3ce508e24970a",
+      "caller_prompt_chars": 15862,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "7.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d12f7798e924efef868c8b272d5b083fb8832be3666aa2cfa6878e1f41d8bed4",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "28867809955d1cb98c45460291dc63ab4ea1e7a61aa663e62802e38386bf5117",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "463816ae4e0102db7b4c5e3c2c31b6f95c1bec8d850281f87895b1fb5474e9f2",
+      "caller_prompt_chars": 14666,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "7.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "48af30851fba0ab344b159ee9461ac90fb67c132c45121fcc1b631f2f98e6288",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "81e70d540e0ad2895e9ef1de9bf8f6275b1474ec8e7a68b33b9b190fc4a87ede",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0779a425112ed05ea22dc1864f1619a45ec62820b045585fcbea3fcf7bb35baa",
+      "caller_prompt_chars": 14894,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "8.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d116ad87993eac3c233f2bfbaa7584fad74c316f25eea72d6b46e4be37c6a384",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "6d48f35f1aaa98741aaa8ebad715c76a725e22366597ad0ee5d6ea01a5bb0b8e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3f5382af963d91dbf83ae91cdee07e3b2aa73f8a84ff422ba3da03acc7c41ac6",
+      "caller_prompt_chars": 15747,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "8.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b35df569c00e31e78b14fa057f8945588ca6d85181284df312e31076fb1a080b",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "be59876b456431e6371eb7f4a2a3bf4da052f0b0961759bc1efd007181a0db7d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "46e2a77ad056f89a5bb51007824aeac17a5d75c2c1a72fa2f66b0fbd855f6497",
+      "caller_prompt_chars": 15519,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "9.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "728a3b7a74aac658375c253f2a3ce7ffc94e3ba66a3e4ff5d7c25e06f0a35ba4",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "9f1f858def60befb25f227c514725eb46c2f0e53d30cf913075cc276ce244f99",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c5aeaef505ad32e451029b1d850676bf4414b4e19dbd523cd1e30a787f87c1de",
+      "caller_prompt_chars": 14315,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "9.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "823b5142da4cef228610231f97479d93aae5dc925743cd8798cf47cb84bfea2a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "2e1aa5e8890597463a594da44f27358bfe9b16d971f38ee17c7e351e5ab40d59",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "cf5749a31631d951ba5de7a4c253dba38e5a0ba4e0d556505e4fe91a75b3f1b6",
+      "caller_prompt_chars": 15028,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "22fcb6adb1cccc94bc485cef886be0521cfdcd6ab697cfc42cc8b1d26f6545b7",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "39ef22acf2fee179ba63e8062e1bab5e83c4d0015bdc36ede63c001c2f39338e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6975a02fd038f14d54566871a02108c8fcbdb4df1887e974d18a7a7e335c4382",
+      "caller_prompt_chars": 15629,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A10",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c7b17800359e0b041f40f5542e4a4f66ed1cfac95b29ab89b314f3e8a9866bc5",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "f492f89d8280029dc98bda8374fd6950404e7f973b26cf243e8a8b861812350e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4228202dffecc1d36e573d8f3324cd2ad2b2b0b232b88c3933d281eb38465c59",
+      "caller_prompt_chars": 15594,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c6f89cc8adb08644e9e8952c8650a96ac59790191f2404391f6b0302ff41b515",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "5cf4c42b20876bd69447d521c060738ef6f382660c26813790745aa9224b3a02",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4ccb88fc5ded77aa558b6e26ccd1689b964fbe8fbd58b86ee9467299240b7ded",
+      "caller_prompt_chars": 15880,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "15d72edb7a763fa96869bb0ea0783af037b3431cdf89dbd1a0e997a727e851ad",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "c94f319db2e92ce332bacde20ca7bc9a87baad9dab9257ac4db23b9d758bbcff",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b650379f3ed7798deea2356fa85b0b9e3a4f9c6dc79ad4c39f9cf7a67cd1303c",
+      "caller_prompt_chars": 16503,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A4",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2ad8c586b96702771fb238f839bb61ca741fa6c59cd873048cfca09c0f3f6057",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "ecb120d0121f16146db27ef41372c5d63d230c5c69ccf426094a533ba99dfd0c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "4cca617c9eae7d1c6505c8c879b9833c3620df80c95764e10e89b2a167841fe0",
+      "caller_prompt_chars": 15270,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A5",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a748461e32664c53b5ce35c1e71b857ab970e203b55e0628772129ef59217ce3",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "c5cc61e1e901a224fab9368916b3eb707b35ff5872b91f0afdd5e7239fe2446b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2553890b59e7425f10aa42e2b49dde2738ecbf61b07551396546b623aa1cec0b",
+      "caller_prompt_chars": 15919,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A6",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2d9271d1a98d07cc56e35c25c6e8348eb5eca29f13781ed1bb6146225856305a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "e23db0b098fd6db6c4f4a2e83f7e0d75eb5afdaad492e00f6d12a33d421fdb67",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "641497bbcf1009e8ddcfad655e59dc4b9d27cdc36aa45b94cd06da041f8ef6aa",
+      "caller_prompt_chars": 15884,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A7",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ee056fd1130430c0fca3bb82276cfa22eb930c345199a4a8a4091a31afa6b48a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "28818eb22a1eaca2f851196e2b3193e9a30995f400c98349094d939fb80f17a2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "919c603a4ddb0e686fc52a246e9f01132c3d66f2c54abb998a6bdb5e0c853c8a",
+      "caller_prompt_chars": 15836,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "A9",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f61021d6c43b23e0aba4777541b2cc46d51eada8c7869e7a1150812944ffcf8a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "44db6192768aca788e0e5be1a3a6a05eb94a8cc37df3a4692966569bd9833c89",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "05e453ed5c8dd39aa7799a8e600dd8c89678ed528ec92e1f6c00a40e434ca6ba",
+      "caller_prompt_chars": 16021,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f1f872018dbbe70d205d24df36f2918affe7ffbe0e152f7109cf8f1058a4e44d",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "55715173aa1b4c43a93f2becab2e329ac0dc7bdde6376ab8f46883ada84537b3",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "53fa30a252d2d04e452112029de55f194177645e1fb4261b1e42167e9b064b81",
+      "caller_prompt_chars": 17814,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5fcbfc9f3f56aa4729ae57d3c7395b0b69143d96473971625caef4748d980b32",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "be8b70841983d3fdb94cf70f88b7e7bf38e0f91661d2020abc2272d2b3344fec",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "30ba55641d6b161a77d0bf7f675f88753cfe27e4bc38ab19c5073e07ce1c1f4a",
+      "caller_prompt_chars": 17402,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e009a8f801bb74505fc19c500b5106c1807d34420f17cd9c40a116256a449fad",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "96b7a1c4162b21c8ef1059e597459912d9685408ff8eed7f416a401434385f44",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d57e1ab7b1da65417bf7d70274c8906c858ffdc64b6e483e5cfdcd330b4304db",
+      "caller_prompt_chars": 17521,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D10.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6126a98851bfb5707b71b8aa03ebfda9f32816115a798511b27e9332d443c927",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "be0f4bdaad6669e8a4abb1ac9fd864c8d7baf4765a3b917d125b700d5d38974d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3825023c12a4b404b71a29cde184b5846865cc953cd160e2ec29752e7fb1ea7c",
+      "caller_prompt_chars": 16840,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D10.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "264b3b7ad687bc451ef53fba7a6db10921734f65c3e587372702d4e96eed6c15",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "a1df947f723b3d6904ea2f52ad6b25f36ea21fd220b868c5149e9ddaef9e85ea",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "8a810151a66c61cf9da3f0dfbb506b98df4af652fdeaea2009b14b9fc866feff",
+      "caller_prompt_chars": 16209,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D10.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "59374a7997152dc27989081d992d74d9ce79e84b9b7b945d1eed1a9674f68d8b",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "a64c21322d229dd98dd98c22405c4de81845070214d1140b51a67ce2375071f7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "40f658ad43cfc54c9273906dc39d757b1a0190d3bd3a1832236e9c5980fea101",
+      "caller_prompt_chars": 17004,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5ffc30271b13822aad0383b72beee596694dd9ed0f075b02bc847b1a2c878789",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "3f20affc21c2153297382d882599109b81086d36c7012b559e085a8f2c0c0d5d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e64998151af2717304d33174ef5ed9b0e1dea3416bb9c574d04fd8d94187d793",
+      "caller_prompt_chars": 16135,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a0f6e9f195a47015d5f71d067efbb9c11a0f82dce6bf6ba644f46a1621069b5c",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "8ddd2623bbc2673479721643f23abe7a04706fc2e0a6bdbd37f39888384a039e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "81d1bfc3f72621647106c8525311c587e5d01e4f81039df68f8ee8344a1b1f3f",
+      "caller_prompt_chars": 16745,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D2.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c0740c7e99cde7e81f0c21ff6d8d168554dc41a48c83707e323569a874f68a10",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "8872a185de4b7380d21fe08ab38dcbc6de6a2eda25ddaa83d3ccf953b3077f9d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "638903332b61f2b41c36a12dd604752124ad79d98db7055876c746731b8643da",
+      "caller_prompt_chars": 16339,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ef6383d79ecd710373a00e8024891ddaa4c838911ebf09aa5c1bdf692bc1abc5",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "600b4989a96cdf6ac82ae5ca9454e56987589e1f747f31766c131ec072b59655",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "da9dca93dc83d1fa583ba98aeb92320afdbcb6e215f85d13069eaf4b4d3b3bce",
+      "caller_prompt_chars": 17993,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D3.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "481244ed1cdeb1bf315fb38562f90c9aa0115673d9d8e50d3a6d2759a14c318b",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "fe216fb9ebed391e958e7c64f0b84acc2f08cf542c8dbf6bace0b4485ab2960a",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e87db038ff5d9fb82f24f6641f90945026dc0c49a600d82377692dfeefca74ea",
+      "caller_prompt_chars": 17259,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D3.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f66ee50e2faa46e6b1919525956408ad3294fb3d72b662ec7ad55b5cf3c8a944",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "30d3bb5deb4867f99e960498755ce12de27072f8fb9096397764f0feead11ca7",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3403f981c514fab4cad2b433462e8c9a1dd6dd6cfa936e955ec2e2c7da41366b",
+      "caller_prompt_chars": 17568,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D4.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "d73447b76e50b585a3570d094335a90ed62afac9b55da4710e4ae455c21a9c86",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "9ec72f1207566a42e23d20c3e92e82016a537518be5320ba44f2a58cff717a41",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5ad93e7b0d603990c5c86f492fb876eedfe656651edced27760220a06c32eaf9",
+      "caller_prompt_chars": 16807,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D4.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b439d1f5485ed79368cf199e70263617116b60ab6092af6a88f09331477b7947",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "123ee011e2a19e9175d6ed0634b33080a845a187e9140bc9a2c2b3c1fba829ba",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e9213812f9a16b8031d92c3604624eb205af225e83bd4c35f89ba1f7404e0617",
+      "caller_prompt_chars": 17070,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D4.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "be452b2523e5d969e8c9255f1a6cf3634025cad087666b6ecc9c81a96498057c",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "febe0b2a45881a9f23bd3a2811dc4bce430ab944902481cbc8a4611284c02618",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c5c395f4fc43536be05c10102e1815165d0e6b5be7847e9213b8e5f9f0742526",
+      "caller_prompt_chars": 16123,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D5.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6126a98851bfb5707b71b8aa03ebfda9f32816115a798511b27e9332d443c927",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "be0f4bdaad6669e8a4abb1ac9fd864c8d7baf4765a3b917d125b700d5d38974d",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e4d419922ed51d19b316c55b7c03d10bf499e6eafb305f71b5e8a79dab1474a5",
+      "caller_prompt_chars": 15552,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D5.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "3c27cc1caad4da7e878199869dd7bdb3cc01c3d1ab163061fc25ac14d0f2d534",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "3013f6675af9f3b756c83425364f747427c90fdf046064caf634911f99165023",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "fad32877947dad2fe8938b88188d0cf3dafa8bb718a61d4c1c204fa735c98674",
+      "caller_prompt_chars": 16103,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D5.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ea75d8c5e65765a633bc00f8988ddaf996953e11f6b151b0a8a35be3540c572f",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "be51a6341288f2fd2d3d6861dbf2ed325cb63c0b6b7f278d7d98f74eaa735f91",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5dfdfd6ffbca377266266102e9ffb3ae549da9e1e2b3d3aa29e16476c6a41055",
+      "caller_prompt_chars": 15895,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D6.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a0f6e9f195a47015d5f71d067efbb9c11a0f82dce6bf6ba644f46a1621069b5c",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "8ddd2623bbc2673479721643f23abe7a04706fc2e0a6bdbd37f39888384a039e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "53e2cfb72b6ec80009f01c29da3a8243f5fae89a34596b6f9b30f3c08069a30e",
+      "caller_prompt_chars": 16984,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D6.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "5f441169265b4a3ef6deda8867f445847b50ca70ae318c519485300327193152",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "9f81e4dc4c1ca7ab0f68905f57323ad463fbc1d71df174e2956f24a1afd03ab2",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "01aa0bf74f250c3bacb97eae8e4ebaf75d0a3f12f621557012288dfab1b4cfbd",
+      "caller_prompt_chars": 16989,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D6.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a930baf3e1c40b6056f2447fbf92761b1a5ef6c13e365aa9f44d595fe30b4043",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "1d178276b0e6ffa7a16eee92fa457631725a2bfe7dd41cd396e5702e3871b4aa",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "340f68e8c2df2c81097a132dd34def5a582746616c10d864bcb6522de0f4e9d0",
+      "caller_prompt_chars": 16212,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D7.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "30bb8332cf6dc2dcbc054e426b71144d29c721fcd9ce4e34fc2fc147efc9b829",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "5b0632da8265706f96d7fbc98fb87338861a672b3950da975fb89b881885d6c4",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "09666c4c9aa45124d0504c1dfaab69216353d67982ec3ea042960b9759355d4d",
+      "caller_prompt_chars": 16471,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D7.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "ed207bee9006a983a11cace8c8ed3f9422b4353cfc8870e6f13240374858d502",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "d1429f5ba4957d057fbad112f4da3d9f17c9bd30376366dad691ca8e8c2b6a9f",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "78d0cd9f7445089d0d237beb80f1e680ed53cc7fdf7eec6edf4486da42415391",
+      "caller_prompt_chars": 16261,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D7.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9de4baa3ed344f7aa7a3a7cf98c3456d874cbb367eb5e224205968354bfb02cc",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "c231bcc3a758c430e8dde81b0842ce4f70f71e69d2ccf9a9e45680ca8ab90453",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "af4d75e8f3e447811f94b43a34b1d8243591520f6714fa6ae664a6f25b01dbc2",
+      "caller_prompt_chars": 16330,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D8.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "03d11bb85ce443aa965003920691cd6bbd5130897cc0f5735dd67e5dd30d75b3",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "d8bfa198a9436975a6427cbefb1c04660b405283c74ed8285c0846e1ec4faff0",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "770539726d101987eae27ea301cba9a07a95a5ede4d4895644c1738a55b232e5",
+      "caller_prompt_chars": 15951,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D8.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "c8c417e1bda27fca7983d2535129e4cf186b2b979a73c48b3f513d667578f476",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "67af91ac7fcf5b3fe0755735c5fd000de2b10f8f03599a6d60c2d901bb837fac",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "76e2c40f38decb1db89ba5a50e675b9797fd6b9bf546bbc402be0c3d1cd97654",
+      "caller_prompt_chars": 16313,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D8.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "a1e529f01c884fb45631d31b1290dec0cf098e63a88a631bbad3ea5a52eebf9b",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "5e602e965a63d698c723ee437f14622686f61afc6cf028075eec0b3c421848e5",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "77bf0b88ca95c2f5ceca1a69a68ad97942c507c1978dc9a742488f91aa3aa1b0",
+      "caller_prompt_chars": 15856,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D9.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "1dcd61639693f2e57248d59960c67a8bf76148d1d87ec103b7cddd0b6a3591db",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "8ec780503530a5fefcd2213b45790d73eea6c6ed1bbae6409d8b9264109ed31f",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "2ad423f8f5d14090fcecc3b6bd7ebe6fb3e2ddbcca5c8a82899fac6d4eae30db",
+      "caller_prompt_chars": 16053,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "D9.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "f9caa84ea15b7a5ec60914a80ecf93cf446954c2377774070ed3e916439d7473",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "1b8ede50679449f991826aa0fadef680744c6d7dfc6ded399e9e6012921b7065",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "0f5b01ff9e32aba39b2740e63f3ab784c373942f8d7461d81a763195ea3f47d7",
+      "caller_prompt_chars": 17530,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T1.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "8feea88b37c2664bbce8aab6ebd0f8dc19c4fe6f0fd892a0d2991a6158323e89",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "f07c29baa250a2a62a5a3930b1386af8a77eb39509a4baf254b910ef1142419b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6c08fb59479a4cfe6528b1bfa24b366b93929683c72df641928d936f2ca7bc5f",
+      "caller_prompt_chars": 18263,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T1.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "2146b74a40a351661f382a6be82733e8f929050f32f126866e1f7f6e5c35f6d2",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "e73da14824fec24ee97e486501ac61162d56b439051890a84a7db562c0ed8892",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c4744955f54652e655d1e245b797ada156a0f51cdfc1471e1a20da6722e81d1b",
+      "caller_prompt_chars": 18201,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T1.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "960e788a653073db4be9bf6f6fe2c426fb952a47c9f7dd9b80f2c85427b9a1a6",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "7286619082a4cf29ae8f85b352d22059b59a3350199422883d18c1eec3d33ce4",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "d00d943d26b802bdbd2cf28e7de6f48c189445c9196780af16e5aaadd97fcc41",
+      "caller_prompt_chars": 18335,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T2.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e3b6acb7ea841f8cc19ba0ccb6273abfe2e08c78742b58c287f42afbc85b2387",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "89573cd75b8626dcc91b8a9e71b00bfa9e79a4af674fafba7e64b3125cab6029",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3de2825baf18467941544c75c08574c874adb35946fcf33a385e83934eec94e4",
+      "caller_prompt_chars": 18349,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T2.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b845e671e42a6692fc8f7fd4cc9a0559f7c74999601238321001ab9e07f3d54e",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "6a096f893d842cf1ad3a49b2782265608b0f79f71b97b1c9d7e175bd8ed8de06",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c80b21ee8c0ae3faceb8452eb7a077b7de5e6a73500d9e2e675451a1f574649f",
+      "caller_prompt_chars": 18126,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T2.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "13a3ba09a11d04a2bcd7d4f619ab1e5c21d8c512cba4d4b2717ad8a0c53c1f8a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "b53ca99d519ce56028d49314e956a986e8266da965aa0569b2f91f71e56fd91e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "6458cfdc320bdff21bfa03618749fee742e826a29099d95617929021a591c4e8",
+      "caller_prompt_chars": 18385,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T3.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "91a2eedfa9962b0a8a66f4eed078236b3a50315582d29ca7c42a156718297d26",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "e206894ddc858d3c090d7af7558e1ddb08b8f3cfac455bad9bf31cc1574102de",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b8c4093bb53a05f04c9adde47ece28ccb8d6107b32db37db1d7e79204fd08dc1",
+      "caller_prompt_chars": 16905,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T3.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "0aa660c7081c0f70f3faf3e9f54e4fb840a65b1b8d6f1a25000c591ebfdccc41",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "904ed47ed3e97c4b308dcdb4a505b49324a4ca0e217b721b5404dd48a239616b",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "627ae3261616e1b94e67c0e2a606923d99dcc40643fa25ded35ad3c3fe2ad219",
+      "caller_prompt_chars": 17821,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T3.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "7bc43163d47f9f199a515b2ba4c1414e1c8d3c6116cb596bdc9f8a89550c6573",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "ef87e63b255c37ae60b5f483cdf9ad8c062a9d4885ee570361f2cd010f16f36c",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "ba1468be74dcc1445622b2dbf2bc2c3cb031c130f62d45981d41eea523e7a206",
+      "caller_prompt_chars": 17815,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T4.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6b5722886d441c0663bf338c0198ceb488a396c94602aee62857abf3c930b41a",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "6c228dc9176b2f8d5970da9bc43e06b6a0686de7d5ab4a4ab122504c595430df",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "291ad3855b8c9eb73e0b6a4fe069f1f52ed71aa62fdf53fdf168900995fce1e6",
+      "caller_prompt_chars": 17355,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T4.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e91b8751e8dc4a1b746fefb9a0b0007565c672c45972203d9957627b3f3a03ec",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "3e240ae977e390039c18e18dac54d7b0058707dfafe4a173a3b3bb31fa310858",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "91996c941a347dea2ef454d0ff2e0d18b37329a9e08e6b4cf55397d766881781",
+      "caller_prompt_chars": 17231,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T4.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "6d0d0ae0b7ecee22390f9389b0baa1d7634649947ec65bdaf107017ec7d2f74e",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "bb227f166d77ff009b55bac39c368339ee5ee6f0fae8c25c5e257ee68c579251",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "84ec5860bfee2a9a65f7d7da42804328c8f4fbc877f8aa305d809fec0413d187",
+      "caller_prompt_chars": 17196,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T5.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "94236fd06c63773bac2a9a3ef517251fb5f52151199440652a0c43929600a2df",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "63c271f133da1d48ce72d27430e63ebdd7ccffa54d46e41b714cd7b91df0c4e6",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "b00e802914be7335be55a80334c122ec458f1811a96dbaa0fa7e57cd96cdbdcf",
+      "caller_prompt_chars": 17047,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T5.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "9defc4c7fab43b04a29ef243002fef198c69fb8a733600fdf7a0941cd8c8f923",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "7425fb2189a608897ca203be8c005653958337454a3158301394033c1fe8fcf0",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "5018f7fecf22996159758299a7b9aba416169aa4ae9b5a86746ae5a0168eb7a5",
+      "caller_prompt_chars": 16962,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T5.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "df19fa940c1f7a404c0b30f52b9465d1f4e443465e8590bf826c335441a130f4",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "44522f96ca1c4f955ec5b7b8990280ef0a1c888f0d0eada18733aa2e26c48fc6",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "bd0161ad232ffce864746fa590a88033bebaa82571a0ef8de5c9a5bfb34e0596",
+      "caller_prompt_chars": 17582,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T6.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "da57e61f232a2142430dbccd3e480c1e0aa64a107520c25ddbf5a8fd39927bbe",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "7b84a838c0f6f067692da11ad95655e9517acab07a98208ae3c32a07d537d8cd",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "c71843845164c786447d460f23c19e92fe0beae6a39bd65c41ac5a1b138db538",
+      "caller_prompt_chars": 17021,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T6.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "49255dd6c5bdbe1da428f5e47cef2a1dfe18c2446ecaf6c3d1870376a13acdc9",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "7296aab8d622029955b11744fa7a599e44c7796ae27b65f1ee4274c09aae2800",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "3fb75ff4bb92521655d84fb0037cc2888b7684dcd5a8655900015b671f3e9581",
+      "caller_prompt_chars": 17520,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T6.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "412e7059f72b812d8d3cfdbde820a493c282c0bf52df084b9572f592bf022165",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "dd43a1a3d9677488f4d44e0afc4247f10a52a96454278a273f8badcba8631011",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e5886acbc8f53d3647d1e94e1209d9d21021039fe44c5f97afc05c02e088d0d8",
+      "caller_prompt_chars": 17194,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "F",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T7.1",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "e25999b286a8b853783bc2adcd566c1c10d3104bef185290147ffe4e17135b8e",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "0595cbb45a1fa8ebcd23cf3ca13067c954dccb207d4f2ff0d9170e0bc691e85e",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "9a2b5edd587be1b538ffa7e582a739e098ae14a604776d05159c2c5008b4edec",
+      "caller_prompt_chars": 17434,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T7.2",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "776baa67e92f1c0116e8b1da8c94caa6e3bab572ae6b6fa457b14727be76b97c",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "559db9aa9a06396aad3b4bb2805e3580d1fb6a3744d582e36b978ce25f9a8e44",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "e80a1d07073850ae3c9d1ddae6162ba8399935c21ba9fd74c4ef05576de7aef6",
+      "caller_prompt_chars": 16672,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    },
+    {
+      "domain": "medical_hr",
+      "record_id": "T7.3",
+      "model": "gpt-realtime-1.5",
+      "system_prompt": "b167a74e53d7fc2fd6429ef2cd0bf93819730189f70a5a4ae9484bec040f3911",
+      "tools": "5fdbc6c413c030078102931a875f542ee64c035ccf9b7262172eccbe74812ccc",
+      "tool_count": 48,
+      "session": "27579b19d76a2ed7c4d37710e2fd3487786a9c05192ad90e90793f2842c84aca",
+      "greeting": "Hello! How can I help you today?",
+      "opening_text": "Say: 'Hello! How can I help you today?'",
+      "caller_prompt": "de79b7f543fb51e747c20e14bb4796ea6822becd0048739da4542ff9f8ef0f7b",
+      "caller_prompt_chars": 16696,
+      "caller_variables": [
+        "prompt"
+      ],
+      "gender": "M",
+      "language": "en"
+    }
+  ]
+}

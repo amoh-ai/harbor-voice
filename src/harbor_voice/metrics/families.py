@@ -1,4 +1,4 @@
-"""The metric families.
+"""The metric families of
 
 Each one declares what it needs and abstains outside it. Importing this module
 registers all of them into :data:`harbor_voice.metrics.base.REGISTRY`.
@@ -169,7 +169,8 @@ def overlap_seconds(context: MetricContext) -> Outcome:
 
     ``NEUTRAL`` on purpose. Overlap is rudeness in an intake call and
     attentiveness in a crisis line; a global direction would rank half the use
-    cases backwards, exactly as it would for turn-overlap ratio.
+    cases backwards. That is true of turn-overlap ratio and it applies
+    identically here.
     """
     events = context.trajectory.events_of(EventType.OVERLAP)
     if not events:
@@ -315,11 +316,11 @@ def _selectivity(context: MetricContext, probe: str) -> Outcome:
     ``meta["ignored"]``, which is the contract
     :class:`~harbor_voice.duplex.DuplexDriver` fills.
 
-    ``ignored`` is ``None`` for a probe that landed where no conclusion could
-    be drawn — after the reply had ended, or with no agent audio following
-    it. Those leave the denominator rather than counting as the agent being
-    derailed, because a probe nobody could have reacted to is a fact about the
-    call, not about the agent.
+    The same rule in its selectivity form: ``ignored`` is ``None`` for a probe
+    that landed where no conclusion could be drawn — after the reply had
+    ended, or with no agent audio following it. Those leave the denominator
+    rather than counting as the agent being derailed, because a probe nobody
+    could have reacted to is a fact about the call, not about the agent.
     """
     injected = [
         e

@@ -1,14 +1,17 @@
 """The unit on the wire: a timestamped frame.
 
-A transport of ``send_audio(whole_utterance)`` -> ``recv_audio()`` would make
-jitter architecturally impossible (there is no inter-packet interval to
-perturb), force every full-duplex provider into a bespoke background loop, and
-leave barge-in unimplementable. Frames avoid all three.
+The most consequential decision in harbor-voice.
+
+A transport shaped as ``send_audio(whole_utterance)`` -> ``recv_audio()``
+makes jitter architecturally impossible (there
+is no inter-packet interval to perturb), forces every full-duplex provider into
+a bespoke background-loop hack, and leaves barge-in unimplementable. Frames fix
+all three.
 
 A frame also carries :attr:`AudioFrame.clean_ref`, the digest of its
-pre-perturbation twin. Without a reference signal there is no measurable SNR,
-no degradation ladder and no said-vs-heard WER — which is exactly the hole a
-one-way destructive effect chain leaves.
+pre-perturbation twin. Without a reference signal there is no
+measurable SNR, no degradation ladder and no said-vs-heard WER — which is
+exactly the hole a one-way, destructive effect chain leaves.
 """
 
 from __future__ import annotations

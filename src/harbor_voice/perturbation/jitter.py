@@ -1,5 +1,8 @@
 """L4 jitter — the perturbation that frames unlock.
 
+A transport that sends whole utterances has no inter-packet interval to
+perturb; frames do.
+
 That is the whole argument, and it is worth being precise about why. Jitter is
 **packet delay variation**: frames leave evenly spaced and arrive unevenly.
 A harness whose unit on the wire is an utterance has exactly one packet per

@@ -1,0 +1,222 @@
+{
+ "eva": {
+  "assistant_interrupted_turns": [],
+  "audio_timestamps_assistant_turns": {
+   "0": [
+    [
+     1793211462.881372,
+     1793211464.861372
+    ]
+   ],
+   "1": [
+    [
+     1793211468.663472,
+     1793211472.843472
+    ]
+   ],
+   "2": [
+    [
+     1793211476.8496718,
+     1793211479.6296718
+    ]
+   ],
+   "3": [
+    [
+     1793211481.512272,
+     1793211483.992272
+    ]
+   ],
+   "4": [
+    [
+     1793211487.6830719,
+     1793211489.1630719
+    ]
+   ]
+  },
+  "audio_timestamps_user_turns": {
+   "1": [
+    [
+     1793211465.9816718,
+     1793211467.462672
+    ]
+   ],
+   "2": [
+    [
+     1793211473.9723718,
+     1793211475.5533717
+    ]
+   ],
+   "3": [
+    [
+     1793211479.074972,
+     1793211480.255972
+    ]
+   ],
+   "4": [
+    [
+     1793211485.081972,
+     1793211486.462972
+    ]
+   ]
+  },
+  "conversation_ended_reason": "goodbye",
+  "conversation_trace": [
+   {
+    "content": "Hello, how can I help you today?",
+    "role": "assistant",
+    "timestamp": 1793211465571,
+    "turn_id": 0,
+    "type": "transcribed"
+   },
+   {
+    "content": "I need to change my flight.",
+    "role": "user",
+    "timestamp": 1793211466068,
+    "turn_id": 1,
+    "type": "intended"
+   },
+   {
+    "parameters": {
+     "confirmation_number": "ABC123",
+     "last_name": "Smith"
+    },
+    "timestamp": 1793211469272,
+    "tool_name": "get_reservation",
+    "turn_id": 1,
+    "type": "tool_call"
+   },
+   {
+    "timestamp": 1793211469272,
+    "tool_name": "get_reservation",
+    "tool_response": {
+     "reservation": {
+      "confirmation_number": "ABC123",
+      "date": "Monday",
+      "destination": "Boston",
+      "flight": "100",
+      "passenger": "Jos\u00e9 Smith"
+     },
+     "status": "success"
+    },
+    "turn_id": 1,
+    "type": "tool_response"
+   },
+   {
+    "content": "Let me check that for you. I found your booking, flight 100 to Boston, Monday at 9 AM. Would you like to change it?",
+    "role": "assistant",
+    "timestamp": 1793211473818,
+    "turn_id": 1,
+    "type": "transcribed"
+   },
+   {
+    "content": "Yes, I want to move it to Friday.",
+    "role": "user",
+    "timestamp": 1793211474170,
+    "turn_id": 2,
+    "type": "intended"
+   },
+   {
+    "content": "[user interrupts] Wait, what about the evening?",
+    "role": "user",
+    "timestamp": 1793211479168,
+    "turn_id": 3,
+    "type": "intended"
+   },
+   {
+    "content": "Sure, I can move you to Friday at 9 AM.",
+    "role": "assistant",
+    "timestamp": 1793211481073,
+    "turn_id": 2,
+    "type": "transcribed"
+   },
+   {
+    "content": "The evening flight leaves at 6 PM. Shall I book it?",
+    "role": "assistant",
+    "timestamp": 1793211484870,
+    "turn_id": 3,
+    "type": "transcribed"
+   },
+   {
+    "content": "Yes, please. Thanks, goodbye.",
+    "role": "user",
+    "timestamp": 1793211485171,
+    "turn_id": 4,
+    "type": "intended"
+   },
+   {
+    "content": "You're all set on the 6 PM flight. Goodbye. [speaker likely cut itself off]",
+    "role": "assistant",
+    "timestamp": 1793211489975,
+    "turn_id": 4,
+    "type": "transcribed"
+   }
+  ],
+  "history_len": 42,
+  "intended_assistant_turns": {
+   "0": "",
+   "1": "",
+   "2": "",
+   "3": "",
+   "4": ""
+  },
+  "intended_user_turns": {
+   "1": "I need to change my flight.",
+   "2": "Yes, I want to move it to Friday.",
+   "3": "Wait, what about the evening?",
+   "4": "Yes, please. Thanks, goodbye."
+  },
+  "latency_assistant_turns": {
+   "1": 1.2008,
+   "2": 1.2963,
+   "3": 1.2563,
+   "4": 1.2201
+  },
+  "num_assistant_turns": 5,
+  "num_tool_calls": 1,
+  "num_user_turns": 4,
+  "t0": 1793211462.4676719,
+  "tool_called": [
+   "get_reservation"
+  ],
+  "tool_params": [
+   {
+    "tool_name": "get_reservation",
+    "tool_parameters": {
+     "confirmation_number": "ABC123",
+     "last_name": "Smith"
+    }
+   }
+  ],
+  "tool_responses": [
+   {
+    "tool_name": "get_reservation",
+    "tool_response": {
+     "reservation": {
+      "confirmation_number": "ABC123",
+      "date": "Monday",
+      "destination": "Boston",
+      "flight": "100",
+      "passenger": "Jos\u00e9 Smith"
+     },
+     "status": "success"
+    }
+   }
+  ],
+  "transcribed_assistant_turns": {
+   "0": "Hello, how can I help you today?",
+   "1": "Let me check that for you. I found your booking, flight 100 to Boston, Monday at 9 AM. Would you like to change it?",
+   "2": "Sure, I can move you to Friday at 9 AM.",
+   "3": "The evening flight leaves at 6 PM. Shall I book it?",
+   "4": "You're all set on the 6 PM flight. Goodbye. [speaker likely cut itself off]"
+  },
+  "transcribed_user_turns": {
+   "1": "I need to change my flight.",
+   "2": "Yes, I want to move it to Friday.",
+   "3": "[user interrupts] Wait, what about the evening?",
+   "4": "Yes, please. Thanks, goodbye."
+  },
+  "user_interrupted_turns": [
+   3
+  ]
+ }
+}

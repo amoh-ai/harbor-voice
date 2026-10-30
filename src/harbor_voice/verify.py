@@ -13,12 +13,12 @@
 Scoring is a library call: authors select metrics, they do not parse JSON.
 This is that call, given a name and a CLI so a shell script can reach it.
 
-**It reads one file and writes three.** That restraint is trajectory-only
-scoring turned into a deployment property: everything scoring needs is in the
-trajectory, so ``regrade`` over stored trajectories is the *same computation*
-as the original scoring rather than a second implementation that drifts. The
-moment this needed a transport, a credential or a live session, that guarantee
-would be gone and nobody would notice until two numbers disagreed.
+**It reads one file and writes three.** That restraint is trajectory-only scoring turned into a
+deployment property: everything scoring needs is in the trajectory, so
+``regrade`` over stored trajectories is the *same computation* as the original
+scoring rather than a second implementation that drifts. The moment this
+needed a transport, a credential or a live session, that guarantee would be
+gone and nobody would notice until two numbers disagreed.
 
 It is also why this module imports neither the provider layer nor the recorder.
 """
@@ -77,8 +77,8 @@ def score(
             that adding a metric to harbor-voice cannot silently change what
             an existing benchmark reports.
         validate_selection: Check the selection against the registry and
-            against the perturbation–metric pairing before scoring. A typo
-            becomes a load error rather than a missing column.
+            against the perturbation–metric pairing before scoring. A typo becomes a load error rather
+            than a missing column.
     """
     reg = REGISTRY if registry is None else registry
     context = MetricContext(trajectory=trajectory, clean_baseline=clean_baseline)

@@ -43,8 +43,8 @@ _POLL_S = 0.01
 async def check_contract_consistency(ctx: CheckContext) -> None:
     """Declared optional ops are implemented, and vice versa.
 
-    This catches a transport whose declared capability matrix its code does
-    not honour.
+    It catches stubs that publish capability matrices their code never
+    honours.
     """
     problems = ctx.transport.check_contract()
     if problems:
@@ -105,9 +105,9 @@ async def check_tx_before_open_refuses(ctx: CheckContext) -> None:
 async def check_open_reports_ready(ctx: CheckContext) -> None:
     """``open`` must not return until the session is usable.
 
-    An ``open()`` that succeeds by assigning a sentinel ``object()`` defers the
-    failure to first audio, and a caller cannot distinguish that from a working
-    transport until minutes later.
+    A stub that succeeds by assigning a sentinel ``object()`` defers the
+    failure to first audio. A caller cannot distinguish that from
+    a working transport until minutes later.
     """
     if not ctx.transport.is_open:
         raise ConformanceFailure("open() returned but is_open is False")
@@ -174,7 +174,7 @@ async def check_inbound_format(ctx: CheckContext) -> None:
     """Every received frame is in the format the transport declared.
 
     Attests ``audio_out``. A provider that reports one rate and emits another
-    pitch-shifts silently.
+    pitch-shifts silently, so a logged warning is not enough.
     """
     frames = await _exchange(ctx)
     declared = ctx.transport.capabilities.audio_out

@@ -258,7 +258,7 @@ class SpeakingRate(Perturbation):
             the pitch shift is real. ``pitch_preserved: false`` goes into the
             plan so nobody reads this as prosody control.
 
-    The frame length is held constant, which is what alignment requires of
+    The frame length is held constant, which is what the clean reference requires of
     anything in the signal chain: a faster caller delivers *more* speech per
     frame, so the tail of a sped-up utterance is padded with the silence the
     caller would really have left, and a slowed one is truncated at the frame

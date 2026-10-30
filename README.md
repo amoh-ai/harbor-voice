@@ -208,7 +208,8 @@ Agents are named `provider/model`, e.g. `openai.realtime/gpt-realtime-1.5` or
 src/harbor_voice/     transports and providers, the caller simulator and layer
                       stack, ATIF-voice, metrics, VoiceCallAgent, the CLI
 adapters/tau-voice/   the tau-voice adapter (its own package)
-tests/, adapters/tau-voice/tests/
+adapters/eva/         the EVA adapter (its own package)
+tests/, adapters/tau-voice/tests/, adapters/eva/tests/
 ```
 
 Development:

@@ -7,8 +7,8 @@ live in the perturbations themselves.
 Loudness is handled in **RMS**, not peak, because the run mixes to a
 *target SNR* rather than a raw gain. ``mixed = signal + noise * volume`` with
 a fixed volume and no normalisation on either side lets the effective SNR
-drift with TTS loudness sentence to sentence — the number you set is not the
-number you get, and nothing records the number you got.
+drift with TTS loudness sentence to sentence — the number you set is not the number you get, and nothing records
+the number you got.
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ def snr_db(signal: np.ndarray, noise: np.ndarray) -> float:
     signal. Both are **infinities on purpose**: the ratio is undefined, and
     callers filter infinities out of their statistics. Letting the epsilon
     floor turn "no signal" into a finite -240 dB would put a believable-looking
-    number into a published mean.
+    number into a published mean, which is the failure a target SNR exists to stop.
     """
     signal_rms, noise_rms = rms(signal), rms(noise)
     if noise_rms <= _EPSILON:

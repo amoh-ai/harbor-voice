@@ -138,8 +138,10 @@ async def install_into(
     """Upload the wheels into ``main`` and ``uv pip install`` them as root.
 
     harbor-voice's own wheel brings its ``voice`` extra when its distribution
-    declares one, and ``extras``, the ones the agent under test needs
-    (``live`` for OpenAI Live), when declared.
+    declares one (``harbor-voice`` has its voice dependencies in its core) —
+    and ``extras``,
+    the ones the agent under test needs (``live`` for OpenAI Live), when
+    declared.
     """
     voice = distribution_of("harbor_voice")
     declared = importlib.metadata.metadata(voice).get_all("Provides-Extra") or []

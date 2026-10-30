@@ -6,9 +6,9 @@ Two rules this module exists to make unavoidable:
 ``np.random.default_rng()`` inside each apply cannot be reproduced, and an
 unreproducible perturbation is not a measurement.
 
-**Seeds are layered.** Deriving both the dialogue text and the
-interrupt coin-flip from one key makes it impossible to hold the
-conversation fixed while varying the channel — which is the experiment the
+**Seeds are layered.** Deriving both the dialogue text and the interrupt
+coin-flip from one key makes it impossible to hold the conversation fixed
+while varying the channel — which is the experiment the
 whole benchmark exists to run. :class:`SeedSet` derives independent streams
 from one root so each axis moves on its own.
 """

@@ -1,16 +1,16 @@
 """Four clock domains, reported side by side and never reconciled silently.
 
-Four domains — produced / on_wire / rendered / voiced — reported side by
-side rather than picking one.
+Four domains — produced / on_wire / rendered / voiced —
+reported side by side rather than picking one.
 
 The rule this module exists to enforce:
 
     **A latency computed from two clock domains must name both.**
 
-:class:`Interval` makes it hard to report a turn's *full response latency*
-under a TTFB name: you cannot construct one without saying which clock each
-end came from, and :attr:`Interval.label` derives the metric suffix from those
-two names.
+The classic mistake is a first turn's *full response latency* reported under
+a time-to-first-byte name. :class:`Interval` makes that mistake hard: you cannot construct one
+without saying which clock each end came from, and :attr:`Interval.label`
+derives the metric suffix from those two names.
 """
 
 from __future__ import annotations

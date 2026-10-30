@@ -7,7 +7,7 @@ Three invariants live here.
 local. The consequence is not subtle: with no reference signal there is no
 measurable SNR, no degradation ladder, and no said-vs-heard WER. Pairing the
 *clean transcript* with the *degraded audio* in one message also leaves a
-text judge is structurally blind to the perturbation under test. Here every
+text judge structurally blind to the perturbation under test. Here every
 perturbed frame carries its clean twin's digest and the twin itself is kept.
 
 **The plan is written, not just declared.** A plan type that is

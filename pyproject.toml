@@ -38,15 +38,17 @@ requires = ["uv_build>=0.8.4,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.workspace]
-members = ["adapters/tau-voice"]
+members = ["adapters/tau-voice", "adapters/eva"]
 
 [tool.uv.sources]
 harbor-voice-tau-voice-adapter = { workspace = true }
+harbor-voice-eva-adapter = { workspace = true }
 
 [dependency-groups]
 dev = [
     "harbor-voice[aws,daytona,ec2,live]",
     "harbor-voice-tau-voice-adapter",
+    "harbor-voice-eva-adapter",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "ruff>=0.15.17,<0.16",
@@ -54,14 +56,18 @@ dev = [
 ]
 
 [tool.ruff]
-# tau2's vendored audio code is generated verbatim; never reformatted or linted.
-extend-exclude = ["adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py"]
+# Vendored code (tau2's audio effects, EVA's perturbator) stays verbatim; never
+# reformatted or linted.
+extend-exclude = [
+    "adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py",
+    "adapters/eva/src/eva_adapter/vendored/[a-z]*.py",
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["harbor"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "adapters/tau-voice/tests"]
+testpaths = ["tests", "adapters/tau-voice/tests", "adapters/eva/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -80,5 +86,8 @@ python = ".venv"
 all = "error"
 
 [tool.ty.src]
-include = ["src/harbor_voice", "adapters/tau-voice/src"]
-exclude = ["adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py"]
+include = ["src/harbor_voice", "adapters/tau-voice/src", "adapters/eva/src"]
+exclude = [
+    "adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py",
+    "adapters/eva/src/eva_adapter/vendored/[a-z]*.py",
+]

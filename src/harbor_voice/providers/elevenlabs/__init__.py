@@ -1,4 +1,5 @@
-"""ElevenLabs providers — the caller voice tau-voice uses.
+"""ElevenLabs providers — the caller voice tau-voice uses, and ElevenLabs
+Agents (``elevenlabs.agents``), the caller EVA uses.
 
 Imported lazily, like the AWS package: nothing here is reachable from
 ``harbor_voice.providers`` at import time.
@@ -26,7 +27,8 @@ __all__ = [
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add every ElevenLabs provider to a registry. See ``aws.register_all``."""
+    from harbor_voice.providers.elevenlabs import agents
     from harbor_voice.providers.elevenlabs import tts
 
-    for spec, build in tts.REGISTRATIONS:
+    for spec, build in (*tts.REGISTRATIONS, *agents.REGISTRATIONS):
         registry.register(spec, build)

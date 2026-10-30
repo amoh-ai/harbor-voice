@@ -11,8 +11,8 @@ A three-way choice, not an assumption:
 * **LLM** — a persona driven by a model. Most realistic, least reproducible,
   and the most expensive per rollout.
 
-Whatever the source, the text it yields is the **SAID** side of said-vs-heard:
-the other party's own words, against which the system's
+Whatever the source, the text it yields is the **SAID** side of said-vs-heard
+: the other party's own words, against which the system's
 transcription is the hypothesis.
 """
 

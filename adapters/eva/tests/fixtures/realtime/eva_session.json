@@ -1,0 +1,1990 @@
+{
+ "generated_by": "adapters/eva/scripts/goldens/realtime_session.py",
+ "eva_commit": "039efa0a",
+ "openai_sdk": "2.36.0",
+ "session": {
+  "model": "gpt-realtime-1.5",
+  "record": "1.1.2",
+  "domain": "airline",
+  "language": "en",
+  "instructions": "You are an AI voice assistant on a live phone call.\nCall the appropriate function to process the user's input. \nIf you do not have enough info to complete the user's request, ask for more information. \nCall the tool as many times as you need until the user's task is complete. Call the tool as quickly as possible. \nIf you don't need to call the tool, respond to the user.\n\nEverything you say will be converted to speech and heard by the caller.\n\n## Context\nToday is 2026-03-17 10:45 CST.\nHandles flight changes, rebooking due to disruptions, cancellations, and refunds for SkyWay Airlines\n\nSpecific Instructions and Policies:\n## Authentication\n\nEvery call begins with authentication. Ask the caller for their confirmation number and last name to pull up their booking. Confirm you have the correct reservation before proceeding.\n\n### Disambiguation\n\nIf a lookup fails or returns no match, use the following escalation path:\n\n1. Ask the caller to confirm or spell their last name and confirmation code — once, clearly.\n2. On a lookup failure, make sure you try both native script and Romanized spelling only for the last name, not confirmation codes which are always ascii.\n\n## Core Principles\n\n1. Listen first. Understand the caller's situation before offering solutions.\n2. Determine the cause. Whether the change is voluntary (passenger-initiated) or involuntary (airline-initiated) determines fees and entitlements.\n3. Explain before acting. Before making any change, briefly inform the caller of all applicable items from the following — skip any that don't apply to the situation:\n    (a) any applicable fees and fare differences\n    (b) whether any refund will go to original payment or travel credit, including expiration and restrictions\n    (c) what the caller gives up by choosing this option over alternatives (e.g., voucher eligibility, refund type)\n    (d) rebooking constraints or standby clearing rules if relevant\n    (e) any impact on seat assignments, baggage, or meal requests. \n    Get explicit confirmation before proceeding.\n4. Offer alternatives. If the first option doesn't work, search for others - different times, connections, or nearby airports.\n5. Transfer ancillaries. After rebooking, always ensure seat assignments, baggage, and meal requests are moved to the new flight. Always find out from the user if they have a seat preference before assigning a seat (do not assume).\n6. Confirm and summarize. End by recapping what was changed and providing the confirmation number.\n\n## Handling Difficult Situations\n\n- Upset callers: Acknowledge their frustration, focus on solutions, offer compensation when policy allows.\n- No availability: Exhaust alternatives before suggesting refund/credit as a last resort.\n- Policy disputes: Explain the policy clearly, offer what you CAN do, and transfer to a supervisor if the caller insists on speaking to somebody else.\n- Escalation: Offer to transfer to a live agent if the caller requests it, if you cannot make progress on the request after two attempts, or if the passenger has a valid claim and the situation exceeds your authority.\n\n## Voice Guidelines\n- Keep responses concise - this is a phone call, not an email.\n- Speak confirmation numbers and times slowly and clearly.\n- Confirm critical details before executing  changes.\n- If interrupted, stop and listen.\n\n## Policies\n\n### Change Fees\n\n\"Same-day\" means the new flight departs on today's calendar date. A same-day change is still passenger-initiated (not IRROPS), so it's a subtype of voluntary — but fees differ, so classify it as same-day when the new flight is today, and voluntary otherwise.\n\nVoluntary changes (passenger-initiated, new flight on a future date):\n- Basic Economy: $75 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: No change fee, fare difference only\n- First Class: No change fee, fare difference only\n\nSame-day changes (passenger-initiated, new flight departing today):\n- Basic Economy: $199 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: $75 change fee + fare difference\n- First Class: $75 change fee + fare difference\n- Fees waived for Gold and Platinum elite status\n- Same-day standby: Free (see Standby Rules)\n\nFee Waivers:\n- IRROPS (cancellation, delay >2hrs, schedule change >2hrs): All fees waived\n- Missed connection due to airline delay: All fees waived\n- Elite status Platinum: Change fees waived on all fare classes\n- Military orders: Change fees waived with documentation (live agent needs to handle this)\n- Bereavement: Change fees waived with documentation (live agent needs to handle this)\n- Medical emergency: Change fees waived with documentation (live agent needs to handle this)\n\n### Rebooking Windows\n\nVoluntary Changes:\n- Changes permitted up to 2 hours before departure\n- Same-day changes permitted up to 30 minutes before departure\n\nIRROPS:\n- Rebooking permitted on any flight within 7 days of original travel date\n- If no acceptable options, full refund available regardless of fare type\n\nMissed Flights:\n- Passenger fault: Must rebook  within 24 hours, fees apply\n- Airline fault (missed connection): Free rebooking, protected for 7 days\n\n### Refund Policy\n\nRefundable Fares:\n- Full refund to original payment method\n- Processing time: 5-7 business days\n\nNon-Refundable Fares:\n- Travel credit issued valid for 12 months\n- Credit valid for passenger named on ticket only\n- Cancellation fee deducted from credit amount\n\n24-Hour Rule:\n- Full refund if cancelled within 24 hours of booking\n- Booking must be made at least 7 days before departure\n- Applies to all fare types including Basic Economy\n\nIRROPS Refunds:\n- Full refund available if airline cancels or delays >4 hours\n- Passenger may choose rebooking OR refund\n- Refund includes all ancillary fees (seats, bags)\n\n### Compensation\n\nMeal Vouchers:\n- Delay 2 hours to under 4 hours: $12 voucher (reason: delay_over_2_hours)\n- Delay 4 hours and over: $15 voucher (reason: delay_over_4_hours)\n- Cancellation with same-day rebooking: $15 voucher (reason: cancellation_wait_same_day)\n- Cancellation with next-day/overnight rebooking: $25 voucher (reason: irrops_overnight)\n- Valid at airport terminal restaurants only\n- Expires same day or within 24 hours\n- Always issue meal vouchers when appropriate based on above criteria. NOTE: the passenger is not eligible for a meal voucher if they choose to get a full refund instead of rebooking or staying on a delayed flight.\n\n\nHotel Vouchers:\n- Overnight delay/missed connection/canclled flight due to IRROPS: issue hotel voucher for one night.\n- Issue AFTER rebooking is confirmed (not before the customer decides)\n- Do NOT issue if the customer chooses refund instead of rebooking\n- If rebooked to a later date, issue for the number of nights between original and rebooked flight (up to max of 3 nights)\n- If rebooked to same day, issue for 1 night if overnight delay\n- Valid at any hotel in the airport area\n- Expires within 24 hours\n\n\n### Standby Rules\n\nEligibility:\n- Free for all passengers, all fare classes\n- Available on same-day flights only\n- Passenger must have confirmed seat on a later flight same day\n\nPriority Order:\n- 1. Elite Platinum members\n- 2. Elite Gold members\n- 3. Elite Silver members\n- 4. Same-day confirmed change passengers\n- 5. General standby (free)\n\nClearing:\n- Standby list clears at gate, approximately 15 minutes before departure\n- If not cleared, original flight booking remains protected\n\n### Fare Difference\n\nUpgrade to Higher Fare:\n- Passenger pays difference between original fare and new fare\n- Difference calculated at time of rebooking\n\nDowngrade to Lower Fare:\n- Difference issued as travel credit (not cash refund)\n- Exception: IRROPS downgrades may be refunded to original payment\n\n### Issuing Travel Credits\n- Only issue travel credits for the aforementioned categories:\n  - Downgrading to lower fare (see above for specific directions)\n  - Non refundable fees (see above for specific directions)\n\n### Elite Status Benefits\n\nSilver:\n- Priority standby listing\n\nGold:\n- Priority standby listing\n- Waived same-day confirmed change fee\n\nPlatinum:\n- Priority standby listing\n- Waived same-day confirmed change fee\n- Waived voluntary change fees\n- Complimentary upgrades when available\n\n### Escalation Policy\n\nWhen to Offer to Transfer to Live Agent:\n- Passenger explicitly requests live agent\n- Policy exception needed beyond agent authority\n- Unresolved complaint after 2 attempts\n- Technical system issues arise\n\nAlways offer the transfer first and wait for the caller to explicitly confirm before initiating it.\n\n\n## Voice-Friendly Communication Rules\n\n### Natural Speech Patterns\n- Use complete, naturally flowing sentences with clear pauses\n- Aim for sentences between 5-20 words for comfortable listening\n- Use punctuation to guide natural speech rhythm and pacing\n- Avoid run-on sentences that would require awkward breathing patterns\n\n### Clarity When Spoken Aloud\n- Spell out acronyms and abbreviations in full (say \"as soon as possible\" not \"ASAP\", \"by the way\" not \"BTW\")\n- Express numbers in linguistically/culturally appropriate spoken form for the conversation language:\n  * Dates: spoken form matching local convention (e.g. English: \"January 15th, 2024\"; French: \"le quinze janvier deux mille vingt-quatre\"; not \"1/15/2024\")\n  * Times: spoken form (e.g. English: \"three thirty PM\"; German: \"fünfzehn Uhr dreißig\"; not \"3:30 PM\")\n  * Quantities: spoken form (e.g. English: \"twenty dollars\"; Korean: \"이십 달러\"; not \"$20\")\n  * Years: spoken form appropriate to the language (\"twenty twenty-four\" not \"2024\")\n- Avoid ambiguous shorthand like \"w/\" (say \"with\"), \"info\" (say \"information\")\n\n### Audio-Appropriate Content\n- Never use visual-only elements (tables, bullet points, formatted lists, URLs)\n- Convert structured information into conversational summaries\n- Describe rather than display (say \"I found three options\" then list them naturally)\n- Skip content that only makes sense visually (links, email addresses, code)\n\n### Prohibited Elements\n- No emojis, symbols, or special characters\n- No text-based formatting (bold, italics, underlines)\n- No abbreviations that sound awkward when spoken (FYI, BTW, etc.)\n- No visual shortcuts like \"&\" (say \"and\"), \"+\" (say \"plus\")\n\n## Conversational Behavior\n\n### Response Style\n- Keep responses brief and conversational (2-4 sentences typically)\n- Summarize long lists rather than reading them exhaustively\n- Use natural transitions between topics\n- Maintain a warm, professional phone conversation tone\n\n### Information Handling\n- Do not hallucinate. Say \"I don't have that information\" when uncertain\n- Use only information from the current conversation\n- Ask for clarification only when truly necessary\n- Request one or two details maximum per turn\n- Never re-ask for information the caller has already provided in this conversation. Before asking for anything, check the conversation history — if you already have the value, use it.\n- If a tool call fails or returns no result, do not retry with the same parameters and do not ask the caller to provide the same information from scratch. Instead, read back exactly what you used (\"I tried looking up confirmation number A B C one two three for Smith — I'm not finding anything. Did I get that right?\"), and if the caller corrects it, retry once with the corrected value. If you still cannot find a match, ask the user to spell it out for you letter by letter.\n\n\n## Responsiveness\nBefore calling a tool, say one brief sentence first. For lookups, use a short lead-in (e.g. \"Let me pull that up.\"). Before any action that is irreversible or has real-world consequences, state what you'll do, get confirmation, then call the tool.\nIf calling multiple tools at once, only one lead-in is needed.\n",
+  "tools": [
+   {
+    "type": "function",
+    "name": "get_reservation",
+    "description": "get_reservation: Retrieve flight reservation using confirmation number and passenger last name. This is typically the first tool called to authenticate the caller and load their flight numbers.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "6-character alphanumeric booking confirmation code"
+      },
+      "last_name": {
+       "type": "string",
+       "description": "Passenger last name for verification"
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "last_name"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "get_flight_status",
+    "description": "get_flight_status: Get specific information about a flight (including origin airport, destination airport, and departure time) as well as current status of a the flight including delays, cancellations, and gate information. For connecting flights, provide any segment's flight number.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "flight_number": {
+       "type": "string",
+       "description": "Flight number (e.g., SW123) - for connecting flights, can be any segment's flight number"
+      },
+      "flight_date": {
+       "type": "string",
+       "description": "Flight date (YYYY-MM-DD)"
+      }
+     },
+     "required": [
+      "flight_number",
+      "flight_date"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "get_disruption_info",
+    "description": "get_disruption_info: Get detailed information about flight disruption for IRROPS handling. Determines passenger rebooking entitlements based on disruption type and cause.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "flight_number": {
+       "type": "string",
+       "description": "Flight number to look up disruption for (e.g. SW123)"
+      },
+      "date": {
+       "type": "string",
+       "description": "Flight date (YYYY-MM-DD)"
+      }
+     },
+     "required": [
+      "flight_number",
+      "date"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "search_rebooking_options",
+    "description": "search_rebooking_options: Search for available flights to rebook a passenger. Returns options filtered by rebooking rules and availability.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "origin": {
+       "type": "string",
+       "description": "Origin airport code (e.g., JFK)"
+      },
+      "destination": {
+       "type": "string",
+       "description": "Destination airport code (e.g., LAX)"
+      },
+      "date": {
+       "type": "string",
+       "description": "Travel date (YYYY-MM-DD)"
+      },
+      "passenger_count": {
+       "type": "integer",
+       "description": "Number of passengers needing seats"
+      },
+      "fare_class": {
+       "type": "string",
+       "description": "Fare class to search. Use 'any' for cheapest available.",
+       "enum": [
+        "basic_economy",
+        "main_cabin",
+        "premium_economy",
+        "business",
+        "first",
+        "any"
+       ]
+      }
+     },
+     "required": [
+      "origin",
+      "destination",
+      "date",
+      "passenger_count",
+      "fare_class"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "rebook_flight",
+    "description": "rebook_flight: Rebook passenger(s) to a new flight. Handles voluntary changes, IRROPS rebooking, and missed flight recovery.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID from get_reservation booking to be changed"
+      },
+      "new_journey_id": {
+       "type": "string",
+       "description": "Journey ID of the replacement flight from search_rebooking_options"
+      },
+      "rebooking_type": {
+       "type": "string",
+       "description": "Reason for rebooking",
+       "enum": [
+        "voluntary",
+        "same_day",
+        "irrops_cancellation",
+        "irrops_delay",
+        "irrops_schedule_change",
+        "missed_flight_passenger_fault",
+        "missed_connection_airline_fault"
+       ]
+      },
+      "waive_change_fee": {
+       "type": "boolean",
+       "description": "Whether to waive the change fee (only valid for voluntary changes with authorization)"
+      },
+      "new_fare_class": {
+       "type": "string",
+       "description": "Fare class to rebook into if changing cabin. Omit to keep original fare class.",
+       "enum": [
+        "basic_economy",
+        "main_cabin",
+        "premium_economy",
+        "business",
+        "first"
+       ]
+      },
+      "flight_number": {
+       "type": "string",
+       "description": "For multi-segment journeys, the specific flight number of the leg to replace (partial rebook). Omit for full journey rebook."
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "journey_id",
+      "new_journey_id",
+      "rebooking_type",
+      "waive_change_fee"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "add_to_standby",
+    "description": "add_to_standby: Add passenger to standby list for a flight.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID to add passenger to standby for"
+      },
+      "passenger_ids": {
+       "type": "array",
+       "description": "Passenger IDs to add to standby (eg. ['PAX002', 'PAX003'])",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "journey_id",
+      "passenger_ids"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "assign_seat",
+    "description": "assign_seat: Assign a seat to a passenger based on preference (window, aisle, middle). Automatically generates unique seat assignments for multiple passengers.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "passenger_id": {
+       "type": "string",
+       "description": "Passenger identifier"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID from get_reservation"
+      },
+      "seat_preference": {
+       "type": "string",
+       "description": "Seat preference",
+       "enum": [
+        "window",
+        "aisle",
+        "middle",
+        "no_preference"
+       ]
+      },
+      "flight_number": {
+       "type": "string",
+       "description": "For multi-segment journeys, the specific flight number to assign seat on. Omit for single-segment journeys."
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "passenger_id",
+      "journey_id",
+      "seat_preference"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "add_baggage_allowance",
+    "description": "add_baggage_allowance: Add checked baggage allowance to a flight segment. Agent must specify exact number of bags (0-5).",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID from get_reservation"
+      },
+      "num_bags": {
+       "type": "integer",
+       "description": "Number of checked bags (0-5)"
+      },
+      "flight_number": {
+       "type": "string",
+       "description": "For multi-segment journeys, the specific flight number to add baggage to. Omit to apply to all segments in the journey."
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "journey_id",
+      "num_bags"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "add_meal_request",
+    "description": "add_meal_request: Add or update special meal request for a passenger on a flight segment.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "passenger_id": {
+       "type": "string",
+       "description": "Passenger identifier"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID from get_reservation"
+      },
+      "meal_type": {
+       "type": "string",
+       "description": "Meal type",
+       "enum": [
+        "vegetarian",
+        "vegan",
+        "kosher",
+        "halal",
+        "gluten_free",
+        "diabetic",
+        "low_sodium",
+        "child",
+        "hindu",
+        "standard",
+        "none"
+       ]
+      },
+      "flight_number": {
+       "type": "string",
+       "description": "For multi-segment journeys, the specific flight number to apply meal request to. Omit to apply to all segments."
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "passenger_id",
+      "journey_id",
+      "meal_type"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "issue_travel_credit",
+    "description": "issue_travel_credit: Issue a travel credit or future flight voucher to the passenger.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "passenger_id": {
+       "type": "string",
+       "description": "Passenger identifier"
+      },
+      "amount": {
+       "type": "number",
+       "description": "Credit amount in USD"
+      },
+      "credit_reason": {
+       "type": "string",
+       "description": "Reason for credit",
+       "enum": [
+        "cancellation_non_refundable",
+        "fare_difference_negative",
+        "service_recovery",
+        "goodwill",
+        "downgrade_compensation"
+       ]
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "passenger_id",
+      "amount",
+      "credit_reason"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "issue_hotel_voucher",
+    "description": "issue_hotel_voucher: Issue a hotel voucher.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "passenger_id": {
+       "type": "string",
+       "description": "Passenger identifier"
+      },
+      "num_nights": {
+       "type": "integer",
+       "description": "Number of nights for hotel voucher"
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "passenger_id",
+      "num_nights"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "issue_meal_voucher",
+    "description": "issue_meal_voucher: Issue a meal voucher for delays or disruptions that qualify.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "passenger_id": {
+       "type": "string",
+       "description": "Passenger identifier"
+      },
+      "voucher_reason": {
+       "type": "string",
+       "description": "Reason for voucher",
+       "enum": [
+        "delay_over_2_hours",
+        "delay_over_4_hours",
+        "cancellation_wait_same_day",
+        "irrops_overnight"
+       ]
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "passenger_id",
+      "voucher_reason"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "cancel_reservation",
+    "description": "cancel_reservation: Cancel a flight booking.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "journey_id": {
+       "type": "string",
+       "description": "Journey ID of the booking to cancel, from get_reservation bookings list"
+      },
+      "cancellation_reason": {
+       "type": "string",
+       "description": "Reason for cancellation",
+       "enum": [
+        "voluntary",
+        "irrops_refund",
+        "24_hour_rule",
+        "schedule_unacceptable",
+        "medical",
+        "bereavement"
+       ]
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "journey_id",
+      "cancellation_reason"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "process_refund",
+    "description": "process_refund: Process a refund for a cancelled or eligible reservation. Called after cancel_reservation when refund is due. Call once per refund type — fare and ancillary fees must be separate calls. Never combine both into a single call.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code"
+      },
+      "refund_amount": {
+       "type": "number",
+       "description": "Amount to refund from cancel_reservation response"
+      },
+      "refund_type": {
+       "type": "string",
+       "description": "Type of refund",
+       "enum": [
+        "full_fare",
+        "partial_fare",
+        "taxes_only",
+        "ancillary_fees"
+       ]
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "refund_amount",
+      "refund_type"
+     ]
+    }
+   },
+   {
+    "type": "function",
+    "name": "transfer_to_agent",
+    "description": "transfer_to_agent: Transfer the call to a live human agent when requested by passenger.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "confirmation_number": {
+       "type": "string",
+       "description": "Booking confirmation code for context transfer"
+      },
+      "transfer_reason": {
+       "type": "string",
+       "description": "Reason for transfer (passenger_requested, policy_exception_needed, complex_itinerary, complaint_escalation, technical_issue, unable_to_resolve)"
+      },
+      "issue_summary": {
+       "type": "string",
+       "description": "Brief summary of the issue and what has been attempted, in the same language as the conversation you had with the user"
+      }
+     },
+     "required": [
+      "confirmation_number",
+      "transfer_reason",
+      "issue_summary"
+     ]
+    }
+   }
+  ],
+  "initial_message": "Hello! How can I help you today?",
+  "session_config": {
+   "type": "realtime",
+   "output_modalities": [
+    "audio"
+   ],
+   "instructions": "You are an AI voice assistant on a live phone call.\nCall the appropriate function to process the user's input. \nIf you do not have enough info to complete the user's request, ask for more information. \nCall the tool as many times as you need until the user's task is complete. Call the tool as quickly as possible. \nIf you don't need to call the tool, respond to the user.\n\nEverything you say will be converted to speech and heard by the caller.\n\n## Context\nToday is 2026-03-17 10:45 CST.\nHandles flight changes, rebooking due to disruptions, cancellations, and refunds for SkyWay Airlines\n\nSpecific Instructions and Policies:\n## Authentication\n\nEvery call begins with authentication. Ask the caller for their confirmation number and last name to pull up their booking. Confirm you have the correct reservation before proceeding.\n\n### Disambiguation\n\nIf a lookup fails or returns no match, use the following escalation path:\n\n1. Ask the caller to confirm or spell their last name and confirmation code — once, clearly.\n2. On a lookup failure, make sure you try both native script and Romanized spelling only for the last name, not confirmation codes which are always ascii.\n\n## Core Principles\n\n1. Listen first. Understand the caller's situation before offering solutions.\n2. Determine the cause. Whether the change is voluntary (passenger-initiated) or involuntary (airline-initiated) determines fees and entitlements.\n3. Explain before acting. Before making any change, briefly inform the caller of all applicable items from the following — skip any that don't apply to the situation:\n    (a) any applicable fees and fare differences\n    (b) whether any refund will go to original payment or travel credit, including expiration and restrictions\n    (c) what the caller gives up by choosing this option over alternatives (e.g., voucher eligibility, refund type)\n    (d) rebooking constraints or standby clearing rules if relevant\n    (e) any impact on seat assignments, baggage, or meal requests. \n    Get explicit confirmation before proceeding.\n4. Offer alternatives. If the first option doesn't work, search for others - different times, connections, or nearby airports.\n5. Transfer ancillaries. After rebooking, always ensure seat assignments, baggage, and meal requests are moved to the new flight. Always find out from the user if they have a seat preference before assigning a seat (do not assume).\n6. Confirm and summarize. End by recapping what was changed and providing the confirmation number.\n\n## Handling Difficult Situations\n\n- Upset callers: Acknowledge their frustration, focus on solutions, offer compensation when policy allows.\n- No availability: Exhaust alternatives before suggesting refund/credit as a last resort.\n- Policy disputes: Explain the policy clearly, offer what you CAN do, and transfer to a supervisor if the caller insists on speaking to somebody else.\n- Escalation: Offer to transfer to a live agent if the caller requests it, if you cannot make progress on the request after two attempts, or if the passenger has a valid claim and the situation exceeds your authority.\n\n## Voice Guidelines\n- Keep responses concise - this is a phone call, not an email.\n- Speak confirmation numbers and times slowly and clearly.\n- Confirm critical details before executing  changes.\n- If interrupted, stop and listen.\n\n## Policies\n\n### Change Fees\n\n\"Same-day\" means the new flight departs on today's calendar date. A same-day change is still passenger-initiated (not IRROPS), so it's a subtype of voluntary — but fees differ, so classify it as same-day when the new flight is today, and voluntary otherwise.\n\nVoluntary changes (passenger-initiated, new flight on a future date):\n- Basic Economy: $75 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: No change fee, fare difference only\n- First Class: No change fee, fare difference only\n\nSame-day changes (passenger-initiated, new flight departing today):\n- Basic Economy: $199 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: $75 change fee + fare difference\n- First Class: $75 change fee + fare difference\n- Fees waived for Gold and Platinum elite status\n- Same-day standby: Free (see Standby Rules)\n\nFee Waivers:\n- IRROPS (cancellation, delay >2hrs, schedule change >2hrs): All fees waived\n- Missed connection due to airline delay: All fees waived\n- Elite status Platinum: Change fees waived on all fare classes\n- Military orders: Change fees waived with documentation (live agent needs to handle this)\n- Bereavement: Change fees waived with documentation (live agent needs to handle this)\n- Medical emergency: Change fees waived with documentation (live agent needs to handle this)\n\n### Rebooking Windows\n\nVoluntary Changes:\n- Changes permitted up to 2 hours before departure\n- Same-day changes permitted up to 30 minutes before departure\n\nIRROPS:\n- Rebooking permitted on any flight within 7 days of original travel date\n- If no acceptable options, full refund available regardless of fare type\n\nMissed Flights:\n- Passenger fault: Must rebook  within 24 hours, fees apply\n- Airline fault (missed connection): Free rebooking, protected for 7 days\n\n### Refund Policy\n\nRefundable Fares:\n- Full refund to original payment method\n- Processing time: 5-7 business days\n\nNon-Refundable Fares:\n- Travel credit issued valid for 12 months\n- Credit valid for passenger named on ticket only\n- Cancellation fee deducted from credit amount\n\n24-Hour Rule:\n- Full refund if cancelled within 24 hours of booking\n- Booking must be made at least 7 days before departure\n- Applies to all fare types including Basic Economy\n\nIRROPS Refunds:\n- Full refund available if airline cancels or delays >4 hours\n- Passenger may choose rebooking OR refund\n- Refund includes all ancillary fees (seats, bags)\n\n### Compensation\n\nMeal Vouchers:\n- Delay 2 hours to under 4 hours: $12 voucher (reason: delay_over_2_hours)\n- Delay 4 hours and over: $15 voucher (reason: delay_over_4_hours)\n- Cancellation with same-day rebooking: $15 voucher (reason: cancellation_wait_same_day)\n- Cancellation with next-day/overnight rebooking: $25 voucher (reason: irrops_overnight)\n- Valid at airport terminal restaurants only\n- Expires same day or within 24 hours\n- Always issue meal vouchers when appropriate based on above criteria. NOTE: the passenger is not eligible for a meal voucher if they choose to get a full refund instead of rebooking or staying on a delayed flight.\n\n\nHotel Vouchers:\n- Overnight delay/missed connection/canclled flight due to IRROPS: issue hotel voucher for one night.\n- Issue AFTER rebooking is confirmed (not before the customer decides)\n- Do NOT issue if the customer chooses refund instead of rebooking\n- If rebooked to a later date, issue for the number of nights between original and rebooked flight (up to max of 3 nights)\n- If rebooked to same day, issue for 1 night if overnight delay\n- Valid at any hotel in the airport area\n- Expires within 24 hours\n\n\n### Standby Rules\n\nEligibility:\n- Free for all passengers, all fare classes\n- Available on same-day flights only\n- Passenger must have confirmed seat on a later flight same day\n\nPriority Order:\n- 1. Elite Platinum members\n- 2. Elite Gold members\n- 3. Elite Silver members\n- 4. Same-day confirmed change passengers\n- 5. General standby (free)\n\nClearing:\n- Standby list clears at gate, approximately 15 minutes before departure\n- If not cleared, original flight booking remains protected\n\n### Fare Difference\n\nUpgrade to Higher Fare:\n- Passenger pays difference between original fare and new fare\n- Difference calculated at time of rebooking\n\nDowngrade to Lower Fare:\n- Difference issued as travel credit (not cash refund)\n- Exception: IRROPS downgrades may be refunded to original payment\n\n### Issuing Travel Credits\n- Only issue travel credits for the aforementioned categories:\n  - Downgrading to lower fare (see above for specific directions)\n  - Non refundable fees (see above for specific directions)\n\n### Elite Status Benefits\n\nSilver:\n- Priority standby listing\n\nGold:\n- Priority standby listing\n- Waived same-day confirmed change fee\n\nPlatinum:\n- Priority standby listing\n- Waived same-day confirmed change fee\n- Waived voluntary change fees\n- Complimentary upgrades when available\n\n### Escalation Policy\n\nWhen to Offer to Transfer to Live Agent:\n- Passenger explicitly requests live agent\n- Policy exception needed beyond agent authority\n- Unresolved complaint after 2 attempts\n- Technical system issues arise\n\nAlways offer the transfer first and wait for the caller to explicitly confirm before initiating it.\n\n\n## Voice-Friendly Communication Rules\n\n### Natural Speech Patterns\n- Use complete, naturally flowing sentences with clear pauses\n- Aim for sentences between 5-20 words for comfortable listening\n- Use punctuation to guide natural speech rhythm and pacing\n- Avoid run-on sentences that would require awkward breathing patterns\n\n### Clarity When Spoken Aloud\n- Spell out acronyms and abbreviations in full (say \"as soon as possible\" not \"ASAP\", \"by the way\" not \"BTW\")\n- Express numbers in linguistically/culturally appropriate spoken form for the conversation language:\n  * Dates: spoken form matching local convention (e.g. English: \"January 15th, 2024\"; French: \"le quinze janvier deux mille vingt-quatre\"; not \"1/15/2024\")\n  * Times: spoken form (e.g. English: \"three thirty PM\"; German: \"fünfzehn Uhr dreißig\"; not \"3:30 PM\")\n  * Quantities: spoken form (e.g. English: \"twenty dollars\"; Korean: \"이십 달러\"; not \"$20\")\n  * Years: spoken form appropriate to the language (\"twenty twenty-four\" not \"2024\")\n- Avoid ambiguous shorthand like \"w/\" (say \"with\"), \"info\" (say \"information\")\n\n### Audio-Appropriate Content\n- Never use visual-only elements (tables, bullet points, formatted lists, URLs)\n- Convert structured information into conversational summaries\n- Describe rather than display (say \"I found three options\" then list them naturally)\n- Skip content that only makes sense visually (links, email addresses, code)\n\n### Prohibited Elements\n- No emojis, symbols, or special characters\n- No text-based formatting (bold, italics, underlines)\n- No abbreviations that sound awkward when spoken (FYI, BTW, etc.)\n- No visual shortcuts like \"&\" (say \"and\"), \"+\" (say \"plus\")\n\n## Conversational Behavior\n\n### Response Style\n- Keep responses brief and conversational (2-4 sentences typically)\n- Summarize long lists rather than reading them exhaustively\n- Use natural transitions between topics\n- Maintain a warm, professional phone conversation tone\n\n### Information Handling\n- Do not hallucinate. Say \"I don't have that information\" when uncertain\n- Use only information from the current conversation\n- Ask for clarification only when truly necessary\n- Request one or two details maximum per turn\n- Never re-ask for information the caller has already provided in this conversation. Before asking for anything, check the conversation history — if you already have the value, use it.\n- If a tool call fails or returns no result, do not retry with the same parameters and do not ask the caller to provide the same information from scratch. Instead, read back exactly what you used (\"I tried looking up confirmation number A B C one two three for Smith — I'm not finding anything. Did I get that right?\"), and if the caller corrects it, retry once with the corrected value. If you still cannot find a match, ask the user to spell it out for you letter by letter.\n\n\n## Responsiveness\nBefore calling a tool, say one brief sentence first. For lookups, use a short lead-in (e.g. \"Let me pull that up.\"). Before any action that is irreversible or has real-world consequences, state what you'll do, get confirmation, then call the tool.\nIf calling multiple tools at once, only one lead-in is needed.\n",
+   "audio": {
+    "output": {
+     "voice": "marin",
+     "format": {
+      "type": "audio/pcm",
+      "rate": 24000
+     }
+    },
+    "input": {
+     "format": {
+      "type": "audio/pcm",
+      "rate": 24000
+     },
+     "turn_detection": {
+      "type": "server_vad",
+      "threshold": 0.5,
+      "prefix_padding_ms": 300,
+      "silence_duration_ms": 200
+     },
+     "transcription": {
+      "model": "whisper-1"
+     }
+    }
+   },
+   "tools": [
+    {
+     "type": "function",
+     "name": "get_reservation",
+     "description": "get_reservation: Retrieve flight reservation using confirmation number and passenger last name. This is typically the first tool called to authenticate the caller and load their flight numbers.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "6-character alphanumeric booking confirmation code"
+       },
+       "last_name": {
+        "type": "string",
+        "description": "Passenger last name for verification"
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "last_name"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "get_flight_status",
+     "description": "get_flight_status: Get specific information about a flight (including origin airport, destination airport, and departure time) as well as current status of a the flight including delays, cancellations, and gate information. For connecting flights, provide any segment's flight number.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "flight_number": {
+        "type": "string",
+        "description": "Flight number (e.g., SW123) - for connecting flights, can be any segment's flight number"
+       },
+       "flight_date": {
+        "type": "string",
+        "description": "Flight date (YYYY-MM-DD)"
+       }
+      },
+      "required": [
+       "flight_number",
+       "flight_date"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "get_disruption_info",
+     "description": "get_disruption_info: Get detailed information about flight disruption for IRROPS handling. Determines passenger rebooking entitlements based on disruption type and cause.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "flight_number": {
+        "type": "string",
+        "description": "Flight number to look up disruption for (e.g. SW123)"
+       },
+       "date": {
+        "type": "string",
+        "description": "Flight date (YYYY-MM-DD)"
+       }
+      },
+      "required": [
+       "flight_number",
+       "date"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "search_rebooking_options",
+     "description": "search_rebooking_options: Search for available flights to rebook a passenger. Returns options filtered by rebooking rules and availability.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "origin": {
+        "type": "string",
+        "description": "Origin airport code (e.g., JFK)"
+       },
+       "destination": {
+        "type": "string",
+        "description": "Destination airport code (e.g., LAX)"
+       },
+       "date": {
+        "type": "string",
+        "description": "Travel date (YYYY-MM-DD)"
+       },
+       "passenger_count": {
+        "type": "integer",
+        "description": "Number of passengers needing seats"
+       },
+       "fare_class": {
+        "type": "string",
+        "description": "Fare class to search. Use 'any' for cheapest available.",
+        "enum": [
+         "basic_economy",
+         "main_cabin",
+         "premium_economy",
+         "business",
+         "first",
+         "any"
+        ]
+       }
+      },
+      "required": [
+       "origin",
+       "destination",
+       "date",
+       "passenger_count",
+       "fare_class"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "rebook_flight",
+     "description": "rebook_flight: Rebook passenger(s) to a new flight. Handles voluntary changes, IRROPS rebooking, and missed flight recovery.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID from get_reservation booking to be changed"
+       },
+       "new_journey_id": {
+        "type": "string",
+        "description": "Journey ID of the replacement flight from search_rebooking_options"
+       },
+       "rebooking_type": {
+        "type": "string",
+        "description": "Reason for rebooking",
+        "enum": [
+         "voluntary",
+         "same_day",
+         "irrops_cancellation",
+         "irrops_delay",
+         "irrops_schedule_change",
+         "missed_flight_passenger_fault",
+         "missed_connection_airline_fault"
+        ]
+       },
+       "waive_change_fee": {
+        "type": "boolean",
+        "description": "Whether to waive the change fee (only valid for voluntary changes with authorization)"
+       },
+       "new_fare_class": {
+        "type": "string",
+        "description": "Fare class to rebook into if changing cabin. Omit to keep original fare class.",
+        "enum": [
+         "basic_economy",
+         "main_cabin",
+         "premium_economy",
+         "business",
+         "first"
+        ]
+       },
+       "flight_number": {
+        "type": "string",
+        "description": "For multi-segment journeys, the specific flight number of the leg to replace (partial rebook). Omit for full journey rebook."
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "journey_id",
+       "new_journey_id",
+       "rebooking_type",
+       "waive_change_fee"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "add_to_standby",
+     "description": "add_to_standby: Add passenger to standby list for a flight.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID to add passenger to standby for"
+       },
+       "passenger_ids": {
+        "type": "array",
+        "description": "Passenger IDs to add to standby (eg. ['PAX002', 'PAX003'])",
+        "items": {
+         "type": "string"
+        }
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "journey_id",
+       "passenger_ids"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "assign_seat",
+     "description": "assign_seat: Assign a seat to a passenger based on preference (window, aisle, middle). Automatically generates unique seat assignments for multiple passengers.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "passenger_id": {
+        "type": "string",
+        "description": "Passenger identifier"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID from get_reservation"
+       },
+       "seat_preference": {
+        "type": "string",
+        "description": "Seat preference",
+        "enum": [
+         "window",
+         "aisle",
+         "middle",
+         "no_preference"
+        ]
+       },
+       "flight_number": {
+        "type": "string",
+        "description": "For multi-segment journeys, the specific flight number to assign seat on. Omit for single-segment journeys."
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "passenger_id",
+       "journey_id",
+       "seat_preference"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "add_baggage_allowance",
+     "description": "add_baggage_allowance: Add checked baggage allowance to a flight segment. Agent must specify exact number of bags (0-5).",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID from get_reservation"
+       },
+       "num_bags": {
+        "type": "integer",
+        "description": "Number of checked bags (0-5)"
+       },
+       "flight_number": {
+        "type": "string",
+        "description": "For multi-segment journeys, the specific flight number to add baggage to. Omit to apply to all segments in the journey."
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "journey_id",
+       "num_bags"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "add_meal_request",
+     "description": "add_meal_request: Add or update special meal request for a passenger on a flight segment.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "passenger_id": {
+        "type": "string",
+        "description": "Passenger identifier"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID from get_reservation"
+       },
+       "meal_type": {
+        "type": "string",
+        "description": "Meal type",
+        "enum": [
+         "vegetarian",
+         "vegan",
+         "kosher",
+         "halal",
+         "gluten_free",
+         "diabetic",
+         "low_sodium",
+         "child",
+         "hindu",
+         "standard",
+         "none"
+        ]
+       },
+       "flight_number": {
+        "type": "string",
+        "description": "For multi-segment journeys, the specific flight number to apply meal request to. Omit to apply to all segments."
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "passenger_id",
+       "journey_id",
+       "meal_type"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "issue_travel_credit",
+     "description": "issue_travel_credit: Issue a travel credit or future flight voucher to the passenger.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "passenger_id": {
+        "type": "string",
+        "description": "Passenger identifier"
+       },
+       "amount": {
+        "type": "number",
+        "description": "Credit amount in USD"
+       },
+       "credit_reason": {
+        "type": "string",
+        "description": "Reason for credit",
+        "enum": [
+         "cancellation_non_refundable",
+         "fare_difference_negative",
+         "service_recovery",
+         "goodwill",
+         "downgrade_compensation"
+        ]
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "passenger_id",
+       "amount",
+       "credit_reason"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "issue_hotel_voucher",
+     "description": "issue_hotel_voucher: Issue a hotel voucher.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "passenger_id": {
+        "type": "string",
+        "description": "Passenger identifier"
+       },
+       "num_nights": {
+        "type": "integer",
+        "description": "Number of nights for hotel voucher"
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "passenger_id",
+       "num_nights"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "issue_meal_voucher",
+     "description": "issue_meal_voucher: Issue a meal voucher for delays or disruptions that qualify.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "passenger_id": {
+        "type": "string",
+        "description": "Passenger identifier"
+       },
+       "voucher_reason": {
+        "type": "string",
+        "description": "Reason for voucher",
+        "enum": [
+         "delay_over_2_hours",
+         "delay_over_4_hours",
+         "cancellation_wait_same_day",
+         "irrops_overnight"
+        ]
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "passenger_id",
+       "voucher_reason"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "cancel_reservation",
+     "description": "cancel_reservation: Cancel a flight booking.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "journey_id": {
+        "type": "string",
+        "description": "Journey ID of the booking to cancel, from get_reservation bookings list"
+       },
+       "cancellation_reason": {
+        "type": "string",
+        "description": "Reason for cancellation",
+        "enum": [
+         "voluntary",
+         "irrops_refund",
+         "24_hour_rule",
+         "schedule_unacceptable",
+         "medical",
+         "bereavement"
+        ]
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "journey_id",
+       "cancellation_reason"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "process_refund",
+     "description": "process_refund: Process a refund for a cancelled or eligible reservation. Called after cancel_reservation when refund is due. Call once per refund type — fare and ancillary fees must be separate calls. Never combine both into a single call.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code"
+       },
+       "refund_amount": {
+        "type": "number",
+        "description": "Amount to refund from cancel_reservation response"
+       },
+       "refund_type": {
+        "type": "string",
+        "description": "Type of refund",
+        "enum": [
+         "full_fare",
+         "partial_fare",
+         "taxes_only",
+         "ancillary_fees"
+        ]
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "refund_amount",
+       "refund_type"
+      ]
+     }
+    },
+    {
+     "type": "function",
+     "name": "transfer_to_agent",
+     "description": "transfer_to_agent: Transfer the call to a live human agent when requested by passenger.",
+     "parameters": {
+      "type": "object",
+      "properties": {
+       "confirmation_number": {
+        "type": "string",
+        "description": "Booking confirmation code for context transfer"
+       },
+       "transfer_reason": {
+        "type": "string",
+        "description": "Reason for transfer (passenger_requested, policy_exception_needed, complex_itinerary, complaint_escalation, technical_issue, unable_to_resolve)"
+       },
+       "issue_summary": {
+        "type": "string",
+        "description": "Brief summary of the issue and what has been attempted, in the same language as the conversation you had with the user"
+       }
+      },
+      "required": [
+       "confirmation_number",
+       "transfer_reason",
+       "issue_summary"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ "script": [
+  {
+   "type": "session.created",
+   "event_id": "event_1",
+   "session": {
+    "id": "sess_golden"
+   }
+  },
+  {
+   "type": "session.updated",
+   "event_id": "event_2",
+   "session": {
+    "id": "sess_golden"
+   }
+  },
+  {
+   "type": "response.created",
+   "event_id": "event_3",
+   "response": {
+    "id": "resp_golden",
+    "object": "realtime.response",
+    "status": "in_progress"
+   }
+  },
+  {
+   "type": "response.function_call_arguments.done",
+   "event_id": "event_4",
+   "response_id": "resp_golden",
+   "item_id": "item_golden_1",
+   "output_index": 0,
+   "call_id": "call_golden_1",
+   "name": "get_reservation",
+   "arguments": "{\"confirmation_number\": \"ZK3FFW\", \"last_name\": \"Rodriguez\"}"
+  },
+  {
+   "type": "response.function_call_arguments.done",
+   "event_id": "event_5",
+   "response_id": "resp_golden",
+   "item_id": "item_golden_2",
+   "output_index": 1,
+   "call_id": "call_golden_2",
+   "name": "get_flight_status",
+   "arguments": "{\"flight_number\": \"SK621\", \"flight_date\": \"2026-03-20\"}"
+  },
+  {
+   "type": "response.done",
+   "event_id": "event_6",
+   "response": {
+    "id": "resp_golden",
+    "object": "realtime.response",
+    "status": "completed",
+    "output": [
+     {
+      "id": "item_golden_1",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_golden_1",
+      "name": "get_reservation",
+      "arguments": "{\"confirmation_number\": \"ZK3FFW\", \"last_name\": \"Rodriguez\"}"
+     },
+     {
+      "id": "item_golden_2",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_golden_2",
+      "name": "get_flight_status",
+      "arguments": "{\"flight_number\": \"SK621\", \"flight_date\": \"2026-03-20\"}"
+     }
+    ],
+    "usage": {
+     "total_tokens": 1300,
+     "input_tokens": 1200,
+     "output_tokens": 100
+    }
+   }
+  }
+ ],
+ "wire": [
+  {
+   "type": "session.update",
+   "session": {
+    "type": "realtime",
+    "output_modalities": [
+     "audio"
+    ],
+    "instructions": "You are an AI voice assistant on a live phone call.\nCall the appropriate function to process the user's input. \nIf you do not have enough info to complete the user's request, ask for more information. \nCall the tool as many times as you need until the user's task is complete. Call the tool as quickly as possible. \nIf you don't need to call the tool, respond to the user.\n\nEverything you say will be converted to speech and heard by the caller.\n\n## Context\nToday is 2026-03-17 10:45 CST.\nHandles flight changes, rebooking due to disruptions, cancellations, and refunds for SkyWay Airlines\n\nSpecific Instructions and Policies:\n## Authentication\n\nEvery call begins with authentication. Ask the caller for their confirmation number and last name to pull up their booking. Confirm you have the correct reservation before proceeding.\n\n### Disambiguation\n\nIf a lookup fails or returns no match, use the following escalation path:\n\n1. Ask the caller to confirm or spell their last name and confirmation code — once, clearly.\n2. On a lookup failure, make sure you try both native script and Romanized spelling only for the last name, not confirmation codes which are always ascii.\n\n## Core Principles\n\n1. Listen first. Understand the caller's situation before offering solutions.\n2. Determine the cause. Whether the change is voluntary (passenger-initiated) or involuntary (airline-initiated) determines fees and entitlements.\n3. Explain before acting. Before making any change, briefly inform the caller of all applicable items from the following — skip any that don't apply to the situation:\n    (a) any applicable fees and fare differences\n    (b) whether any refund will go to original payment or travel credit, including expiration and restrictions\n    (c) what the caller gives up by choosing this option over alternatives (e.g., voucher eligibility, refund type)\n    (d) rebooking constraints or standby clearing rules if relevant\n    (e) any impact on seat assignments, baggage, or meal requests. \n    Get explicit confirmation before proceeding.\n4. Offer alternatives. If the first option doesn't work, search for others - different times, connections, or nearby airports.\n5. Transfer ancillaries. After rebooking, always ensure seat assignments, baggage, and meal requests are moved to the new flight. Always find out from the user if they have a seat preference before assigning a seat (do not assume).\n6. Confirm and summarize. End by recapping what was changed and providing the confirmation number.\n\n## Handling Difficult Situations\n\n- Upset callers: Acknowledge their frustration, focus on solutions, offer compensation when policy allows.\n- No availability: Exhaust alternatives before suggesting refund/credit as a last resort.\n- Policy disputes: Explain the policy clearly, offer what you CAN do, and transfer to a supervisor if the caller insists on speaking to somebody else.\n- Escalation: Offer to transfer to a live agent if the caller requests it, if you cannot make progress on the request after two attempts, or if the passenger has a valid claim and the situation exceeds your authority.\n\n## Voice Guidelines\n- Keep responses concise - this is a phone call, not an email.\n- Speak confirmation numbers and times slowly and clearly.\n- Confirm critical details before executing  changes.\n- If interrupted, stop and listen.\n\n## Policies\n\n### Change Fees\n\n\"Same-day\" means the new flight departs on today's calendar date. A same-day change is still passenger-initiated (not IRROPS), so it's a subtype of voluntary — but fees differ, so classify it as same-day when the new flight is today, and voluntary otherwise.\n\nVoluntary changes (passenger-initiated, new flight on a future date):\n- Basic Economy: $75 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: No change fee, fare difference only\n- First Class: No change fee, fare difference only\n\nSame-day changes (passenger-initiated, new flight departing today):\n- Basic Economy: $199 change fee + fare difference\n- Main Cabin Economy: $75 change fee + fare difference\n- Premium Economy: $75 change fee + fare difference\n- Business Class: $75 change fee + fare difference\n- First Class: $75 change fee + fare difference\n- Fees waived for Gold and Platinum elite status\n- Same-day standby: Free (see Standby Rules)\n\nFee Waivers:\n- IRROPS (cancellation, delay >2hrs, schedule change >2hrs): All fees waived\n- Missed connection due to airline delay: All fees waived\n- Elite status Platinum: Change fees waived on all fare classes\n- Military orders: Change fees waived with documentation (live agent needs to handle this)\n- Bereavement: Change fees waived with documentation (live agent needs to handle this)\n- Medical emergency: Change fees waived with documentation (live agent needs to handle this)\n\n### Rebooking Windows\n\nVoluntary Changes:\n- Changes permitted up to 2 hours before departure\n- Same-day changes permitted up to 30 minutes before departure\n\nIRROPS:\n- Rebooking permitted on any flight within 7 days of original travel date\n- If no acceptable options, full refund available regardless of fare type\n\nMissed Flights:\n- Passenger fault: Must rebook  within 24 hours, fees apply\n- Airline fault (missed connection): Free rebooking, protected for 7 days\n\n### Refund Policy\n\nRefundable Fares:\n- Full refund to original payment method\n- Processing time: 5-7 business days\n\nNon-Refundable Fares:\n- Travel credit issued valid for 12 months\n- Credit valid for passenger named on ticket only\n- Cancellation fee deducted from credit amount\n\n24-Hour Rule:\n- Full refund if cancelled within 24 hours of booking\n- Booking must be made at least 7 days before departure\n- Applies to all fare types including Basic Economy\n\nIRROPS Refunds:\n- Full refund available if airline cancels or delays >4 hours\n- Passenger may choose rebooking OR refund\n- Refund includes all ancillary fees (seats, bags)\n\n### Compensation\n\nMeal Vouchers:\n- Delay 2 hours to under 4 hours: $12 voucher (reason: delay_over_2_hours)\n- Delay 4 hours and over: $15 voucher (reason: delay_over_4_hours)\n- Cancellation with same-day rebooking: $15 voucher (reason: cancellation_wait_same_day)\n- Cancellation with next-day/overnight rebooking: $25 voucher (reason: irrops_overnight)\n- Valid at airport terminal restaurants only\n- Expires same day or within 24 hours\n- Always issue meal vouchers when appropriate based on above criteria. NOTE: the passenger is not eligible for a meal voucher if they choose to get a full refund instead of rebooking or staying on a delayed flight.\n\n\nHotel Vouchers:\n- Overnight delay/missed connection/canclled flight due to IRROPS: issue hotel voucher for one night.\n- Issue AFTER rebooking is confirmed (not before the customer decides)\n- Do NOT issue if the customer chooses refund instead of rebooking\n- If rebooked to a later date, issue for the number of nights between original and rebooked flight (up to max of 3 nights)\n- If rebooked to same day, issue for 1 night if overnight delay\n- Valid at any hotel in the airport area\n- Expires within 24 hours\n\n\n### Standby Rules\n\nEligibility:\n- Free for all passengers, all fare classes\n- Available on same-day flights only\n- Passenger must have confirmed seat on a later flight same day\n\nPriority Order:\n- 1. Elite Platinum members\n- 2. Elite Gold members\n- 3. Elite Silver members\n- 4. Same-day confirmed change passengers\n- 5. General standby (free)\n\nClearing:\n- Standby list clears at gate, approximately 15 minutes before departure\n- If not cleared, original flight booking remains protected\n\n### Fare Difference\n\nUpgrade to Higher Fare:\n- Passenger pays difference between original fare and new fare\n- Difference calculated at time of rebooking\n\nDowngrade to Lower Fare:\n- Difference issued as travel credit (not cash refund)\n- Exception: IRROPS downgrades may be refunded to original payment\n\n### Issuing Travel Credits\n- Only issue travel credits for the aforementioned categories:\n  - Downgrading to lower fare (see above for specific directions)\n  - Non refundable fees (see above for specific directions)\n\n### Elite Status Benefits\n\nSilver:\n- Priority standby listing\n\nGold:\n- Priority standby listing\n- Waived same-day confirmed change fee\n\nPlatinum:\n- Priority standby listing\n- Waived same-day confirmed change fee\n- Waived voluntary change fees\n- Complimentary upgrades when available\n\n### Escalation Policy\n\nWhen to Offer to Transfer to Live Agent:\n- Passenger explicitly requests live agent\n- Policy exception needed beyond agent authority\n- Unresolved complaint after 2 attempts\n- Technical system issues arise\n\nAlways offer the transfer first and wait for the caller to explicitly confirm before initiating it.\n\n\n## Voice-Friendly Communication Rules\n\n### Natural Speech Patterns\n- Use complete, naturally flowing sentences with clear pauses\n- Aim for sentences between 5-20 words for comfortable listening\n- Use punctuation to guide natural speech rhythm and pacing\n- Avoid run-on sentences that would require awkward breathing patterns\n\n### Clarity When Spoken Aloud\n- Spell out acronyms and abbreviations in full (say \"as soon as possible\" not \"ASAP\", \"by the way\" not \"BTW\")\n- Express numbers in linguistically/culturally appropriate spoken form for the conversation language:\n  * Dates: spoken form matching local convention (e.g. English: \"January 15th, 2024\"; French: \"le quinze janvier deux mille vingt-quatre\"; not \"1/15/2024\")\n  * Times: spoken form (e.g. English: \"three thirty PM\"; German: \"fünfzehn Uhr dreißig\"; not \"3:30 PM\")\n  * Quantities: spoken form (e.g. English: \"twenty dollars\"; Korean: \"이십 달러\"; not \"$20\")\n  * Years: spoken form appropriate to the language (\"twenty twenty-four\" not \"2024\")\n- Avoid ambiguous shorthand like \"w/\" (say \"with\"), \"info\" (say \"information\")\n\n### Audio-Appropriate Content\n- Never use visual-only elements (tables, bullet points, formatted lists, URLs)\n- Convert structured information into conversational summaries\n- Describe rather than display (say \"I found three options\" then list them naturally)\n- Skip content that only makes sense visually (links, email addresses, code)\n\n### Prohibited Elements\n- No emojis, symbols, or special characters\n- No text-based formatting (bold, italics, underlines)\n- No abbreviations that sound awkward when spoken (FYI, BTW, etc.)\n- No visual shortcuts like \"&\" (say \"and\"), \"+\" (say \"plus\")\n\n## Conversational Behavior\n\n### Response Style\n- Keep responses brief and conversational (2-4 sentences typically)\n- Summarize long lists rather than reading them exhaustively\n- Use natural transitions between topics\n- Maintain a warm, professional phone conversation tone\n\n### Information Handling\n- Do not hallucinate. Say \"I don't have that information\" when uncertain\n- Use only information from the current conversation\n- Ask for clarification only when truly necessary\n- Request one or two details maximum per turn\n- Never re-ask for information the caller has already provided in this conversation. Before asking for anything, check the conversation history — if you already have the value, use it.\n- If a tool call fails or returns no result, do not retry with the same parameters and do not ask the caller to provide the same information from scratch. Instead, read back exactly what you used (\"I tried looking up confirmation number A B C one two three for Smith — I'm not finding anything. Did I get that right?\"), and if the caller corrects it, retry once with the corrected value. If you still cannot find a match, ask the user to spell it out for you letter by letter.\n\n\n## Responsiveness\nBefore calling a tool, say one brief sentence first. For lookups, use a short lead-in (e.g. \"Let me pull that up.\"). Before any action that is irreversible or has real-world consequences, state what you'll do, get confirmation, then call the tool.\nIf calling multiple tools at once, only one lead-in is needed.\n",
+    "audio": {
+     "output": {
+      "voice": "marin",
+      "format": {
+       "type": "audio/pcm",
+       "rate": 24000
+      }
+     },
+     "input": {
+      "format": {
+       "type": "audio/pcm",
+       "rate": 24000
+      },
+      "turn_detection": {
+       "type": "server_vad",
+       "threshold": 0.5,
+       "prefix_padding_ms": 300,
+       "silence_duration_ms": 200
+      },
+      "transcription": {
+       "model": "whisper-1"
+      }
+     }
+    },
+    "tools": [
+     {
+      "type": "function",
+      "name": "get_reservation",
+      "description": "get_reservation: Retrieve flight reservation using confirmation number and passenger last name. This is typically the first tool called to authenticate the caller and load their flight numbers.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "6-character alphanumeric booking confirmation code"
+        },
+        "last_name": {
+         "type": "string",
+         "description": "Passenger last name for verification"
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "last_name"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "get_flight_status",
+      "description": "get_flight_status: Get specific information about a flight (including origin airport, destination airport, and departure time) as well as current status of a the flight including delays, cancellations, and gate information. For connecting flights, provide any segment's flight number.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "flight_number": {
+         "type": "string",
+         "description": "Flight number (e.g., SW123) - for connecting flights, can be any segment's flight number"
+        },
+        "flight_date": {
+         "type": "string",
+         "description": "Flight date (YYYY-MM-DD)"
+        }
+       },
+       "required": [
+        "flight_number",
+        "flight_date"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "get_disruption_info",
+      "description": "get_disruption_info: Get detailed information about flight disruption for IRROPS handling. Determines passenger rebooking entitlements based on disruption type and cause.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "flight_number": {
+         "type": "string",
+         "description": "Flight number to look up disruption for (e.g. SW123)"
+        },
+        "date": {
+         "type": "string",
+         "description": "Flight date (YYYY-MM-DD)"
+        }
+       },
+       "required": [
+        "flight_number",
+        "date"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "search_rebooking_options",
+      "description": "search_rebooking_options: Search for available flights to rebook a passenger. Returns options filtered by rebooking rules and availability.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "origin": {
+         "type": "string",
+         "description": "Origin airport code (e.g., JFK)"
+        },
+        "destination": {
+         "type": "string",
+         "description": "Destination airport code (e.g., LAX)"
+        },
+        "date": {
+         "type": "string",
+         "description": "Travel date (YYYY-MM-DD)"
+        },
+        "passenger_count": {
+         "type": "integer",
+         "description": "Number of passengers needing seats"
+        },
+        "fare_class": {
+         "type": "string",
+         "description": "Fare class to search. Use 'any' for cheapest available.",
+         "enum": [
+          "basic_economy",
+          "main_cabin",
+          "premium_economy",
+          "business",
+          "first",
+          "any"
+         ]
+        }
+       },
+       "required": [
+        "origin",
+        "destination",
+        "date",
+        "passenger_count",
+        "fare_class"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "rebook_flight",
+      "description": "rebook_flight: Rebook passenger(s) to a new flight. Handles voluntary changes, IRROPS rebooking, and missed flight recovery.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID from get_reservation booking to be changed"
+        },
+        "new_journey_id": {
+         "type": "string",
+         "description": "Journey ID of the replacement flight from search_rebooking_options"
+        },
+        "rebooking_type": {
+         "type": "string",
+         "description": "Reason for rebooking",
+         "enum": [
+          "voluntary",
+          "same_day",
+          "irrops_cancellation",
+          "irrops_delay",
+          "irrops_schedule_change",
+          "missed_flight_passenger_fault",
+          "missed_connection_airline_fault"
+         ]
+        },
+        "waive_change_fee": {
+         "type": "boolean",
+         "description": "Whether to waive the change fee (only valid for voluntary changes with authorization)"
+        },
+        "new_fare_class": {
+         "type": "string",
+         "description": "Fare class to rebook into if changing cabin. Omit to keep original fare class.",
+         "enum": [
+          "basic_economy",
+          "main_cabin",
+          "premium_economy",
+          "business",
+          "first"
+         ]
+        },
+        "flight_number": {
+         "type": "string",
+         "description": "For multi-segment journeys, the specific flight number of the leg to replace (partial rebook). Omit for full journey rebook."
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "journey_id",
+        "new_journey_id",
+        "rebooking_type",
+        "waive_change_fee"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "add_to_standby",
+      "description": "add_to_standby: Add passenger to standby list for a flight.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID to add passenger to standby for"
+        },
+        "passenger_ids": {
+         "type": "array",
+         "description": "Passenger IDs to add to standby (eg. ['PAX002', 'PAX003'])",
+         "items": {
+          "type": "string"
+         }
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "journey_id",
+        "passenger_ids"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "assign_seat",
+      "description": "assign_seat: Assign a seat to a passenger based on preference (window, aisle, middle). Automatically generates unique seat assignments for multiple passengers.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "passenger_id": {
+         "type": "string",
+         "description": "Passenger identifier"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID from get_reservation"
+        },
+        "seat_preference": {
+         "type": "string",
+         "description": "Seat preference",
+         "enum": [
+          "window",
+          "aisle",
+          "middle",
+          "no_preference"
+         ]
+        },
+        "flight_number": {
+         "type": "string",
+         "description": "For multi-segment journeys, the specific flight number to assign seat on. Omit for single-segment journeys."
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "passenger_id",
+        "journey_id",
+        "seat_preference"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "add_baggage_allowance",
+      "description": "add_baggage_allowance: Add checked baggage allowance to a flight segment. Agent must specify exact number of bags (0-5).",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID from get_reservation"
+        },
+        "num_bags": {
+         "type": "integer",
+         "description": "Number of checked bags (0-5)"
+        },
+        "flight_number": {
+         "type": "string",
+         "description": "For multi-segment journeys, the specific flight number to add baggage to. Omit to apply to all segments in the journey."
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "journey_id",
+        "num_bags"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "add_meal_request",
+      "description": "add_meal_request: Add or update special meal request for a passenger on a flight segment.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "passenger_id": {
+         "type": "string",
+         "description": "Passenger identifier"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID from get_reservation"
+        },
+        "meal_type": {
+         "type": "string",
+         "description": "Meal type",
+         "enum": [
+          "vegetarian",
+          "vegan",
+          "kosher",
+          "halal",
+          "gluten_free",
+          "diabetic",
+          "low_sodium",
+          "child",
+          "hindu",
+          "standard",
+          "none"
+         ]
+        },
+        "flight_number": {
+         "type": "string",
+         "description": "For multi-segment journeys, the specific flight number to apply meal request to. Omit to apply to all segments."
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "passenger_id",
+        "journey_id",
+        "meal_type"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "issue_travel_credit",
+      "description": "issue_travel_credit: Issue a travel credit or future flight voucher to the passenger.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "passenger_id": {
+         "type": "string",
+         "description": "Passenger identifier"
+        },
+        "amount": {
+         "type": "number",
+         "description": "Credit amount in USD"
+        },
+        "credit_reason": {
+         "type": "string",
+         "description": "Reason for credit",
+         "enum": [
+          "cancellation_non_refundable",
+          "fare_difference_negative",
+          "service_recovery",
+          "goodwill",
+          "downgrade_compensation"
+         ]
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "passenger_id",
+        "amount",
+        "credit_reason"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "issue_hotel_voucher",
+      "description": "issue_hotel_voucher: Issue a hotel voucher.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "passenger_id": {
+         "type": "string",
+         "description": "Passenger identifier"
+        },
+        "num_nights": {
+         "type": "integer",
+         "description": "Number of nights for hotel voucher"
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "passenger_id",
+        "num_nights"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "issue_meal_voucher",
+      "description": "issue_meal_voucher: Issue a meal voucher for delays or disruptions that qualify.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "passenger_id": {
+         "type": "string",
+         "description": "Passenger identifier"
+        },
+        "voucher_reason": {
+         "type": "string",
+         "description": "Reason for voucher",
+         "enum": [
+          "delay_over_2_hours",
+          "delay_over_4_hours",
+          "cancellation_wait_same_day",
+          "irrops_overnight"
+         ]
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "passenger_id",
+        "voucher_reason"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "cancel_reservation",
+      "description": "cancel_reservation: Cancel a flight booking.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "journey_id": {
+         "type": "string",
+         "description": "Journey ID of the booking to cancel, from get_reservation bookings list"
+        },
+        "cancellation_reason": {
+         "type": "string",
+         "description": "Reason for cancellation",
+         "enum": [
+          "voluntary",
+          "irrops_refund",
+          "24_hour_rule",
+          "schedule_unacceptable",
+          "medical",
+          "bereavement"
+         ]
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "journey_id",
+        "cancellation_reason"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "process_refund",
+      "description": "process_refund: Process a refund for a cancelled or eligible reservation. Called after cancel_reservation when refund is due. Call once per refund type — fare and ancillary fees must be separate calls. Never combine both into a single call.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code"
+        },
+        "refund_amount": {
+         "type": "number",
+         "description": "Amount to refund from cancel_reservation response"
+        },
+        "refund_type": {
+         "type": "string",
+         "description": "Type of refund",
+         "enum": [
+          "full_fare",
+          "partial_fare",
+          "taxes_only",
+          "ancillary_fees"
+         ]
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "refund_amount",
+        "refund_type"
+       ]
+      }
+     },
+     {
+      "type": "function",
+      "name": "transfer_to_agent",
+      "description": "transfer_to_agent: Transfer the call to a live human agent when requested by passenger.",
+      "parameters": {
+       "type": "object",
+       "properties": {
+        "confirmation_number": {
+         "type": "string",
+         "description": "Booking confirmation code for context transfer"
+        },
+        "transfer_reason": {
+         "type": "string",
+         "description": "Reason for transfer (passenger_requested, policy_exception_needed, complex_itinerary, complaint_escalation, technical_issue, unable_to_resolve)"
+        },
+        "issue_summary": {
+         "type": "string",
+         "description": "Brief summary of the issue and what has been attempted, in the same language as the conversation you had with the user"
+        }
+       },
+       "required": [
+        "confirmation_number",
+        "transfer_reason",
+        "issue_summary"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  {
+   "type": "conversation.item.create",
+   "item": {
+    "type": "message",
+    "role": "user",
+    "content": [
+     {
+      "type": "input_text",
+      "text": "Say: 'Hello! How can I help you today?'"
+     }
+    ]
+   }
+  },
+  {
+   "type": "response.create"
+  },
+  {
+   "type": "conversation.item.create",
+   "item": {
+    "type": "function_call_output",
+    "call_id": "call_golden_1",
+    "output": "{\"status\": \"success\", \"reservation\": {\"ancillaries\": {\"bags_fee\": 0.0, \"seat_selection_fee\": 0.0}, \"booking_date\": \"2026-02-02T14:18:00-06:00\", \"bookings\": [{\"fare_class\": \"main_cabin\", \"fare_paid\": 260.0, \"journey_id\": \"FL_SK621_20260320\", \"segments\": [{\"bags_checked\": 0, \"date\": \"2026-03-20\", \"fare_paid\": 260.0, \"flight_number\": \"SK621\", \"meal_request\": null, \"seat\": \"22A\", \"origin\": \"AUS\", \"destination\": \"LAX\", \"scheduled_departure\": \"11:05\", \"scheduled_arrival\": \"12:20\"}], \"status\": \"confirmed\"}], \"confirmation_number\": \"ZK3FFW\", \"fare_type\": \"non_refundable\", \"passengers\": [{\"elite_status\": null, \"email\": \"samantha.rodriguez@example.com\", \"first_name\": \"samantha\", \"last_name\": \"rodriguez\", \"meal_preference\": \"none\", \"passenger_id\": \"PAX001\", \"phone\": \"+1-512-555-0148\", \"seat_preference\": \"window\", \"ticket_number\": \"1801234567890\"}], \"status\": \"confirmed\"}}"
+   }
+  },
+  {
+   "type": "response.create"
+  },
+  {
+   "type": "conversation.item.create",
+   "item": {
+    "type": "function_call_output",
+    "call_id": "call_golden_2",
+    "output": "{\"status\": \"success\", \"journey\": {\"bookable\": true, \"date\": \"2026-03-20\", \"destination\": \"LAX\", \"fares\": {\"basic_economy\": 210.0, \"business\": 980.0, \"first\": null, \"main_cabin\": 260.0, \"premium_economy\": 640.0}, \"journey_id\": \"FL_SK621_20260320\", \"num_stops\": 0, \"origin\": \"AUS\", \"segments\": [{\"aircraft_type\": \"737-800\", \"available_seat_types\": {\"basic_economy\": [\"window\", \"aisle\", \"middle\"], \"business\": [\"window\", \"aisle\"], \"first\": [], \"main_cabin\": [\"window\", \"aisle\", \"middle\"], \"premium_economy\": [\"window\", \"aisle\", \"middle\"]}, \"available_seats\": {\"basic_economy\": 8, \"business\": 2, \"first\": 0, \"main_cabin\": 18, \"premium_economy\": 6}, \"cancellation_reason\": null, \"delay_minutes\": null, \"delay_reason\": null, \"destination\": \"LAX\", \"destination_utc_offset\": -8, \"duration_minutes\": 195, \"fares\": {\"basic_economy\": 210.0, \"business\": 980.0, \"first\": null, \"main_cabin\": 260.0, \"premium_economy\": 640.0}, \"flight_number\": \"SK621\", \"gate\": \"A7\", \"origin\": \"AUS\", \"origin_utc_offset\": -6, \"scheduled_arrival\": \"12:20\", \"scheduled_departure\": \"11:05\", \"segment_number\": 1, \"status\": \"scheduled\"}], \"status\": \"scheduled\", \"total_duration_minutes\": 195}}"
+   }
+  },
+  {
+   "type": "response.create"
+  }
+ ],
+ "response_done": {
+  "ga_audio": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_ga_audio",
+    "response": {
+     "id": "r1",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "output_audio",
+         "transcript": "Hello! How can I help you today?"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": false,
+   "text": ""
+  },
+  "ga_text": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_ga_text",
+    "response": {
+     "id": "r2",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "output_text",
+         "text": "Hello there."
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": false,
+   "text": ""
+  },
+  "beta_audio": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_beta_audio",
+    "response": {
+     "id": "r3",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "audio",
+         "transcript": "  Hello there.  "
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": false,
+   "text": "Hello there."
+  },
+  "beta_text_and_audio": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_beta_text_and_audio",
+    "response": {
+     "id": "r4",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "text",
+         "text": "One. "
+        },
+        {
+         "type": "audio",
+         "transcript": null,
+         "text": "Two."
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": false,
+   "text": "One. Two."
+  },
+  "function_calls": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_function_calls",
+    "response": {
+     "id": "r5",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_call_1",
+       "type": "function_call",
+       "status": "completed",
+       "call_id": "call_1",
+       "name": "get_reservation",
+       "arguments": "{}"
+      },
+      {
+       "id": "item_call_2",
+       "type": "function_call",
+       "status": "completed",
+       "call_id": "call_2",
+       "name": "get_reservation",
+       "arguments": "{}"
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": true,
+   "text": ""
+  },
+  "speech_then_call": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_speech_then_call",
+    "response": {
+     "id": "r6",
+     "status": "completed",
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "audio",
+         "transcript": "Let me check."
+        }
+       ]
+      },
+      {
+       "id": "item_call_3",
+       "type": "function_call",
+       "status": "completed",
+       "call_id": "call_3",
+       "name": "get_reservation",
+       "arguments": "{}"
+      }
+     ]
+    }
+   },
+   "status": "completed",
+   "has_function_calls": true,
+   "text": "Let me check."
+  },
+  "cancelled": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_cancelled",
+    "response": {
+     "id": "r7",
+     "status": "cancelled",
+     "status_details": {
+      "type": "cancelled",
+      "reason": "turn_detected"
+     },
+     "output": [
+      {
+       "id": "item_msg",
+       "type": "message",
+       "role": "assistant",
+       "status": "completed",
+       "content": [
+        {
+         "type": "output_audio",
+         "transcript": "I can help with"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "status": "cancelled",
+   "has_function_calls": false,
+   "text": ""
+  },
+  "no_output": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_no_output",
+    "response": {
+     "id": "r8",
+     "status": "failed",
+     "output": []
+    }
+   },
+   "status": "failed",
+   "has_function_calls": false,
+   "text": ""
+  },
+  "no_response": {
+   "event": {
+    "type": "response.done",
+    "event_id": "event_no_response"
+   },
+   "status": null,
+   "has_function_calls": false,
+   "text": ""
+  }
+ }
+}

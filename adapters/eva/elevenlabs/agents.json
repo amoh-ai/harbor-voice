@@ -1,0 +1,155 @@
+{
+  "eva_commit": "039efa0a",
+  "source": "EVA docs/experiment_setup.md:133-188 (@039efa0a): the ElevenLabs user simulator agents",
+  "about": [
+    "EVA's caller agents as ElevenLabs Agents API payloads (POST /v1/convai/agents/create).",
+    "'common' + each agent's own block is the create body: exactly the settings EVA's setup table defines; ElevenLabs defaults everything else, as EVA's 'Blank Agent' instructions do.",
+    "'observed_defaults' are the values ElevenLabs gave the EN agents it created by hand on 2026-10-28 (read back by GET). EVA never sets them; diff() reports a change as drift, not as a deviation from EVA.",
+    "'unconfirmed' are EVA settings with no field we could pin to the API; diff() reports their live value for a human to judge.",
+    "EVA's 'Interruptible: Disabled' is the UI toggle under 'First message' (agent.disable_first_message_interruptions); the UI shows it only when a first message is set, so with EVA's empty first message it has no effect (checked in the UI 2026-10-28). The caller's own handling of the 'interruption' event is EVA's bridge, whose interrupt() is a no-op (audio_bridge.py:323-330), ported as is."
+  ],
+  "common": {
+    "conversation_config": {
+      "asr": {
+        "user_input_audio_format": "ulaw_8000"
+      },
+      "turn": {
+        "turn_eagerness": "eager",
+        "turn_timeout": 15
+      },
+      "tts": {
+        "model_id": "eleven_v3_conversational",
+        "expressive_mode": true,
+        "suggested_audio_tags": []
+      },
+      "conversation": {
+        "max_duration_seconds": 600
+      },
+      "agent": {
+        "first_message": "",
+        "disable_first_message_interruptions": true,
+        "prompt": {
+          "prompt": "{{prompt}}",
+          "llm": "gpt-5.1",
+          "ignore_default_personality": true,
+          "built_in_tools": {
+            "end_call": {
+              "type": "system",
+              "name": "end_call",
+              "description": "Use this to end the phone call and hang up.\n\nCall this function when any ONE of the following is true:\n1. The agent has confirmed your request is resolved and you have said goodbye\n2. The agent says they are transferring you to a live agent\n3. The agent has been unable to make progress for at least 5 consecutive turns\n4. The agent says goodbye or indicates the conversation is over\n5. The agent indicates that the remainder of your request cannot be fulfilled.\n6. If the assistant says something along the lines of \"I'm sorry I encountered an error processing your request.\"\n\nIMPORTANT: never call this tool in the same turn that you provide the agent with data, an identifier, a request to transfer to a live agent, an approval to proceed, or any kind of additional information. \n\n\nBefore calling this tool, always say a brief goodbye first.\n",
+              "params": {
+                "system_tool_type": "end_call"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    "en_f": {
+      "status": "active",
+      "env": "EVA_EN_USER_F",
+      "name": "EVA user simulator EN F",
+      "eva_voice_id": "KpTQ5yzwazQWLkvnK59A",
+      "deviation": "EVA's female voice (Natalee Champlin, KpTQ5yzwazQWLkvnK59A) now has live moderation, which ElevenLabs refuses for agents; g6xIsTj2HwM6VR4iXFCw replaces it. Both sides of a parity run share it; only the comparison with the paper's female callers is affected.",
+      "conversation_config": {
+        "tts": {
+          "voice_id": "g6xIsTj2HwM6VR4iXFCw"
+        },
+        "agent": {
+          "language": "en"
+        }
+      }
+    },
+    "en_m": {
+      "status": "active",
+      "env": "EVA_EN_USER_M",
+      "name": "EVA user simulator EN M",
+      "eva_voice_id": "cjVigY5qzO86Huf0OWal",
+      "conversation_config": {
+        "tts": {
+          "voice_id": "cjVigY5qzO86Huf0OWal"
+        },
+        "agent": {
+          "language": "en"
+        }
+      }
+    },
+    "fr_f": {
+      "status": "placeholder",
+      "env": "EVA_FR_USER_F",
+      "name": "EVA user simulator FR F",
+      "eva_voice_id": "1hIScOW98xkqE5ttC10C",
+      "note": "Not created. EVA's setup table gives English as the only agent language, so 'fr' is assumed for this French voice; check that the voice works with agents before creating it.",
+      "conversation_config": {
+        "tts": {
+          "voice_id": "1hIScOW98xkqE5ttC10C"
+        },
+        "agent": {
+          "language": "fr"
+        }
+      }
+    },
+    "fr_m": {
+      "status": "placeholder",
+      "env": "EVA_FR_USER_M",
+      "name": "EVA user simulator FR M",
+      "eva_voice_id": "K8nDX2f6wjv6bCh5UeZi",
+      "note": "Not created. EVA's setup table gives English as the only agent language, so 'fr' is assumed for this French voice; check that the voice works with agents before creating it.",
+      "conversation_config": {
+        "tts": {
+          "voice_id": "K8nDX2f6wjv6bCh5UeZi"
+        },
+        "agent": {
+          "language": "fr"
+        }
+      }
+    }
+  },
+  "unconfirmed": [],
+  "observed_defaults": {
+    "conversation_config.agent.prompt.reasoning_effort": "none",
+    "conversation_config.agent.prompt.temperature": 0.0,
+    "conversation_config.agent.prompt.max_tokens": -1,
+    "conversation_config.agent.prompt.backup_llm_config": {
+      "preference": "default"
+    },
+    "conversation_config.agent.prompt.cascade_timeout_seconds": 4.0,
+    "conversation_config.agent.prompt.tool_ids": [],
+    "conversation_config.agent.prompt.knowledge_base": [],
+    "conversation_config.agent.prompt.timezone": "Asia/Calcutta",
+    "conversation_config.turn.mode": "turn",
+    "conversation_config.turn.turn_model": "turn_v3",
+    "conversation_config.turn.speculative_turn": true,
+    "conversation_config.turn.spelling_patience": "auto",
+    "conversation_config.turn.silence_end_call_timeout": -1.0,
+    "conversation_config.turn.initial_wait_time": null,
+    "conversation_config.turn.retranscribe_on_turn_timeout": false,
+    "conversation_config.turn.soft_timeout_config.timeout_seconds": -1.0,
+    "conversation_config.tts.agent_output_audio_format": "pcm_16000",
+    "conversation_config.tts.optimize_streaming_latency": 3,
+    "conversation_config.tts.stability": 0.5,
+    "conversation_config.tts.speed": 1.0,
+    "conversation_config.tts.similarity_boost": 0.75,
+    "conversation_config.tts.text_normalisation_type": "system_prompt",
+    "conversation_config.tts.enable_phoneme_tags": true,
+    "conversation_config.tts.pronunciation_dictionary_locators": [],
+    "conversation_config.asr.provider": "scribe_realtime",
+    "conversation_config.asr.quality": "high",
+    "conversation_config.asr.keywords": [],
+    "conversation_config.vad.background_voice_detection": false,
+    "conversation_config.conversation.text_only": false,
+    "conversation_config.conversation.client_events": [
+      "audio",
+      "interruption",
+      "user_transcript",
+      "agent_response",
+      "agent_response_correction"
+    ],
+    "conversation_config.conversation.background_sound.source_type": null,
+    "platform_settings.call_limits.agent_concurrency_limit": -1,
+    "platform_settings.guardrails.focus.is_enabled": false,
+    "platform_settings.guardrails.prompt_injection.is_enabled": false
+  }
+}

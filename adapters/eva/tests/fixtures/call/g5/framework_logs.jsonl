@@ -1,0 +1,17 @@
+{"timestamp": 1793211463887, "type": "llm_response", "data": {"frame": "Hello! How can I help you today?"}}
+{"timestamp": 1793211463887, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": false}}
+{"timestamp": 1793211465982, "type": "turn_start", "data": {"frame": "turn_start"}}
+{"timestamp": 1793211469271, "type": "tool_call", "data": {"frame": "tool_call", "tool_name": "get_reservation", "arguments": {"confirmation_number": "ABC123", "last_name": "Smith"}, "result": {"status": "success", "reservation": {"confirmation_number": "ABC123", "flight": "100", "destination": "Boston", "date": "Monday", "passenger": "José Smith"}}}}
+{"timestamp": 1793211469271, "type": "llm_response", "data": {"frame": "Let me check that for you."}}
+{"timestamp": 1793211469271, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": false}}
+{"timestamp": 1793211471184, "type": "llm_response", "data": {"frame": "I found your booking: flight 100 to Boston, Monday at 9 AM. Would you like to change it?"}}
+{"timestamp": 1793211471184, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": false}}
+{"timestamp": 1793211473972, "type": "turn_start", "data": {"frame": "turn_start"}}
+{"timestamp": 1793211479074, "type": "s2s_transcript", "data": {"frame": "Sure. I can move you to Friday at 9 AM, at 2 [interrupted]"}}
+{"timestamp": 1793211479074, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": true}}
+{"timestamp": 1793211479075, "type": "turn_start", "data": {"frame": "turn_start"}}
+{"timestamp": 1793211482789, "type": "llm_response", "data": {"frame": "The evening flight leaves at 6 PM. Shall I book it?"}}
+{"timestamp": 1793211482789, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": false}}
+{"timestamp": 1793211485082, "type": "turn_start", "data": {"frame": "turn_start"}}
+{"timestamp": 1793211488428, "type": "llm_response", "data": {"frame": "You're all set on the 6 PM flight. Goodbye!"}}
+{"timestamp": 1793211488428, "type": "turn_end", "data": {"frame": "turn_end", "was_interrupted": false}}

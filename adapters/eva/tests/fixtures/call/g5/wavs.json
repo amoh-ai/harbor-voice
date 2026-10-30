@@ -1,0 +1,18 @@
+{
+ "audio_user.wav": [
+  580800,
+  24000
+ ],
+ "audio_assistant.wav": [
+  580320,
+  24000
+ ],
+ "audio_mixed.wav": [
+  580800,
+  24000
+ ],
+ "audio_user_clean.wav": [
+  146720,
+  16000
+ ]
+}

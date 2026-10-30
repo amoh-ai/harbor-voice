@@ -1,0 +1,122 @@
+{
+  "source": "ServiceNow/eva@039efa0a (template/records.json)",
+  "seed": 300,
+  "per_domain": 10,
+  "families": {
+    "airline": {
+      "1": {
+        "records": 9,
+        "sampled": 2
+      },
+      "2": {
+        "records": 10,
+        "sampled": 2
+      },
+      "3": {
+        "records": 3,
+        "sampled": 1
+      },
+      "4": {
+        "records": 7,
+        "sampled": 1
+      },
+      "5": {
+        "records": 8,
+        "sampled": 1
+      },
+      "6": {
+        "records": 4,
+        "sampled": 1
+      },
+      "7": {
+        "records": 9,
+        "sampled": 2
+      }
+    },
+    "itsm": {
+      "single_intent": {
+        "records": 29,
+        "sampled": 3
+      },
+      "adversarial_intent": {
+        "records": 9,
+        "sampled": 1
+      },
+      "double_intent": {
+        "records": 14,
+        "sampled": 2
+      },
+      "triple_intent": {
+        "records": 14,
+        "sampled": 2
+      },
+      "quadruple_intent": {
+        "records": 14,
+        "sampled": 2
+      }
+    },
+    "medical_hr": {
+      "single_intent": {
+        "records": 24,
+        "sampled": 3
+      },
+      "adversarial": {
+        "records": 9,
+        "sampled": 2
+      },
+      "double_intent": {
+        "records": 29,
+        "sampled": 3
+      },
+      "triple_intent": {
+        "records": 21,
+        "sampled": 2
+      }
+    }
+  },
+  "records": {
+    "airline": [
+      "1.2.2",
+      "1.3.2",
+      "2.2.5",
+      "2.4.2",
+      "3.1.5",
+      "4.2.1",
+      "5.2.2",
+      "6.3.4",
+      "7.2.2",
+      "7.3.1"
+    ],
+    "itsm": [
+      "102",
+      "16",
+      "19",
+      "22",
+      "37",
+      "40",
+      "56",
+      "60",
+      "76",
+      "90"
+    ],
+    "medical_hr": [
+      "1.2",
+      "6.2",
+      "9.1",
+      "A2",
+      "A5",
+      "D1.2",
+      "D4.1",
+      "D8.2",
+      "T1.2",
+      "T7.1"
+    ]
+  },
+  "required": {
+    "itsm": {
+      "escalate_to_live_agent": [
+        "37"
+      ]
+    }
+  }
+}

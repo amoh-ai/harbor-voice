@@ -1,0 +1,190 @@
+{
+  "record": "airline/1.1.2",
+  "requests": [
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 28334,
+              "sha256": "d37a0d794ae8ce83fbdb631e2d5fc342b1fce2ae93fdbb38f287a00bf4604025",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "transcription_accuracy_key_entities",
+      "model": "gpt-5.2",
+      "params": {
+        "max_tokens": 100000,
+        "service_tier": "flex",
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 30509,
+              "sha256": "5fe9c2bef89a1887cff74b5d4bc7ef1e42175296543da7a1044164ac70b40d4c",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "conciseness",
+      "model": "gpt-5.2",
+      "params": {
+        "max_tokens": 100000,
+        "service_tier": "flex",
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 39238,
+              "sha256": "1b66196981df2c9e58073f1b244b3c3e57cc6cef441b72f4389dbc92062d80de",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "conversation_progression",
+      "model": "gpt-5.2",
+      "params": {
+        "max_tokens": 100000,
+        "service_tier": "flex",
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 57378,
+              "sha256": "6c9fb16db4a08e94e9685fd9723d9a5bc14bbeab8968cd84ae0f181ee28fd459",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "user_behavioral_fidelity",
+      "model": "gpt-5.2-medium",
+      "params": {
+        "max_tokens": 100000,
+        "service_tier": "flex",
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 64125,
+              "sha256": "863dc1e3a65c7216cc53466fda42ff4486becd85a9e632cf07ffcfc13abefce9",
+              "type": "file"
+            },
+            {
+              "chars": 9082,
+              "sha256": "2c6b6dda5b18e6793b6852ebcd1785883f80b147d1b1b3c2f343dbd5fea74fb4",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "user_speech_fidelity",
+      "model": "gemini-3-flash-preview",
+      "params": {
+        "max_tokens": 40000,
+        "reasoning_effort": "minimal",
+        "temperature": 0.0,
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 75522,
+              "sha256": "5bfecf1f5a719cbc6d034bafc0b78c423c4f4c9d39b8ae6791f81bbcb36af3fe",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "faithfulness",
+      "model": "us.anthropic.claude-opus-4-6-v1",
+      "params": {
+        "max_tokens": 100000,
+        "timeout": 480
+      }
+    },
+    {
+      "messages": [
+        {
+          "parts": [
+            {
+              "chars": 96125,
+              "sha256": "b6ce0871784681c96020f0805ab3ff14b0bbbf8788f89550b44b74a0bff3fe7d",
+              "type": "file"
+            },
+            {
+              "chars": 20632,
+              "sha256": "d0bda2b08c0dfb3a8bd9957f31f9fecfaf4955a9d2b35e5b9bdb103148c3055b",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "metric": "agent_speech_fidelity",
+      "model": "gemini-3-flash-preview",
+      "params": {
+        "max_tokens": 40000,
+        "reasoning_effort": "minimal",
+        "temperature": 0.0,
+        "timeout": 480
+      }
+    }
+  ],
+  "judge_prompts": {
+    "agent_speech_fidelity": "d0bda2b08c0dfb3a8bd9957f31f9fecfaf4955a9d2b35e5b9bdb103148c3055b",
+    "conciseness": "5fe9c2bef89a1887cff74b5d4bc7ef1e42175296543da7a1044164ac70b40d4c",
+    "conversation_progression": "1b66196981df2c9e58073f1b244b3c3e57cc6cef441b72f4389dbc92062d80de",
+    "faithfulness": "5bfecf1f5a719cbc6d034bafc0b78c423c4f4c9d39b8ae6791f81bbcb36af3fe",
+    "transcription_accuracy_key_entities": "d37a0d794ae8ce83fbdb631e2d5fc342b1fce2ae93fdbb38f287a00bf4604025",
+    "user_behavioral_fidelity": "6c9fb16db4a08e94e9685fd9723d9a5bc14bbeab8968cd84ae0f181ee28fd459",
+    "user_speech_fidelity": "2c6b6dda5b18e6793b6852ebcd1785883f80b147d1b1b3c2f343dbd5fea74fb4"
+  },
+  "metrics": [
+    "agent_speech_fidelity",
+    "authentication_success",
+    "conciseness",
+    "conversation_correctly_finished",
+    "conversation_progression",
+    "conversation_valid_end",
+    "faithfulness",
+    "response_speed",
+    "task_completion",
+    "time_to_completion",
+    "tool_call_validity",
+    "transcription_accuracy_key_entities",
+    "turn_taking",
+    "turns_to_completion",
+    "user_behavioral_fidelity",
+    "user_speech_fidelity"
+  ]
+}

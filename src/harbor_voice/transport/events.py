@@ -5,10 +5,9 @@ Everything that is *not* audio — the provider's own VAD, a barge-in it detecte
 a socket that dropped — flows here, so neither stream has to carry a sentinel
 or a union type.
 
-The gap budget implements the second half of reconnection: a reconnecting
-transport does not fail a run, but a run that spent too long disconnected is
-not evidence about the agent, so it becomes ``measurement_invalid`` rather
-than a failure.
+The gap budget implements the second half of reconnection: a reconnecting transport
+does not fail a run, but a run that spent too long disconnected is not evidence
+about the agent, so it becomes ``measurement_invalid`` rather than a failure.
 """
 
 from __future__ import annotations

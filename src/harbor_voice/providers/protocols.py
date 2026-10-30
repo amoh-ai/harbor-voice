@@ -13,10 +13,10 @@ audio judge                  LLM        grading, after the call is over
 ===========================  =========  ====================================
 
 The distinction that matters: the metrics STT is held **fixed** while the
-agent's STT varies. That is the reference-cascade ablation — hold the LLM
-fixed, swap the STT, and *misheard the drug name* separates from *does not
-know the drug*. It only works if the two are different objects, which is why
-a module named after one consumer could not hold them.
+agent's STT varies. That is the reference-cascade ablation — hold the LLM fixed, swap the
+STT, and *misheard the drug name* separates from *does not know the drug*. It
+only works if the two are different objects, which is why a module named after
+one consumer could not hold them.
 
 No speech-to-speech provider permits that ablation, because it exposes no seam
 between hearing and reasoning.

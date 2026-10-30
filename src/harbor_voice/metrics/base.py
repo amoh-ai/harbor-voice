@@ -61,7 +61,7 @@ class Direction(StrEnum):
 
 
 class Family(StrEnum):
-    """The eight families. A metric must belong to exactly one."""
+    """The eight metric families. A metric must belong to exactly one."""
 
     TASK = "task"
     DIVERGENCE = "divergence"

@@ -10,7 +10,8 @@ copy: import `harbor.*` directly, and bump the pin deliberately.
   simulator and its layer stack, ATIF-voice trajectories, metrics, the
   `harbor-voice` CLI, and `VoiceCallAgent` (a voice call as a harbor agent).
 - `adapters/tau-voice/` — the tau-voice benchmark adapter (its own package).
-- `tests/unit/voice/`, `adapters/tau-voice/tests/` — unit tests.
+- `adapters/eva/` — the EVA benchmark adapter (its own package).
+- `tests/unit/voice/`, `adapters/tau-voice/tests/`, `adapters/eva/tests/` — unit tests.
 
 ## Commands
 

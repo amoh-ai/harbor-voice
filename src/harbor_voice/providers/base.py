@@ -164,7 +164,7 @@ class Usage:
 
     Nova Sonic meters these separately from text tokens and prices them
     differently, so folding them together would make the cost column wrong.
-    This is the concrete case for a separate meter: harbor's ``UsageInfo``
+    This is the concrete case for wrapping it rather than bending it: harbor's ``UsageInfo``
     has three token fields and no notion of a speech token, so the count had
     nowhere truthful to go.
     """

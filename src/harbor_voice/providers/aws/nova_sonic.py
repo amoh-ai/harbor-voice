@@ -29,8 +29,8 @@ converter rather than the deliberately-aliasing perturbation one.
 
 **It emits the transcript of its own input** (``textOutput`` with
 ``role: USER``). That is why ``Stage.ASR_FINAL`` is now an S2S-optional stage.
-Said-vs-heard works against Nova Sonic; the reference-cascade ablation still
-does not, because you cannot swap the recogniser.
+Said-vs-heard works against Nova Sonic; the reference-cascade ablation still does not,
+because you cannot swap the recogniser.
 
 **Sessions are capped at 8 minutes.** Declared as ``max_session_s`` so a task
 demanding a longer call fails at load rather than mid-measurement.
@@ -228,8 +228,8 @@ class NovaSonicTransport(VoiceTransport):
 
         ``exposes_asr`` is true and ``exposes_partials`` is false: it hands
         back a final transcript of the input, and nothing verified says it
-        streams partials. Claiming partials would declare an unverified
-        capability — one the applicability gate then trusts.
+        streams partials. Claiming them anyway would hand the applicability
+        gate a capability it then trusts.
 
         Nothing is ``attested``: no conformance run has verified any of it,
         so every number resting on these claims reports as ``unattested``

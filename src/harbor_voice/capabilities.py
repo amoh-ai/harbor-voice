@@ -1,8 +1,9 @@
 """What a party can do, declared and **enforced**.
 
-A capability gate that trusts whatever a party declares can let a run start
-and then hang forever polling for something no adapter ever provides:
-**an advisory capability flag is not a capability model**.
+An adapter can declare ``streaming_transcripts=True``, ``native_vad=True`` and
+``pcm16/48000``, have a capability gate trust all three, and then hang forever
+polling an attribute nothing ever sets. **An advisory capability flag is not a
+capability model.**
 
 Three rules:
 
@@ -15,8 +16,9 @@ Three rules:
 3. A capability the conformance suite has not verified is **unattested** and
    cannot gate a published number.
 
-Internal consistency is checked at construction: a speech-to-speech party
-**cannot** claim ``asr_final``, because by definition it does not expose one.
+Internal consistency is checked at construction, which is where that failure
+is caught: a speech-to-speech party **cannot** claim
+``asr_final``, because by definition it does not expose one.
 """
 
 from __future__ import annotations
@@ -45,8 +47,8 @@ from harbor_voice.audio.stages import Stage
 class Duplex(StrEnum):
     """Whether both parties may have audio on the wire at once.
 
-    A property of the *floor policy*, not of the transport — the transport is
-    always bidirectional. A party declares which floors it can honour.
+    A property of the *floor policy*, not of the transport — the transport
+    is always bidirectional. A party declares which floors it can honour.
     """
 
     HALF = "half"
@@ -74,10 +76,11 @@ class TurnControl(StrEnum):
 class OptionalOp(StrEnum):
     """Transport operations beyond the four every transport must implement.
 
-    Finding these by ``getattr`` would leave the real contract invisible to
-    anyone writing a subclass. Declaring them here makes the surface part of
-    the capability matrix, which means a caller can ask before calling and the
-    conformance suite can verify the answer.
+    Found by ``getattr`` at call time, the real contract would be invisible to
+    anyone writing a subclass. Declaring them
+    here makes the surface part of the capability matrix, which means a
+    caller can ask before calling and the conformance suite can verify the
+    answer.
     """
 
     SEND_TEXT = "send_text"
@@ -241,7 +244,8 @@ class Capabilities(BaseModel):
             )
         if self.exposes_partials and Stage.ASR_PARTIAL not in self.exposes_stages:
             raise CapabilityError(
-                "exposes_partials=True requires Stage.ASR_PARTIAL in exposes_stages"
+                "exposes_partials=True requires Stage.ASR_PARTIAL in exposes_stages; "
+                "a transport cannot claim partials it never emits"
             )
         if self.exposes_asr and Stage.ASR_FINAL not in self.exposes_stages:
             raise CapabilityError(

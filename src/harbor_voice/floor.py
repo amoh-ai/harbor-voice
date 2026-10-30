@@ -10,11 +10,10 @@ Three things that buys, none of which an interface split does:
    times" is a finding, not a crash.
 2. **You can run a half-duplex-designed agent under a full-duplex floor** and
    measure what breaks. That is an experiment, not a configuration error.
-3. **One code path.** A turn-shaped interface forces each full-duplex provider
-   into its own workaround — background loops with terminal sentinels, a
-   continuous 20 ms mic pump, AAD disabled plus explicit activity markers — to
-   fake the other mode. A floor policy over one bidirectional transport needs
-   none of them.
+3. **One code path.** A turn-shaped interface forces each full-duplex
+   provider to fake the other mode with its own workaround: background loops
+   with terminal sentinels, a continuous 20 ms mic pump, AAD disabled plus
+   explicit activity markers.
 
 A floor counts; it does not decide what a count means. The trial turns
 :attr:`BaseFloor.violations` and :attr:`BaseFloor.overlaps` into metrics, and

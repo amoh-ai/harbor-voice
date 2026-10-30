@@ -9,10 +9,10 @@ runner (``harbor_voice.harbor_agent:VoiceCallAgent``)::
     harbor-voice trials start -p <task> -m openai.realtime/gpt-realtime-1.5
     harbor-voice jobs start -c job.yaml
 
-Mounting harbor's commands into ours needs no harbor edit. The commands of our
-own are the ones that need no job: inspect a configuration, list what is
-available, render something you already have — plus ``drive``, which is what
-runs inside ``main``.
+Mounting harbor's commands into ours needs no harbor edit, whether harbor is
+installed from PyPI or developed alongside. The commands of our own are the ones that need no job: inspect a
+configuration, list what is available, render something you already have —
+plus ``drive``, which is what runs inside ``main``.
 """
 
 from __future__ import annotations

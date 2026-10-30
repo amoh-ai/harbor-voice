@@ -25,3 +25,6 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+/docs/internal/
+internal/

@@ -27,7 +27,7 @@ Probe            Bid                   The agent is right if it     Family
 ===============  ====================  ===========================  ===========
 
 tau-voice's selectivity family exists *only because* its simulator injects
-these: the perturbation is the probe that makes the
+these, which is the perturbation–metric pairing exactly: the perturbation is the probe that makes the
 measurement possible. Without L5, ``selectivity.*``, ``turns.overlap_s``,
 ``turns.barge_in_success_rate`` and ``timing.yield_latency_s`` are all
 correctly inert, which is the state ``doctor`` reported before this module
@@ -131,8 +131,7 @@ class Probe:
 class Landing(StrEnum):
     """Whether a probe landed somewhere it could be measured.
 
-    The key is recording *whether the interruption fired*. Without it a
-    barge-in metric cannot tell "the agent
+    The key is recording *whether the interruption fired*. Without it a barge-in metric cannot tell "the agent
     handled it" from "it never happened", and the second one is a harness
     finding wearing an agent's score.
     """

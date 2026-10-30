@@ -1,0 +1,30 @@
+{"timestamp": 1793211462467, "sequence": 1, "type": "connection_state", "data": {"state": "connected", "details": {"server_url": "ws://localhost:10123/ws"}}, "provider": "elevenlabs"}
+{"timestamp": 1793211462769, "sequence": 2, "type": "connection_state", "data": {"state": "session_started", "details": {}}, "provider": "elevenlabs"}
+{"timestamp": 1793211462881, "sequence": 3, "event_type": "audio_start", "user": "assistant", "audio_timestamp": 1793211462.881372, "provider": "elevenlabs"}
+{"timestamp": 1793211465221, "sequence": 4, "event_type": "audio_end", "user": "assistant", "audio_timestamp": 1793211464.861372, "provider": "elevenlabs"}
+{"timestamp": 1793211465571, "sequence": 5, "type": "assistant_speech", "data": {"text": "Hello, how can I help you today?", "source": "assistant"}, "provider": "elevenlabs"}
+{"timestamp": 1793211465981, "sequence": 6, "event_type": "audio_start", "user": "simulated_user", "audio_timestamp": 1793211465.9816718, "provider": "elevenlabs"}
+{"timestamp": 1793211466068, "sequence": 7, "type": "user_speech", "data": {"text": "I need to change my flight.", "source": "simulated_user"}, "provider": "elevenlabs"}
+{"timestamp": 1793211468062, "sequence": 8, "event_type": "audio_end", "user": "simulated_user", "audio_timestamp": 1793211467.462672, "provider": "elevenlabs"}
+{"timestamp": 1793211468663, "sequence": 9, "event_type": "audio_start", "user": "assistant", "audio_timestamp": 1793211468.663472, "provider": "elevenlabs"}
+{"timestamp": 1793211473151, "sequence": 10, "event_type": "audio_end", "user": "assistant", "audio_timestamp": 1793211472.843472, "provider": "elevenlabs"}
+{"timestamp": 1793211473818, "sequence": 11, "type": "assistant_speech", "data": {"text": "Let me check that for you. I found your booking, flight 100 to Boston, Monday at 9 AM. Would you like to change it?", "source": "assistant"}, "provider": "elevenlabs"}
+{"timestamp": 1793211473972, "sequence": 12, "event_type": "audio_start", "user": "simulated_user", "audio_timestamp": 1793211473.9723718, "provider": "elevenlabs"}
+{"timestamp": 1793211474170, "sequence": 13, "type": "user_speech", "data": {"text": "Yes, I want to move it to Friday.", "source": "simulated_user"}, "provider": "elevenlabs"}
+{"timestamp": 1793211476213, "sequence": 14, "event_type": "audio_end", "user": "simulated_user", "audio_timestamp": 1793211475.5533717, "provider": "elevenlabs"}
+{"timestamp": 1793211476849, "sequence": 15, "event_type": "audio_start", "user": "assistant", "audio_timestamp": 1793211476.8496718, "provider": "elevenlabs"}
+{"timestamp": 1793211479074, "sequence": 16, "event_type": "audio_start", "user": "simulated_user", "audio_timestamp": 1793211479.074972, "provider": "elevenlabs"}
+{"timestamp": 1793211479168, "sequence": 17, "type": "user_speech", "data": {"text": "Wait, what about the evening?", "source": "simulated_user"}, "provider": "elevenlabs"}
+{"timestamp": 1793211479831, "sequence": 18, "event_type": "audio_end", "user": "assistant", "audio_timestamp": 1793211479.6296718, "provider": "elevenlabs"}
+{"timestamp": 1793211480854, "sequence": 19, "event_type": "audio_end", "user": "simulated_user", "audio_timestamp": 1793211480.255972, "provider": "elevenlabs"}
+{"timestamp": 1793211481073, "sequence": 20, "type": "assistant_speech", "data": {"text": "Sure, I can move you to Friday at 9 AM.", "source": "assistant"}, "provider": "elevenlabs"}
+{"timestamp": 1793211481512, "sequence": 21, "event_type": "audio_start", "user": "assistant", "audio_timestamp": 1793211481.512272, "provider": "elevenlabs"}
+{"timestamp": 1793211484261, "sequence": 22, "event_type": "audio_end", "user": "assistant", "audio_timestamp": 1793211483.992272, "provider": "elevenlabs"}
+{"timestamp": 1793211484870, "sequence": 23, "type": "assistant_speech", "data": {"text": "The evening flight leaves at 6 PM. Shall I book it?", "source": "assistant"}, "provider": "elevenlabs"}
+{"timestamp": 1793211485081, "sequence": 24, "event_type": "audio_start", "user": "simulated_user", "audio_timestamp": 1793211485.081972, "provider": "elevenlabs"}
+{"timestamp": 1793211485171, "sequence": 25, "type": "user_speech", "data": {"text": "Yes, please. Thanks, goodbye.", "source": "simulated_user"}, "provider": "elevenlabs"}
+{"timestamp": 1793211487061, "sequence": 26, "event_type": "audio_end", "user": "simulated_user", "audio_timestamp": 1793211486.462972, "provider": "elevenlabs"}
+{"timestamp": 1793211487683, "sequence": 27, "event_type": "audio_start", "user": "assistant", "audio_timestamp": 1793211487.6830719, "provider": "elevenlabs"}
+{"timestamp": 1793211489443, "sequence": 28, "event_type": "audio_end", "user": "assistant", "audio_timestamp": 1793211489.1630719, "provider": "elevenlabs"}
+{"timestamp": 1793211489975, "sequence": 29, "type": "assistant_speech", "data": {"text": "You're all set on the 6 PM flight. Goodbye.", "source": "assistant"}, "provider": "elevenlabs"}
+{"timestamp": 1793211492474, "sequence": 30, "type": "connection_state", "data": {"state": "session_ended", "details": {"reason": "goodbye"}}, "provider": "elevenlabs"}

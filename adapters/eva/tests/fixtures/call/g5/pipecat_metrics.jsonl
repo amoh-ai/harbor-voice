@@ -1,0 +1,11 @@
+{"timestamp": 1793211463887, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150}}
+{"timestamp": 1793211468663, "type": "LatencyMetric", "stage": "model_response", "model": "gpt-realtime-1.5", "value": 0.517}
+{"timestamp": 1793211469271, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 101, "completion_tokens": 51, "total_tokens": 152}}
+{"timestamp": 1793211469681, "type": "LatencyMetric", "stage": "model_response", "model": "gpt-realtime-1.5", "value": 1.535}
+{"timestamp": 1793211471184, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 102, "completion_tokens": 52, "total_tokens": 154}}
+{"timestamp": 1793211476849, "type": "LatencyMetric", "stage": "model_response", "model": "gpt-realtime-1.5", "value": 0.524}
+{"timestamp": 1793211479074, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 103, "completion_tokens": 13, "total_tokens": 116}}
+{"timestamp": 1793211481512, "type": "LatencyMetric", "stage": "model_response", "model": "gpt-realtime-1.5", "value": 0.506}
+{"timestamp": 1793211482789, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 104, "completion_tokens": 54, "total_tokens": 158}}
+{"timestamp": 1793211487683, "type": "LatencyMetric", "stage": "model_response", "model": "gpt-realtime-1.5", "value": 0.497}
+{"timestamp": 1793211488428, "type": "LLMTokenUsageMetricsData", "processor": "openai_realtime", "model": "gpt-realtime-1.5", "value": {"prompt_tokens": 105, "completion_tokens": 55, "total_tokens": 160}}

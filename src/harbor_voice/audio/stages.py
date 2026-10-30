@@ -73,8 +73,8 @@ to be false for it.
 The distinction that survives, and the one that actually matters, is between
 *emitting a transcript* and *exposing a seam*. Nova Sonic hands you what it
 heard; it does not let you replace the recogniser that heard it. So
-said-vs-heard works against an S2S party, while the ablation — hold the LLM
-fixed, swap the STT — still does not. ``CASCADE_ONLY_STAGES``
+said-vs-heard works against an S2S party, while the reference-cascade ablation —
+hold the LLM fixed, swap the STT — still does not. ``CASCADE_ONLY_STAGES``
 keeps the five seams that genuinely require harbor-voice to have composed the
 pipeline itself.
 

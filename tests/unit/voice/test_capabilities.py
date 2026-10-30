@@ -81,8 +81,8 @@ class TestCapabilityConsistency:
         """Nova Sonic emits ``textOutput`` with ``role: USER`` — what it heard.
 
         Emitting a transcript is not the same as exposing a swappable
-        recogniser: said-vs-heard works here, the reference-cascade ablation
-        still does not. The capability model now tells those apart.
+        recogniser: said-vs-heard works here, the reference-cascade ablation still does
+        not. The capability model now tells those apart.
         """
         caps = s2s(
             exposes_asr=True,

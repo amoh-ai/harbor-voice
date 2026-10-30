@@ -2,6 +2,9 @@
 
 The layer that is not about audio at all.
 
+Full-Duplex-Bench v3's `latency_injector.py` is the only prior art, and harbor
+already owns the MCP sidecar, so this layer comes nearly free.
+
 Every other layer degrades the *call*. L6 degrades the **world the agent is
 acting on**: the booking system is slow, the lookup fails, the backend is
 down for forty seconds. It lands on the tool boundary, not the wire.
