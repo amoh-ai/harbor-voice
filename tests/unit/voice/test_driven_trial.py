@@ -90,7 +90,6 @@ async def test_a_driven_trial_writes_the_verified_reward(tmp_path: Path) -> None
     assert trial["verifier"] == {"note": "graded"}
     (ctx,) = seen
     assert ctx.driver_config == {"domain": "x"}
-    assert ctx.services == {} and ctx.verify is None
     assert (tmp_path / "call.txt").read_text() == "driven"
     assert json.loads((tmp_path / "outcome.json").read_text())["verified"] == {
         "reward": 0.75,

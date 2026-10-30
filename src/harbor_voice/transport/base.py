@@ -29,7 +29,6 @@ from typing import Self
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
-from pydantic import model_validator
 
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
@@ -78,15 +77,6 @@ class SessionConfig(BaseModel):
         default_factory=dict,
         description="Provider-specific settings, passed through untouched.",
     )
-
-    @model_validator(mode="after")
-    def _warn_on_non_canonical(self) -> Self:
-        """Non-canonical formats are legal but must be deliberate.
-
-        They are recorded so a resample shows up in the trajectory as a declared
-        channel event rather than an invisible accident.
-        """
-        return self
 
     @property
     def converts_input(self) -> bool:

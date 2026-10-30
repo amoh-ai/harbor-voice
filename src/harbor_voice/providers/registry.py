@@ -11,9 +11,8 @@ Two operations, deliberately separate:
     Actually build one. This is where a missing extra or a missing credential
     becomes an error.
 
-The split is the whole reason ``doctor`` can exist. Harbor preflights
-*running*; ``doctor`` preflights **meaning** — whether a configuration measures
-what the task claims — and you cannot do that if describing a provider requires
+The split is what lets ``doctor`` check whether a configuration measures what
+the task claims: that can't be done if describing a provider requires
 constructing it.
 
 Spec strings are ``provider/model``, matching harbor and litellm. **Modality

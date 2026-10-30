@@ -17,7 +17,6 @@ plus ``drive``, which is what runs inside ``main``.
 
 from __future__ import annotations
 
-import importlib
 import json
 from pathlib import Path
 from typing import Annotated
@@ -39,24 +38,11 @@ def _registry():  # noqa: ANN202 - typer-facing helper
     refuses to start because an optional extra is missing is a CLI nobody
     runs during authoring.
     """
-    from harbor_voice.providers.registry import default_registry
+    from harbor_voice.trial import provider_registry
 
-    registry = default_registry()
-    try:
-        from harbor_voice.providers.aws import register_all
-
-        register_all(registry)
-    except Exception as exc:  # noqa: BLE001 - reported below, never fatal
-        typer.secho(f"note: AWS providers unavailable ({exc})", fg="yellow", err=True)
-    for vendor in ("elevenlabs", "openai"):
-        try:
-            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
-            module.register_all(registry)
-        except Exception as exc:  # noqa: BLE001 - reported below, never fatal
-            typer.secho(
-                f"note: {vendor} providers unavailable ({exc})", fg="yellow", err=True
-            )
-    return registry
+    return provider_registry(
+        lambda message: typer.secho(f"note: {message}", fg="yellow", err=True)
+    )
 
 
 # ----------------------------------------------------------------- doctor
@@ -142,10 +128,8 @@ def doctor(
 ) -> None:
     """Preflight a configuration: what will report, abstain, or block.
 
-    The most valuable command and the cheapest to build, because every
-    piece it needs already exists: capabilities readable without credentials,
-    applicability with reasons, profile-to-metric pairing, and credential
-    status that names variables without printing them.
+    Needs no credentials and builds no provider. Credentials are reported by
+    variable name, never by value.
     """
     from harbor_voice.doctor import diagnose
 

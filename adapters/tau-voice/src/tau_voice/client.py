@@ -64,13 +64,6 @@ class Sidecar:
             )
         return response.json()
 
-    async def health(self) -> bool:
-        try:
-            response = await self._client.get(f"{self._base}/health")
-        except httpx.HTTPError:
-            return False
-        return response.status_code == 200
-
     async def open(
         self,
         *,

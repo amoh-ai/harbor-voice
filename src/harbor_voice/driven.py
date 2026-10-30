@@ -59,9 +59,7 @@ async def drive_here(
         driver_config=config.call.config,
         task_dir=task_dir,
         out_dir=out_dir,
-        services={},
         build_agent=build_agent,
-        verify=None,
         agent=agent,
     )
     outcome = await driver(context)

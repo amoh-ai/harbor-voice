@@ -443,7 +443,6 @@ def _context(config: dict[str, Any], *, seed: int = 0, agent: AgentSpec | None =
         driver_config=config,
         task_dir=Path("."),
         out_dir=Path("."),
-        services={},
         build_agent=lambda **_: None,  # ty: ignore[invalid-argument-type]
         agent=agent,
     )

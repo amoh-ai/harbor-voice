@@ -1,9 +1,7 @@
 """The conformance framework.
 
-The suite is **main** code, not test code: *two verified providers* is a
-stronger claim than *thirty unverified ones*.
-
-It exists to make attestation mean something: a
+It lives in main code, not test code, so third parties can import it into
+their own pytest. It exists to make attestation mean something: a
 capability in :data:`~harbor_voice.capabilities._ATTESTABLE` is only legitimately
 listed in ``Capabilities.attested`` once a check here has verified it, and an
 unattested claim cannot gate a published number.

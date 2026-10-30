@@ -1,48 +1,30 @@
-"""Running one voice trial.
+"""One voice trial, run in this process.
 
-This is what `harbor run` would have dispatched to, had we taken the other
-branch. We did not: harbor-voice is its own tool, so a trial runs here and
-`src/harbor` is untouched.
+:class:`VoiceTrial` runs a task's ``voice.toml`` one of two ways:
 
-**Why standalone rather than a `Trial` subclass.** Inheriting would have cost
-roughly ten lines of harbor and bought the job machinery. It would also have
-coupled us to a 2,127-line base class whose contract we do not control — an
-upstream change to ``_run_agent_phase`` or ``_prepare`` breaks a subclass
-silently, and upstream commits daily. Zero harbor edits keeps ``upstream``
-merges trivial, which is the only real cost of pulling from it.
+- **Driven** (``[call]``): the task names a benchmark's call driver, and the
+  call is the driver's (:mod:`harbor_voice.driven`). This is what
+  ``harbor-voice drive`` runs inside a harbor environment's ``main``; harbor's
+  trial, with ``VoiceCallAgent``, supplies the environment, the install and
+  the verifier around it. Both benchmark adapters work this way.
+- **Built-in** (``[caller]``): harbor-voice runs the call itself, in four
+  steps::
 
-What we give up — ``TrialEvent`` hooks, artifact phasing, OTel spans,
-harbor-format result recording — is reimplementable and none of it is on the
-path to a number.
+      build     providers, simulator, transport, floor, pipeline
+      call      turns, until the content source runs out
+      record    an ATIF-voice trajectory
+      score     measurement.json / reward.json / validity.json
 
-### The loop is four steps and the agent phase is the only odd one
-
-```
-  build     providers, simulator, transport, floor, pipeline
-  call      turns, until the content source runs out
-  record    an ATIF-voice trajectory
-  score     measurement.json / reward.json / validity.json
-```
-
-harbor's agent phase launches a process in a sandbox. Ours does not: a voice
-agent is reached over a transport, so the call runs **harness-side** and a
-container is started only when a task declares tools. That is a real
-divergence from harbor's execution model and the reason inheriting was always
-going to be an awkward fit.
-
-### Scoring runs here, for now
-
-``test.sh`` is the scoring entry point so a benchmark adapter owns
-its ``task.*`` metrics. Nothing declares tools yet, so there is no container
-to run it in, and the call metrics are scored in-process — the same
-:func:`~harbor_voice.metrics.outputs.build_outputs` the verifier would call.
-The first task with a tool sidecar brings the upload path with it; until then
-it would be machinery with no consumer.
+  The call metrics are scored in-process, with the same
+  :func:`~harbor_voice.metrics.outputs.build_outputs` a verifier would call.
+  This path runs from Python only; harbor's runner needs a ``[call]`` driver.
 """
 
 from __future__ import annotations
 
 import importlib
+import warnings
+from collections.abc import Callable
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -266,9 +248,9 @@ class VoiceTaskConfig(BaseModel):
 class DrivenOutcome:
     """A trial whose call a benchmark's driver ran (``[call]``).
 
-    No trajectory yet: a driver's call is not turn-shaped, and recording one
-    as ATIF-voice is its own piece of work. The verifier's reward and the
-    driver's record are what it has.
+    The verifier's reward and the driver's record. The driver's ATIF-voice
+    trajectory, when it returns one, is written to ``trajectory.json`` by
+    :func:`~harbor_voice.driven.drive_here`, not held here.
     """
 
     reward: dict[str, float] | None
@@ -320,7 +302,7 @@ class VoiceTrial:
         self._config = config
         self._task_dir = task_dir
         self._agent_spec_override = agent_spec
-        self._registry = registry if registry is not None else _registry()
+        self._registry = registry if registry is not None else provider_registry()
         self._out_dir = out_dir
         self._caller = caller
         self._agent = agent
@@ -718,20 +700,27 @@ class VoiceTrial:
         )
 
 
-def _registry() -> ProviderRegistry:
-    """Offline providers, plus AWS when its SDK is importable.
+def provider_registry(
+    report: Callable[[str], None] | None = None,
+) -> ProviderRegistry:
+    """Offline providers, plus every vendor whose providers register.
 
-    Degrading rather than raising: a task naming only offline providers must
-    run on a laptop with no cloud SDK, and a trial that refuses to start
-    because an optional extra is missing is one nobody runs while authoring.
+    A vendor that fails to register is skipped, not fatal: a task naming only
+    offline providers must run without the cloud SDKs. The failure is
+    reported, through ``report`` or else as a warning, so a provider's import
+    bug does not surface later as "unknown provider".
     """
     registry = default_registry()
     for vendor in _VENDORS:
         try:
             module = importlib.import_module(f"harbor_voice.providers.{vendor}")
             module.register_all(registry)
-        except Exception:  # noqa: BLE001 - optional extra; the task may not need it
-            pass
+        except Exception as exc:  # noqa: BLE001 - optional extra; reported, not fatal
+            message = f"{vendor} providers unavailable ({exc})"
+            if report is None:
+                warnings.warn(message, RuntimeWarning, stacklevel=2)
+            else:
+                report(message)
     return registry
 
 
@@ -745,7 +734,7 @@ def required_extras(spec: AgentSpec) -> list[str]:
     A provider the registry cannot resolve here needs nothing named; building
     it will say what is missing.
     """
-    registry = _registry()
+    registry = provider_registry()
     extras: list[str] = []
     for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
         if not name:

@@ -1,11 +1,10 @@
 """Preflight for **meaning**.
 
-Harbor preflights *running*: can the agent start, is there a network policy,
-are the resources there. ``doctor`` preflights whether a configuration
-**measures what the task claims** — and that is the failure that costs a
-thousand container-hours, because it does not crash. It produces a results
-table with a column quietly missing, or a number resting on a capability
-nobody verified.
+harbor preflights *running*: can the agent start, are the resources there.
+This checks whether a configuration **measures what the task claims**. That
+failure is expensive because it doesn't crash: it produces a results table
+with a column quietly missing, or a number resting on a capability nobody
+verified.
 
 ``doctor`` answers one question: *if I start this run, what will I get?* It
 answers it before a single container starts, without credentials, and without

@@ -189,10 +189,6 @@ class SteppedCall:
         if self._stop is None:
             self._stop = reason
 
-    @property
-    def current_step(self) -> int:
-        return self.gate.step
-
     async def tool_window(self) -> int:
         """Register an agent tool call; return its step once it may execute.
 

@@ -10,9 +10,9 @@ than grow core to fit each one, a task names a **driver** in ``voice.toml``::
     config = { domain = "airline", task_id = "7" }
 
 The driver is the adapter's code. Core supplies everything that is not
-benchmark-specific through a :class:`DriverContext` — the agent under test
-built from the task's ``[agent]``, the task's services, the verifier — and
-writes the trial's outputs from the :class:`DriverOutcome` it returns.
+benchmark-specific through a :class:`DriverContext`, chiefly the agent under
+test built from the task's ``[agent]``, and writes the trial's outputs from
+the :class:`DriverOutcome` it returns.
 """
 
 from __future__ import annotations
@@ -59,16 +59,12 @@ class DriverContext:
         task_dir: The task directory.
         out_dir: Where this trial's files go. The driver may write anything
             under it; core writes ``reward.json`` and ``trial.json`` beside.
-        services: Each declared service's URL, by name.
         build_agent: Builds the agent under test from the task's ``[agent]``.
             Keyword arguments override that slot's config (a benchmark's
             system prompt, say); ``tools`` is the driver's router.
         agent: The agent under test as configured, for a driver that sets up
             differently per provider (what to pass ``build_agent``, how to
             pace the call). ``None`` when the caller does not say.
-        verify: Runs the task's verifier; ``None`` if the task declares none.
-            A driver may call it more than once — tau-voice grades every
-            attempt to decide on a retry.
         progress: Reports a line of progress (an attempt started, graded).
             Printed with :data:`PROGRESS_PREFIX`; ``VoiceCallAgent`` relays
             such lines into harbor's ``trial.log``.
@@ -78,9 +74,7 @@ class DriverContext:
     driver_config: Mapping[str, Any]
     task_dir: Path
     out_dir: Path
-    services: Mapping[str, str]
     build_agent: Callable[..., VoiceTransport]
-    verify: Callable[[], Awaitable[VerifierResult]] | None = None
     agent: AgentSpec | None = None
     progress: Callable[[str], None] = field(default_factory=lambda: print_progress)
 

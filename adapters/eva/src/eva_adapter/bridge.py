@@ -286,10 +286,6 @@ class Bridge:
         """
         self._user_turn_complete = True
 
-    def is_caller_playing(self) -> bool:
-        """Caller audio is active or waiting to be sent."""
-        return self._user_audio_active or not self.send_queue.empty()
-
     def is_assistant_playing(self) -> bool:
         """Assistant audio is currently active."""
         return self._assistant_audio_active
