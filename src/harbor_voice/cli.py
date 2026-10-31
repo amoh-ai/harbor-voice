@@ -401,6 +401,9 @@ def show(
 CALL_AGENT = "harbor_voice.harbor_agent:VoiceCallAgent"
 _RUNNERS = ("jobs", "job", "trials", "trial")
 _CHOOSES_AGENT = ("-a", "--agent", "-c", "--config")
+SKIP_MODEL_PARSING = "--skip-model-parsing-and-provider-mapping"
+"""harbor's ``jobs start`` / ``trials start`` flag that leaves ``-m`` unparsed:
+our provider specs are not litellm model names."""
 
 
 def with_default_agent(argv: list[str]) -> list[str]:
@@ -418,7 +421,7 @@ def with_default_agent(argv: list[str]) -> list[str]:
         return argv
     from harbor_voice.harbor_agent import harbor_parses_model_names
 
-    skip = ["--skip-model-parsing"] if harbor_parses_model_names() else []
+    skip = [SKIP_MODEL_PARSING] if harbor_parses_model_names() else []
     return [*argv[:2], "--agent", CALL_AGENT, *skip, *rest]
 
 

@@ -14,15 +14,23 @@ tau2's harness does.
 # --task-ids 0 1 2; a speech complexity: --complexity regular.
 uv run tau-voice --tau2-root ../tau2-bench --output-dir datasets/tau-voice
 
-# One trial, locally (Docker):
-uv run harbor-voice trials start -p datasets/tau-voice/airline-0-d9c07603 \
-    -m openai.realtime/gpt-realtime-1.5
+# One trial, locally (Docker), with the parity run's agent: OpenAI Live,
+# gpt-live-1 delegating to a backend model:
+uv run tau-voice job-config --dataset datasets/tau-voice \
+    --task-names airline-0-d9c07603 --trials 1 -n 1 \
+    --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
+    -o one.yaml
+uv run harbor-voice jobs start -c one.yaml
 
 # A job, run the way tau2 runs its trials:
-uv run tau-voice job-config --dataset datasets/tau-voice \
-    --model openai.realtime/gpt-realtime-1.5 --trials 3 -n 4 -o job.yaml
+uv run tau-voice job-config --dataset datasets/tau-voice --trials 3 -n 4 \
+    --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
+    -o job.yaml
 uv run harbor-voice jobs start -c job.yaml
 ```
+
+For OpenAI Realtime instead: `--model openai.realtime/gpt-realtime-1.5` and
+no `--agent-config`.
 
 `job-config` lists the agent once per tau2 trial seed (tau2's run seed 300
 gives 626729, 373753, 361454, ...), retries infrastructure failures three

@@ -20,7 +20,7 @@ laptop's Docker or in the cloud.
 | Caller | tau2's: an LLM for the words, ElevenLabs for the voice, tau2's phone line and audio effects | EVA's: two ElevenLabs Agents (one female, one male English caller) |
 | Conditions | tau2's speech complexities: `control`, `regular` (the leaderboard's) and six ablations | clean, or EVA's audio perturbations: eight background noises at any SNR, connection degradation |
 | Grade | tau2's evaluator | EVA's metrics and judges: EVA-A, EVA-X, overall |
-| Parity | 40 tasks × 3 runs, OpenAI Live, both modes: the criterion holds on all 8 rows ([PARITY.md](adapters/tau-voice/PARITY.md)) | 60 records × 3 runs, `gpt-realtime-1.5`: the criterion holds on all 12 rows ([PARITY.md](adapters/eva/PARITY.md)) |
+| Parity | 40 tasks × 3 runs, OpenAI Live (`gpt-live-1`, backend `gpt-6-luna`), both modes: the criterion holds on all 8 rows ([PARITY.md](adapters/tau-voice/PARITY.md)) | 60 records × 3 runs, OpenAI Realtime (`gpt-realtime-1.5`): the criterion holds on all 12 rows ([PARITY.md](adapters/eva/PARITY.md)) |
 
 In both, the benchmark's own code runs in a sidecar container: the task, its
 tools, the caller's prompts and the grading. harbor-voice runs the call
@@ -47,7 +47,8 @@ harbor-voice jobs start -c job.yaml          (harbor's job runner, mounted)
   `harbor trials`. When no agent is given, the agent defaults to
   `VoiceCallAgent`.
 - **The agent under test is the run's choice, never the task's:**
-  `-m provider/model`, e.g. `openai.realtime/gpt-realtime-1.5`.
+  `-m provider/model`, e.g. `openai.live/gpt-live-1` (tau-voice's parity
+  agent) or `openai.realtime/gpt-realtime-1.5` (EVA's).
 - **Each benchmark brings its own call loop** (the `[call] driver` in a
   task's `voice.toml`). Turn-taking, audio pacing and when a call ends are
   part of a benchmark's definition, so parity needs its exact loop.
@@ -99,11 +100,17 @@ uv run tau-voice --tau2-root ../tau2-bench --output-dir datasets/tau-voice
 # or a few: --domains airline --task-ids 0 1 2; a condition: --complexity regular
 ```
 
-**3. Run one call** on local Docker:
+**3. Run one call** on local Docker. The agent is OpenAI Live, as in the
+parity run: `gpt-live-1`, a speech frontend, delegating to a backend model
+(`--agent-config`). For OpenAI Realtime, use
+`--model openai.realtime/gpt-realtime-1.5` and no `--agent-config`.
 
 ```bash
-uv run harbor-voice trials start -p datasets/tau-voice/airline-0-d9c07603 \
-    -m openai.realtime/gpt-realtime-1.5
+uv run tau-voice job-config --dataset datasets/tau-voice \
+    --task-names airline-0-d9c07603 --trials 1 -n 1 \
+    --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
+    -o one.yaml
+uv run harbor-voice jobs start -c one.yaml
 ```
 
 **4. Run a job.** `job-config` writes a harbor job that runs the tasks the way
@@ -112,8 +119,9 @@ infrastructure failures (not agent failures), and leaves errored trials out
 of the mean:
 
 ```bash
-uv run tau-voice job-config --dataset datasets/tau-voice \
-    --model openai.realtime/gpt-realtime-1.5 --trials 3 -n 4 -o job.yaml
+uv run tau-voice job-config --dataset datasets/tau-voice --trials 3 -n 4 \
+    --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
+    -o job.yaml
 uv run harbor-voice jobs start -c job.yaml
 ```
 
@@ -140,12 +148,16 @@ uv run eva-adapter agents create --agent en_f --yes # its ID goes in EVA_EN_USER
 uv run eva-adapter agents create --agent en_m --yes # its ID goes in EVA_EN_USER_M
 ```
 
-**2. Convert, run one call, run the job:**
+**2. Convert, run one call, run the job.** The agent is OpenAI Realtime
+(`gpt-realtime-1.5`), as in the parity run; it's the only agent EVA's
+adapter takes.
 
 ```bash
 uv run eva-adapter convert --out datasets/eva  # also writes datasets/eva/job.yaml
-uv run harbor-voice trials start -p datasets/eva/airline-1-1-2-17dc1179 \
-    -m openai.realtime/gpt-realtime-1.5
+uv run eva-adapter job-config --dataset datasets/eva \
+    --task-names airline-1-1-2-17dc1179 --trials 1 -n 1 \
+    --model openai.realtime/gpt-realtime-1.5 -o one.yaml
+uv run harbor-voice jobs start -c one.yaml       # one call
 uv run harbor-voice jobs start -c datasets/eva/job.yaml
 ```
 

@@ -7,13 +7,14 @@ from typer.testing import CliRunner
 
 from harbor_voice import cli
 from harbor_voice.cli import CALL_AGENT
+from harbor_voice.cli import SKIP_MODEL_PARSING
 from harbor_voice.cli import with_default_agent
 from harbor_voice.harbor_agent import harbor_parses_model_names
 
 pytestmark = pytest.mark.unit
 
 # harbor 0.25+ resolves -m through litellm; our provider specs skip that.
-SKIP = ["--skip-model-parsing"] if harbor_parses_model_names() else []
+SKIP = [SKIP_MODEL_PARSING] if harbor_parses_model_names() else []
 
 
 @pytest.mark.parametrize("runner", ["jobs", "job", "trials", "trial"])
@@ -70,3 +71,13 @@ def test_harbors_commands_are_mounted() -> None:
     assert mounted["jobs"] is jobs_app and mounted["trials"] is trials_app
     result = CliRunner().invoke(cli.voice_app, ["jobs", "start", "--help"])
     assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("runner", ["jobs", "trials"])
+def test_the_flags_we_add_are_harbors(runner: str) -> None:
+    """The defaulted agent and the model-parsing flag go through harbor's own
+    parser: an option harbor does not have fails before ``--help`` prints."""
+    cli._mount_harbor()
+    argv = with_default_agent([runner, "start", "-m", "openai.live/gpt-live-1"])
+    result = CliRunner().invoke(cli.voice_app, [*argv, "--help"])
+    assert result.exit_code == 0, result.output
