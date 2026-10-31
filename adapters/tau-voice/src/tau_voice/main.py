@@ -117,6 +117,10 @@ services:
     depends_on:
       tau2:
         condition: service_healthy
+    # Not every backend passes the task's env to main (harbor's EC2 does
+    # not), so main names what it needs, as the tau2 service does.
+    environment:
+{main_env}
     volumes:
       # Caller audio and wheels' dependencies survive across trials.
       - ${{HARBOR_VOICE_CACHE_DIR:-${{HOME}}/.cache/harbor-voice}}/tts:/cache/tts
@@ -334,9 +338,14 @@ def write_task(
         for name in images.SIDECAR_FILES:
             shutil.copy2(images.SIDECAR / name, sidecar / name)
     env = "\n".join(f"      - {name}" for name in SIDECAR_ENV)
+    main_env = "\n".join(
+        f"      - {name}" for name in (*MAIN_ENV, "HARBOR_VOICE_TTS_CACHE")
+    )
     write(
         task / "environment" / "docker-compose.yaml",
-        COMPOSE.format(env=env, review=REVIEW_MODEL, tau2_source=source),
+        COMPOSE.format(
+            env=env, main_env=main_env, review=REVIEW_MODEL, tau2_source=source
+        ),
     )
     # Written, not copied: it runs under bash in a Linux container, so it must
     # be LF even when this checkout is CRLF (Windows).

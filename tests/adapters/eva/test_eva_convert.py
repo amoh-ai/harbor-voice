@@ -96,6 +96,13 @@ def test_main_and_the_eva_service(tmp_path: Path) -> None:
     compose = _compose(task)
     main_service, eva = compose["services"]["main"], compose["services"]["eva"]
     assert main_service["depends_on"]["eva"]["condition"] == "service_healthy"
+    # main names its own env: harbor's EC2 does not pass the task's to main.
+    assert main_service["environment"] == [
+        "OPENAI_API_KEY",
+        "ELEVENLABS_API_KEY",
+        "EVA_EN_USER_F",
+        "EVA_EN_USER_M",
+    ]
     # Built where it runs, from EVA's public repo; one tag for every task.
     assert eva["build"] == {
         "context": "./sidecar",

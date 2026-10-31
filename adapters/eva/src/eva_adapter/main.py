@@ -179,6 +179,10 @@ services:
     depends_on:
       eva:
         condition: service_healthy
+    # Not every backend passes the task's env to main (harbor's EC2 does
+    # not), so main names what it needs, as the eva service does.
+    environment:
+{main_env}
     volumes:
       # Wheels' dependencies survive across trials.
       - ${{HARBOR_VOICE_CACHE_DIR:-${{HOME}}/.cache/harbor-voice}}/uv:/root/.cache/uv
@@ -452,9 +456,10 @@ def write_task(
                 (images.SIDECAR / name).read_text(encoding="utf-8"),
             )
     env = "\n".join(f"      - {name}" for name in names)
+    main_names = "\n".join(f"      - {name}" for name in main_env(language))
     write(
         task / "environment" / "docker-compose.yaml",
-        COMPOSE.format(env=env, source=source),
+        COMPOSE.format(env=env, main_env=main_names, source=source),
     )
     write(
         task / "tests" / "test.sh",

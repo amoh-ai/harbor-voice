@@ -32,6 +32,12 @@ def test_a_task_is_harbor_shaped_and_agent_free(tmp_path: Path) -> None:
     assert compose["services"]["main"]["depends_on"]["tau2"]["condition"] == (
         "service_healthy"
     )
+    # main names its own env: harbor's EC2 does not pass the task's to main.
+    assert compose["services"]["main"]["environment"] == [
+        "OPENAI_API_KEY",
+        "ELEVENLABS_API_KEY",
+        "HARBOR_VOICE_TTS_CACHE",
+    ]
     # Built from the task by default, as harbor tasks are; one shared tag.
     assert compose["services"]["tau2"]["build"] == "./sidecar"
     assert compose["services"]["tau2"]["image"] == images.tau2_image()
