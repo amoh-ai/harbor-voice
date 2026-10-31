@@ -160,7 +160,7 @@ exact EVA command, what is compared and how to reproduce it:
 [`PARITY.md`](PARITY.md).
 
 ```bash
-uv run eva-adapter sample                           # parity_records.json (30), --smoke, --all
+uv run eva-adapter sample                           # parity_records.json (30), --all
 uv run eva-adapter compare --harbor <job folder> ... --original <EVA run dir> ... \
     --records adapters/eva/parity_records.json
 ```

@@ -3,7 +3,6 @@
 ::
 
     eva-adapter sample                     # parity_records.json: 10 per domain
-    eva-adapter sample --smoke             # smoke_records.json: 2 airline records
     eva-adapter sample --per-domain 20 -o records.json
     eva-adapter sample --all --domains airline -o all-airline.json
 
@@ -32,16 +31,11 @@ from eva_adapter.main import load_records
 ADAPTER = Path(__file__).resolve().parents[2]
 PARITY_RECORDS = ADAPTER / "parity_records.json"
 """The parity sample both sides run (``sample``)."""
-SMOKE_RECORDS = ADAPTER / "smoke_records.json"
-"""The smoke sample (``sample --smoke``)."""
 
 SAMPLE_SEED = 300
 """Fixed: the sample is the same list every time it is drawn."""
 PER_DOMAIN = 10
 """Parity: 10 records per domain, so every domain row has the same weight."""
-SMOKE_PER_DOMAIN = 2
-SMOKE_DOMAINS = ("airline",)
-"""Smoke: 2 records, one domain."""
 
 ITSM_FAMILIES = (
     (1, 33, "single_intent"),
@@ -202,23 +196,6 @@ def sample(
     return out
 
 
-def smoke_sample(seed: int = SAMPLE_SEED) -> dict[str, Any]:
-    """The smoke run: :data:`SMOKE_PER_DOMAIN` records of the parity sample
-    (so a smoke result carries over to parity), from distinct families."""
-    chosen = sample(domains=SMOKE_DOMAINS, seed=seed)
-    for domain, ids in chosen["records"].items():
-        picked: dict[str, str] = {}
-        for record_id in ids:
-            picked.setdefault(family(domain, record_id)[0], record_id)
-        smoke = list(picked.values())[:SMOKE_PER_DOMAIN]
-        chosen["records"][domain] = smoke
-        for name, entry in chosen["families"][domain].items():
-            entry["sampled"] = sum(1 for r in smoke if family(domain, r)[0] == name)
-    chosen["per_domain"] = SMOKE_PER_DOMAIN
-    chosen["smoke_of"] = PER_DOMAIN
-    return chosen
-
-
 def read_records(path: Path) -> dict[str, list[str]]:
     """A sample file's records per domain, checked against EVA's ids."""
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -245,7 +222,6 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     """``sample``'s options (the parity runner's ``sample`` takes the same)."""
     size = parser.add_mutually_exclusive_group()
     size.add_argument("--per-domain", type=int, default=PER_DOMAIN)
-    size.add_argument("--smoke", action="store_true", help="2 airline records")
     size.add_argument("--all", action="store_true", help="every record (213)")
     parser.add_argument("--domains", nargs="+", choices=DOMAINS, default=list(DOMAINS))
     parser.add_argument("--seed", type=int, default=SAMPLE_SEED)
@@ -254,16 +230,13 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 def write_sample(args: argparse.Namespace) -> Path:
     """Draw the sample the options name and write it (by default the
-    checked-in file it belongs in)."""
-    if args.smoke:
-        chosen = smoke_sample(args.seed)
-    else:
-        chosen = sample(
-            per_domain=None if args.all else args.per_domain,
-            domains=args.domains,
-            seed=args.seed,
-        )
-    target = args.out or (SMOKE_RECORDS if args.smoke else PARITY_RECORDS)
+    checked-in :data:`PARITY_RECORDS`)."""
+    chosen = sample(
+        per_domain=None if args.all else args.per_domain,
+        domains=args.domains,
+        seed=args.seed,
+    )
+    target = args.out or PARITY_RECORDS
     target.write_text(json.dumps(chosen, indent=2) + "\n", encoding="utf-8")
     counts = {d: len(ids) for d, ids in chosen["records"].items()}
     print(f"wrote {target}: {counts}")

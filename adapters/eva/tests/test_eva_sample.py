@@ -67,12 +67,7 @@ def test_every_seed_draws_each_required_label_and_keeps_family_counts(
             assert set(ids) & members
 
 
-def test_smoke_is_two_parity_records_and_all_is_every_record() -> None:
-    smoke = samples.smoke_sample()["records"]
-    assert list(smoke) == ["airline"] and len(smoke["airline"]) == 2
-    assert set(smoke["airline"]) <= set(samples.sample()["records"]["airline"])
-    families = {samples.family("airline", r)[0] for r in smoke["airline"]}
-    assert len(families) == 2
+def test_all_is_every_record() -> None:
     every = samples.sample(per_domain=None)["records"]
     assert sum(len(ids) for ids in every.values()) == 213
 
@@ -102,22 +97,17 @@ def test_a_sample_file_is_checked_against_evas_ids(tmp_path: Path) -> None:
 
 
 def test_the_cli_writes_the_sample(tmp_path: Path) -> None:
-    target = tmp_path / "smoke.json"
-    with pytest.raises(SystemExit) as done:
-        main(["sample", "--smoke", "-o", str(target)])
-    assert done.value.code == 0
-    smoke = samples.smoke_sample()["records"]
-    assert json.loads(target.read_text())["records"] == smoke
     target = tmp_path / "airline.json"
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as done:
         main(
             ["sample", "--per-domain", "20", "--domains", "airline", "-o", f"{target}"]
         )
+    assert done.value.code == 0
     assert json.loads(target.read_text()) == samples.sample(
         per_domain=20, domains=["airline"]
     )
 
 
-def test_the_checked_in_samples_are_what_sample_draws() -> None:
+def test_the_checked_in_sample_is_what_sample_draws() -> None:
     parity_file = json.loads(samples.PARITY_RECORDS.read_text())
     assert parity_file == samples.sample()
