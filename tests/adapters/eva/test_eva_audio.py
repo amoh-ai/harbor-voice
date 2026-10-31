@@ -1,7 +1,7 @@
 """``eva_adapter.audio`` produces EVA's bytes, case for case.
 
 Goldens come from EVA's own functions, run in ``eva-base:039efa0a`` by
-``scripts/goldens/call_audio_cases.py --eva``; this runs the same cases on
+``adapters/eva/scripts/goldens/call_audio_cases.py --eva``; this runs the same cases on
 our port. soxr's int16 output is dithered, so EVA does not reproduce it run
 to run: those cases are compared the way EVA compares with itself (see the
 cases module).
@@ -18,7 +18,8 @@ from pathlib import Path
 import pytest
 
 HERE = Path(__file__).parent
-GOLDENS_DIR = HERE.parent / "scripts" / "goldens"
+ADAPTER = HERE.parents[2] / "adapters" / "eva"
+GOLDENS_DIR = ADAPTER / "scripts" / "goldens"
 sys.path.insert(0, str(GOLDENS_DIR))
 
 from call_audio_cases import run_cases  # noqa: E402

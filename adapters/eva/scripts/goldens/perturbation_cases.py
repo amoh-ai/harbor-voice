@@ -6,14 +6,14 @@ Run inside EVA's image to (re)generate the goldens::
         -v "$PWD/adapters/eva/scripts/goldens:/goldens" \\
         --entrypoint /opt/venv/bin/python -w /app eva-base:039efa0a \\
         /goldens/perturbation_cases.py --eva \\
-        > adapters/eva/tests/fixtures/call/eva_perturbation.json
+        > tests/adapters/eva/fixtures/call/eva_perturbation.json
 
 EVA's side is ``eva.user_simulator.perturbation.AudioPerturbator`` with EVA's
 ``PerturbationConfig``, reading the WAVs in its image (``/app/assets/noise``,
 where EVA looks from its repo root). Ours is the vendored copy
 (``eva_adapter.vendored.perturbation``) with ``eva_adapter.conditions``'
 config, reading the same WAVs from wherever ``--noise-dir`` (or the test)
-points it. ``tests/test_eva_perturbation.py`` runs the cases on ours and
+points it. ``tests/adapters/eva/test_eva_perturbation.py`` runs the cases on ours and
 compares.
 
 **Seeded from outside.** EVA draws the static, the packet loss and the gain

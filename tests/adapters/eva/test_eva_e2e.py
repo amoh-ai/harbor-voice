@@ -6,7 +6,7 @@ agent under test is a fake OpenAI Realtime server reached by harbor's own
 server (websocket and REST) reached by harbor's ``elevenlabs.agents``
 transport and ``ElevenLabsCaller``. The sidecar is the real image, EVA's
 code at the pinned commit, with only its judges faked
-(``scripts/goldens/sidecar_fake_judges.py``). No API is called.
+(``adapters/eva/scripts/goldens/sidecar_fake_judges.py``). No API is called.
 
 The trial runs the way ``harbor-voice drive`` runs it inside ``main``: a
 task written by the converter, its ``voice.toml``, ``VoiceTrial.build_agent``
@@ -51,7 +51,7 @@ from eva_adapter.main import TEMPLATE
 from eva_adapter.main import write_task
 
 HERE = Path(__file__).parent
-GOLDENS = HERE.parent / "scripts" / "goldens"
+GOLDENS = HERE.parents[2] / "adapters" / "eva" / "scripts" / "goldens"
 sys.path.insert(0, str(HERE / "fixtures" / "e2e"))
 
 from eva_e2e_fakes import REPLIES  # noqa: E402

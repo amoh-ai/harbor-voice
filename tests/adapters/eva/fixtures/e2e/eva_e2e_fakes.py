@@ -10,7 +10,7 @@ config) reach :class:`FakeElevenLabs` through its ``api_base``.
   appended frame (server VAD's 200 ms of silence), a transcript of each
   caller turn, and scripted responses that stream audio and transcript
   faster than real time; one ends in a tool call and the next answers after
-  the tool's output. Modelled on the call golden's agent (``scripts/goldens/call_scenario.py``).
+  the tool's output. Modelled on the call golden's agent (``adapters/eva/scripts/goldens/call_scenario.py``).
 - :class:`FakeElevenLabs` is the caller: on a timeline from the socket's
   start it sends the caller's speech (16 kHz PCM, in bursts, as ElevenLabs
   does), the ``agent_response`` cue, its transcript of the agent, and then
@@ -45,7 +45,12 @@ from websockets.asyncio.server import serve
 from websockets.http11 import Request
 from websockets.http11 import Response
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts" / "goldens"))
+sys.path.insert(
+    0,
+    str(
+        Path(__file__).resolve().parents[5] / "adapters" / "eva" / "scripts" / "goldens"
+    ),
+)
 
 from call_audio_cases import speech_like  # noqa: E402
 

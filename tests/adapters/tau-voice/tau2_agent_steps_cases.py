@@ -7,7 +7,7 @@ every tick is recorded, including the ``TickResult`` fields its agent keeps in
 :mod:`tau_voice.agent_steps` against the result. Regenerate inside the
 sidecar image::
 
-    docker run --rm -v "$PWD/adapters/tau-voice/tests:/cases" tau-voice-runtime:<tag> \\
+    docker run --rm -v "$PWD/tests/adapters/tau-voice:/cases" tau-voice-runtime:<tag> \\
         python /cases/tau2_agent_steps_cases.py /cases/fixtures/tau2_agent_steps.json
 """
 

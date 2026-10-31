@@ -6,9 +6,9 @@ Run inside EVA's image to (re)generate the goldens::
         -v "$PWD/adapters/eva/scripts/goldens:/goldens" \\
         --entrypoint /opt/venv/bin/python eva-base:039efa0a \\
         /goldens/call_audio_cases.py --eva \\
-        > adapters/eva/tests/fixtures/call/eva_audio.json
+        > tests/adapters/eva/fixtures/call/eva_audio.json
 
-``tests/test_eva_audio.py`` runs the same cases on ``eva_adapter.audio`` and
+``tests/adapters/eva/test_eva_audio.py`` runs the same cases on ``eva_adapter.audio`` and
 compares. Inputs are built here with integer arithmetic only, so both sides
 get the same bytes on any platform and numpy version; each input's SHA-256 is
 in the golden too. Outputs are compared as SHA-256 of their bytes plus their

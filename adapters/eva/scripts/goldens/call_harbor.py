@@ -11,8 +11,8 @@
   record says ``end_call`` ran.
 
 The agent is opened with EVA's Realtime settings, the ones the driver will
-use. ``tests/test_eva_call_golden.py`` runs :func:`run_harbor` and compares
-it with EVA's record in ``tests/fixtures/call/g5``; run directly, this writes
+use. ``tests/adapters/eva/test_eva_call_golden.py`` runs :func:`run_harbor` and compares
+it with EVA's record in ``tests/adapters/eva/fixtures/call/g5``; run directly, this writes
 the record directory for a look (or for EVA's processor)::
 
     uv run python adapters/eva/scripts/goldens/call_harbor.py OUT_DIR [--real-time]

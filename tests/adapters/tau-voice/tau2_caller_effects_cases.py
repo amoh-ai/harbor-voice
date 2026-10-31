@@ -3,10 +3,10 @@
 Run inside the sidecar image, with the current ``server.py``, to (re)generate
 the golden::
 
-    docker run --rm -v "$PWD/adapters/tau-voice/tests:/cases" \\
+    docker run --rm -v "$PWD/tests/adapters/tau-voice:/cases" \\
         -v "$PWD/adapters/tau-voice/sidecar/server.py:/app/server.py" \\
         tau-voice-runtime:<tag> python /cases/tau2_caller_effects_cases.py --tau2 \\
-        > adapters/tau-voice/tests/fixtures/tau2_caller_effects.json
+        > tests/adapters/tau-voice/fixtures/tau2_caller_effects.json
 
 The tau2 side is tau2's real caller (``VoiceStreamingUserSimulator``, built by
 the sidecar for a ``regular`` task): its ``synthesize_voice`` per line, its

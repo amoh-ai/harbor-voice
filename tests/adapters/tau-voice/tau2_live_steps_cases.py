@@ -7,7 +7,7 @@ produces is recorded, with the caller audio it would send. ``test_agent_steps``
 runs :class:`tau_voice.agent_steps.LiveAgentStepper` on the same script.
 Regenerate inside the sidecar image (Live needs tau2's ``[live]`` extra)::
 
-    docker run --rm -v "$PWD/adapters/tau-voice/tests:/cases" tau-voice-runtime:<tag> \\
+    docker run --rm -v "$PWD/tests/adapters/tau-voice:/cases" tau-voice-runtime:<tag> \\
         bash -c "pip install -q aiortc==1.15.0 && python /cases/tau2_live_steps_cases.py \\
         /cases/fixtures/tau2_live_steps.json"
 """

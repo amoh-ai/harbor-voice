@@ -1,12 +1,12 @@
 """The sidecar against EVA's own code, one golden per interface.
 
 Every golden in ``fixtures/sidecar/`` was produced by EVA's code run natively
-(``scripts/goldens/sidecar_goldens.py``, in ``eva-base:039efa0a``). Here the
+(``adapters/eva/scripts/goldens/sidecar_goldens.py``, in ``eva-base:039efa0a``). Here the
 sidecar image is built on that base, run, and driven over HTTP through
 ``eva_adapter.client``, the way harbor-voice drives it; its answers must
 equal EVA's.
 
-Judges are fakes (``scripts/goldens/sidecar_fake_judges.py``, the sidecar's
+Judges are fakes (``adapters/eva/scripts/goldens/sidecar_fake_judges.py``, the sidecar's
 entrypoint in these tests): no API is called, and every judge request is
 captured for the judge-prompt golden. The tests skip when Docker or the base image is missing.
 """
@@ -36,7 +36,7 @@ from eva_adapter.client import SidecarError
 from eva_adapter.client import ToolReply
 from eva_adapter.client import Validation
 
-ADAPTER = Path(__file__).resolve().parents[1]
+ADAPTER = Path(__file__).resolve().parents[3] / "adapters" / "eva"
 FIXTURES = Path(__file__).parent / "fixtures" / "sidecar"
 GOLDENS = ADAPTER / "scripts" / "goldens"
 SIDECAR = ADAPTER / "sidecar"

@@ -1,6 +1,6 @@
 """Compare two call-golden record directories: EVA's and harbor's.
 
-Used by ``tests/test_eva_call_golden.py``, and from the command line::
+Used by ``tests/adapters/eva/test_eva_call_golden.py``, and from the command line::
 
     python call_compare.py compare EVA_DIR HARBOR_DIR          # print the report
     python call_compare.py fixture EVA_DIR FIXTURE_DIR          # check in EVA's record

@@ -9,10 +9,10 @@ backchannel phrases, the effects, the phone line.
 
 Generate the golden inside the sidecar image, with the current ``server.py``::
 
-    docker run --rm -v "$PWD/adapters/tau-voice/tests:/cases" \\
+    docker run --rm -v "$PWD/tests/adapters/tau-voice:/cases" \\
         -v "$PWD/adapters/tau-voice/sidecar/server.py:/app/server.py" \\
         tau-voice-runtime:<tag> python /cases/tau2_caller_behavior_cases.py --tau2 \\
-        > adapters/tau-voice/tests/fixtures/tau2_caller_behavior.json
+        > tests/adapters/tau-voice/fixtures/tau2_caller_behavior.json
 
 The golden also records every decision prompt tau2 built, and tau2's
 interaction metrics for the call (its caller's chunks, with a scripted agent
@@ -20,7 +20,7 @@ record). Two checks replay *our* side through the sidecar in the image: the
 ``/decide`` requests must give tau2's prompts, and the ``/close`` body must
 give tau2's metrics::
 
-    python adapters/tau-voice/tests/tau2_caller_behavior_cases.py --ours \\
+    python tests/adapters/tau-voice/tau2_caller_behavior_cases.py --ours \\
         > ours.json                # harbor-voice's environment
     docker run ... -v "$PWD/ours.json:/ours.json" tau-voice-runtime:<tag> \\
         python /cases/tau2_caller_behavior_cases.py --check /ours.json

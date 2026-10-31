@@ -67,7 +67,7 @@ extend-exclude = [
 known-first-party = ["harbor"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "adapters/tau-voice/tests", "adapters/eva/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

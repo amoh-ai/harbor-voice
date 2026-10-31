@@ -241,6 +241,9 @@ degradation, and connection degradation alone: EVA's own grid.
 
 ## Tests
 
+In [`tests/adapters/eva/`](../../tests/adapters/eva), with their fixtures;
+`scripts/goldens/` regenerates the fixtures recorded from EVA's code.
+
 - `test_eva_perturbation.py`: the vendored file against EVA's image; the
   goldens (EVA's perturbator in EVA's image on seeded inputs, 28 cases:
   every noise, SNRs, static, degradation, combinations, the ambient stream,

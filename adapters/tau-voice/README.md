@@ -134,8 +134,11 @@ uv run tau-voice compare --harbor <job folder> ... --original <tau2 save folder>
 
 ## Tests
 
+In [`tests/adapters/tau-voice/`](../../tests/adapters/tau-voice), with their
+fixtures.
+
 - Goldens recorded from tau2's own code in the sidecar image
-  (`tests/tau2_*_cases.py`): the agent's per-step handling for Realtime and
+  (`tau2_*_cases.py`): the agent's per-step handling for Realtime and
   Live (`test_agent_steps.py`), the phone line (`test_telephony.py`), the
   audio effects (`test_tau2_audio.py`), and the caller end to end, effects
   and behaviour (`test_tau2_caller_effects.py`,

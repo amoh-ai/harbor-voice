@@ -1,7 +1,7 @@
 """The Realtime-session golden: harbor's ``openai.realtime`` with EVA's settings against EVA's own wire.
 
 The fixture is EVA's ``OpenAIRealtimeAssistantServer`` run in EVA's image
-(``scripts/goldens/realtime_session.py``): the ``session.update`` it sends,
+(``adapters/eva/scripts/goldens/realtime_session.py``): the ``session.update`` it sends,
 its greeting, what it sends when one response holds two tool calls, and what
 it makes of ``response.done`` payloads. harbor's transport, given the same
 prompt and tools and EVA's settings, must send the same events with the same

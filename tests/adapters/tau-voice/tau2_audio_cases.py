@@ -2,8 +2,8 @@
 
 Run inside the tau2 image to (re)generate the goldens::
 
-    docker run --rm -v "$PWD/adapters/tau-voice/tests:/cases" tau-voice-runtime:<tag> \\
-        python /cases/tau2_audio_cases.py --tau2 > adapters/tau-voice/tests/fixtures/tau2_audio_goldens.json
+    docker run --rm -v "$PWD/tests/adapters/tau-voice:/cases" tau-voice-runtime:<tag> \\
+        python /cases/tau2_audio_cases.py --tau2 > tests/adapters/tau-voice/fixtures/tau2_audio_goldens.json
 
 ``test_tau2_audio.py`` runs the same cases on ``tau_voice.tau2_audio`` and
 compares. Inputs are generated here, deterministically (including the noise

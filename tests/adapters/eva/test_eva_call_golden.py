@@ -2,7 +2,7 @@
 
 EVA's side is checked in: ``fixtures/call/g5`` is the record EVA's own
 bridge, Realtime server and ElevenLabs simulator wrote for the scripted call
-in ``scripts/goldens/call_scenario.py``, in ``eva-base:039efa0a``. This runs
+in ``adapters/eva/scripts/goldens/call_scenario.py``, in ``eva-base:039efa0a``. This runs
 the same script through harbor's port (``RealtimeCall`` with the real
 ``openai.realtime`` and ``elevenlabs.agents`` transports and the real
 ``ElevenLabsCaller``, each on a fake socket) and compares the two records.
@@ -20,11 +20,11 @@ Regenerate the fixture (in the repo root)::
         -v "$OUT:/out" --entrypoint /opt/venv/bin/python eva-base:039efa0a \\
         /goldens/call_eva_golden.py /out/eva
     uv run python adapters/eva/scripts/goldens/call_compare.py fixture \\
-        "$OUT/eva" adapters/eva/tests/fixtures/call/g5
+        "$OUT/eva" tests/adapters/eva/fixtures/call/g5
     MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD/adapters/eva/scripts/goldens:/goldens" \\
         -v "$OUT:/records" --entrypoint /opt/venv/bin/python eva-base:039efa0a \\
         /goldens/call_processor.py /records/eva \\
-        > adapters/eva/tests/fixtures/call/g5/processor.json
+        > tests/adapters/eva/fixtures/call/g5/processor.json
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ from typing import Any
 import pytest
 
 HERE = Path(__file__).parent
-GOLDENS = HERE.parent / "scripts" / "goldens"
+GOLDENS = HERE.parents[2] / "adapters" / "eva" / "scripts" / "goldens"
 FIXTURE = HERE / "fixtures" / "call" / "g5"
 EVA_IMAGE = "eva-base:039efa0a"
 sys.path.insert(0, str(GOLDENS))

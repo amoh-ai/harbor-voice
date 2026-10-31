@@ -11,7 +11,8 @@ copy: import `harbor.*` directly, and bump the pin deliberately.
   `harbor-voice` CLI, and `VoiceCallAgent` (a voice call as a harbor agent).
 - `adapters/tau-voice/` — the tau-voice benchmark adapter (its own package).
 - `adapters/eva/` — the EVA benchmark adapter (its own package).
-- `tests/unit/voice/`, `adapters/tau-voice/tests/`, `adapters/eva/tests/` — unit tests.
+- `tests/unit/voice/` — the package's tests; `tests/adapters/eva/`,
+  `tests/adapters/tau-voice/` — each adapter's tests and fixtures.
 
 ## Commands
 

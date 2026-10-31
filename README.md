@@ -298,7 +298,8 @@ src/harbor_voice/        transports and providers, the built-in call loop and
                          layers, ATIF-voice, metrics, VoiceCallAgent, the CLI
 adapters/tau-voice/      the tau-voice adapter (its own package)
 adapters/eva/            the EVA adapter (its own package)
-tests/unit/voice/, adapters/tau-voice/tests/, adapters/eva/tests/
+tests/unit/voice/        the package's tests
+tests/adapters/          each adapter's tests and fixtures: eva/, tau-voice/
 ```
 
 Development:

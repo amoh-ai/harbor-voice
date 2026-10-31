@@ -2,7 +2,7 @@
 
 Each golden is produced here by EVA's code as EVA's orchestrator runs it
 (no sidecar code involved), and checked in under
-``adapters/eva/tests/fixtures/sidecar/``. ``tests/test_eva_sidecar_goldens.py``
+``tests/adapters/eva/fixtures/sidecar/``. ``tests/adapters/eva/test_eva_sidecar_goldens.py``
 runs the sidecar image and compares its HTTP answers with them; harbor's
 tests never import EVA.
 
@@ -40,6 +40,7 @@ Regenerate inside EVA's image, with EVA's ``tests/`` mounted (not in it)::
 
     MSYS_NO_PATHCONV=1 docker run --rm \\
         -v "$PWD/adapters/eva:/adapter" -v "$EVA_REPO/tests:/eva-tests:ro" \\
+        -v "$PWD/tests/adapters/eva/fixtures:/fixtures" \\
         --entrypoint /opt/venv/bin/python eva-base:039efa0a \\
         /adapter/scripts/goldens/sidecar_goldens.py all
 """
@@ -84,7 +85,8 @@ from eva.utils.hash_utils import get_dict_hash  # noqa: E402
 
 ADAPTER = Path(os.environ.get("EVA_ADAPTER_DIR", "/adapter"))
 EVA_TESTS = Path(os.environ.get("EVA_TESTS_DIR", "/eva-tests"))
-OUT = ADAPTER / "tests" / "fixtures" / "sidecar"
+FIXTURES = Path(os.environ.get("EVA_FIXTURES_DIR", "/fixtures"))
+OUT = FIXTURES / "sidecar"
 BUNDLE = OUT / "eva_record_1.1.2.tar.gz"
 
 RECORD = "1.1.2"

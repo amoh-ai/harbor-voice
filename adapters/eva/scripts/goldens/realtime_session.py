@@ -15,14 +15,15 @@ OpenAI SDK EVA pins. Recorded:
   ``_extract_response_text`` return for ``response.done`` payloads of
   several shapes, each parsed by the SDK exactly as EVA receives it.
 
-``adapters/eva/tests/test_eva_realtime_session.py`` checks harbor's
+``tests/adapters/eva/test_eva_realtime_session.py`` checks harbor's
 ``openai.realtime`` transport against it; harbor's tests never import EVA.
 Regenerate inside EVA's image::
 
     docker run --rm -v "$PWD/adapters/eva:/adapter" \\
+        -v "$PWD/tests/adapters/eva/fixtures:/fixtures" \\
         --entrypoint /opt/venv/bin/python eva-base:039efa0a \\
         /adapter/scripts/goldens/realtime_session.py \\
-        /adapter/tests/fixtures/realtime/eva_session.json
+        /fixtures/realtime/eva_session.json
 """
 
 import asyncio

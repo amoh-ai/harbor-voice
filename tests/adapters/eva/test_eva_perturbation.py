@@ -4,7 +4,7 @@
   with the file in ``eva-base:039efa0a``: the same but for ``_ASSETS_DIR``.
 - **Its bytes are EVA's** (goldens). ``fixtures/call/eva_perturbation.json``
   is EVA's perturbator run in EVA's image on seeded inputs
-  (``scripts/goldens/perturbation_cases.py --eva``): every noise at EVA's
+  (``adapters/eva/scripts/goldens/perturbation_cases.py --eva``): every noise at EVA's
   default SNR, other SNRs, static, degradation, combinations, the ambient
   stream, a wrap of the noise file, silence, clipping. Our copy must give
   the same bytes, every case, inside a perturbed task's ``main`` (EVA's
@@ -56,7 +56,7 @@ from eva_adapter.main import JUDGES
 from eva_adapter.vendored import perturbation as vendored
 
 HERE = Path(__file__).parent
-ADAPTER = HERE.parent
+ADAPTER = HERE.parents[2] / "adapters" / "eva"
 GOLDENS_DIR = ADAPTER / "scripts" / "goldens"
 sys.path.insert(0, str(GOLDENS_DIR))
 
