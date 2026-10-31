@@ -1,10 +1,21 @@
 # tau-voice on harbor-voice
 
-harbor-voice runs tau-voice, the full-duplex voice mode of
-[tau2-bench](https://github.com/sierra-research/tau2-bench), at commit
-`2174a60`: tau2's own code holds the task, its tools, the caller's prompts
-and the grade, in a sidecar; harbor-voice runs the call, step for step as
-tau2's harness does.
+τ-Voice is the full-duplex voice mode of
+[tau3-bench](https://github.com/sierra-research/tau2-bench), Sierra's
+benchmark for customer-service agents. A simulated customer phones the agent
+about a problem in one of three domains: airline, retail or telecom. The agent
+talks the caller through it and acts with the domain's tools (looking up a
+reservation, changing an order, …) while following the domain's policy. Both
+sides can speak at once, as on a real call, and the caller can sound like a
+real one: accents, background noise, a phone line, interruptions and
+backchannels (tau3-bench's speech complexities). tau3-bench's own evaluator
+then grades whether the task was done.
+
+This adapter runs τ-Voice's 278 tasks (airline 50, retail 114, telecom 114)
+as harbor tasks, at tau3-bench's commit `2174a60`. tau3-bench's own code holds
+each task, its tools, the caller's prompts and the grade, in a sidecar;
+harbor-voice runs the call step for step as tau3-bench's harness does. How it
+compares with tau3-bench's own `tau2 run`: [PARITY.md](PARITY.md).
 
 ## Run it
 

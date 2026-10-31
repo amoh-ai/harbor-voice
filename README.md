@@ -1,57 +1,49 @@
 # harbor-voice
 
-**Voice-agent evaluation on [harbor](https://github.com/harbor-framework/harbor).**
-harbor-voice puts a voice agent on a phone call with a simulated caller,
-records the call, and grades it with the benchmark's own grader. It runs
-through harbor's job runner and environments, so the same job runs on your
-laptop's Docker or in the cloud.
+harbor-voice is [harbor](https://github.com/harbor-framework/harbor) for
+voice agents. It puts a voice agent on a phone call with a simulated caller,
+records the call and grades it, on harbor's job runner and environments. You
+can use harbor-voice to:
 
-> **Status: pre-release (0.1.0).** Two benchmark adapters, tau-voice and EVA,
-> run end to end through harbor's runner. Each has parity results against its
-> original harness, from runs on Daytona.
+- Evaluate speech-to-speech agents such as OpenAI Realtime and OpenAI Live
+  on voice benchmarks: [tau-voice](adapters/tau-voice) (tau3-bench's voice
+  mode) and [EVA](adapters/eva).
+- Run calls in parallel on harbor's backends, from your laptop's Docker to
+  Daytona or EC2, with harbor's retries and resume.
+- Test agents under realistic audio: accents, background noise, phone lines
+  and connection loss, as each benchmark defines them.
+- Keep every call: its audio, a timed trajectory in ATIF-voice (harbor's ATIF
+  format adapted for voice), and the benchmark's own grade.
+- Add your own voice benchmark as an adapter, like the two included.
+
+## Core features
+
+- Full-duplex and half-duplex calls
+- Audio-native speech-to-speech agents (OpenAI Realtime, OpenAI Live, Amazon
+  Nova Sonic, ElevenLabs Agents) and cascades (speech-to-text → LLM →
+  text-to-speech), with more providers to come
+- A simulated phone line: sample rates, μ-law/G.711, packet loss, jitter
+- A simulated caller with seeded perturbation layers: persona, speech, room,
+  line, turn-taking, tool faults
+- ATIF-voice trajectories, and voice metrics that abstain rather than score 0
+
+The benchmarks run full-duplex speech-to-speech calls with their own callers;
+the rest runs on harbor-voice's built-in call loop (see
+[The core library](#the-core-library)).
 
 ## Benchmarks
 
-| | [tau-voice](adapters/tau-voice) | [EVA](adapters/eva) |
-|---|---|---|
-| Benchmark | [tau2-bench](https://github.com/sierra-research/tau2-bench)'s full-duplex voice mode, at `2174a60` | ServiceNow's [EVA](https://github.com/ServiceNow/eva), at `039efa0a` |
-| Tasks | 278: airline 50, retail 114, telecom 114 | 213 records: airline 50, itsm 80, medical_hr 83 |
-| Agent under test | OpenAI Realtime, OpenAI Live | OpenAI Realtime |
-| Caller | tau2's: an LLM for the words, ElevenLabs for the voice, tau2's phone line and audio effects | EVA's: two ElevenLabs Agents (one female, one male English caller) |
-| Conditions | tau2's speech complexities: `control`, `regular` (the leaderboard's) and six ablations | clean, or EVA's audio perturbations: eight background noises at any SNR, connection degradation |
-| Grade | tau2's evaluator | EVA's metrics and judges: EVA-A, EVA-X, overall |
-| Parity | 40 tasks × 3 runs, OpenAI Live (`gpt-live-1`, backend `gpt-6-luna`), both modes: the criterion holds on all 8 rows ([PARITY.md](adapters/tau-voice/PARITY.md)) | 60 records × 3 runs, OpenAI Realtime (`gpt-realtime-1.5`): the criterion holds on all 12 rows ([PARITY.md](adapters/eva/PARITY.md)) |
+- **[tau-voice](adapters/tau-voice/README.md)**: τ-Voice, the full-duplex
+  voice mode of [tau3-bench](https://github.com/sierra-research/tau2-bench).
+  A simulated customer calls a service agent about airline, retail and telecom
+  tasks (278), and tau3-bench's own evaluator grades the outcome.
 
-In both, the benchmark's own code runs in a sidecar container: the task, its
-tools, the caller's prompts and the grading. harbor-voice runs the call
-itself, the way the original harness does: tau2's 0.2 s step loop, or EVA's
-audio bridge. Each adapter's README covers its keys, options and outputs.
+- **[EVA](adapters/eva/README.md)**: ServiceNow's
+  [EVA](https://github.com/ServiceNow/eva). Enterprise calls in airline, IT
+  service and medical HR (213 scenarios), scored for accuracy (EVA-A) and
+  experience (EVA-X) by EVA's own metrics and judges.
 
-## How it fits harbor
-
-harbor-voice adds no runner of its own. A voice task is a harbor task, and
-the call runner is a harbor agent, `VoiceCallAgent`:
-
-```
-harbor-voice jobs start -c job.yaml          (harbor's job runner, mounted)
-  └─ per trial, a harbor environment (docker | daytona | …)
-       ├─ main     ← VoiceCallAgent installs harbor-voice and the adapter here,
-       │             then runs the task's call driver: the benchmark's call loop
-       └─ sidecar  ← the benchmark's own code, from the task's docker-compose.yaml
-  └─ harbor's verifier grades it; harbor collects logs and trajectory.json
-```
-
-- **What you get from harbor:** concurrency, retries, resume, job metrics and
-  its environment backends, exactly as for any harbor agent.
-  `harbor-voice jobs` and `harbor-voice trials` *are* `harbor jobs` and
-  `harbor trials`. When no agent is given, the agent defaults to
-  `VoiceCallAgent`.
-- **The agent under test is the run's choice, never the task's:**
-  `-m provider/model`, e.g. `openai.live/gpt-live-1` (tau-voice's parity
-  agent) or `openai.realtime/gpt-realtime-1.5` (EVA's).
-- **Each benchmark brings its own call loop** (the `[call] driver` in a
-  task's `voice.toml`). Turn-taking, audio pacing and when a call ends are
-  part of a benchmark's definition, so parity needs its exact loop.
+More voice benchmarks are on the way.
 
 ## Install
 
@@ -171,9 +163,8 @@ per trial and deletes it afterwards. Choose the backend with `job-config --env
 <type>` (both adapters), or `--env` on `trials start`. Settings that belong to
 your account go in your own copy of the job config, never in the tasks.
 
-- **Backends.** The tasks use docker-compose, because the benchmark runs in a
-  sidecar. So they need a backend that supports it. The parity runs used
-  Daytona.
+- **Backends.** Local Docker, Daytona and EC2 today, with more to come. The
+  benchmark runs in a sidecar, so a backend needs docker-compose support.
 - **Daytona.** Set `DAYTONA_API_KEY`. Each trial is a Docker-in-Docker sandbox
   sized from the task.
 
@@ -253,6 +244,8 @@ job's wall time. Keep it within your providers' concurrent-session limits
   | STT / LLM / TTS, for cascades | `aws.nova-stt`, `aws.voxtral` / `openai.llm`, `aws.bedrock-llm` / `elevenlabs.tts`, `aws.nova-tts` |
   | Offline, for tests | `offline.scripted-stt`, `offline.echo-llm`, `offline.scripted-llm`, `offline.tool-echo-llm`, `offline.tone-tts` |
 
+  More providers are on the way.
+
 - **A built-in call loop.** It has a seeded simulated caller (a script, a
   persona LLM or recorded clips), half- or full-duplex turn-taking, and
   perturbation layers, each recorded with what it achieved, not just what was
@@ -270,15 +263,6 @@ job's wall time. Keep it within your providers' concurrent-session limits
 - **Voice metrics** that abstain rather than score 0 when a call can't support
   them: turn timing, overlap and barge-in, said-vs-heard WER, run validity.
 
-**Not yet connected:**
-- **The built-in loop can't run through harbor yet.** It runs from Python
-  (`harbor_voice.trial.VoiceTrial`), but a task needs a `[call]` driver to
-  run through harbor.
-- **The adapters don't use it.** They run their benchmark's own loop and
-  conditions instead.
-- **Benchmark jobs aren't scored with the voice metrics.** They're graded by
-  the benchmark only, and `harbor-voice report` can't roll them up.
-
 ## CLI
 
 | Command | |
@@ -293,15 +277,6 @@ job's wall time. Keep it within your providers' concurrent-session limits
 | `harbor-voice drive` | runs a task's call driver; what `VoiceCallAgent` runs inside `main` |
 | `tau-voice …` | convert tasks; `build-image`, `job-config`; parity: `sample`, `compare` |
 | `eva-adapter …` | `convert`, `agents`, `build-image`, `job-config`; parity: `sample`, `compare` |
-
-## Limitations
-
-- **Agents.** tau-voice runs OpenAI Realtime and OpenAI Live; EVA runs OpenAI
-  Realtime only. There's no transport yet for testing your own deployed voice
-  agent (a WebSocket endpoint, SIP or WebRTC).
-- **Keys.** A benchmark needs keys from several vendors: OpenAI, ElevenLabs
-  and AWS for tau-voice, and Gemini as well for EVA.
-- **Source checkout only** (see Install).
 
 ## Repository
 
@@ -323,7 +298,8 @@ uv run ty check
 ```
 
 Some tests need Docker and the benchmarks' images, and skip without them. CI
-runs the rest on Linux and Windows.
+runs the rest on Linux and Windows. To contribute, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

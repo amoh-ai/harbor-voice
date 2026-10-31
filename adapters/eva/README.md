@@ -1,9 +1,19 @@
 # EVA on harbor-voice
 
-harbor-voice runs [EVA](https://github.com/ServiceNow/eva) (ServiceNow's
-voice-agent benchmark) at commit `039efa0a`: EVA's own code decides the
-prompts, tools, validation and scores, in a sidecar; harbor-voice runs the
-call.
+[EVA](https://github.com/ServiceNow/eva) is ServiceNow's benchmark for
+conversational voice agents. It scores whole spoken conversations on two
+dimensions: EVA-A, accuracy (did the agent complete the task correctly and
+faithfully?), and EVA-X, experience (was the conversation natural, concise
+and suited to speech?). Its 213 enterprise scenarios cover airline service
+(50), IT service management (80) and medical HR (83), and target failures
+specific to voice, such as getting confirmation codes and employee IDs right
+over the phone. The caller is a bot as well, an ElevenLabs agent with a
+persona and a goal, so an evaluation runs end to end with no human listener.
+
+This adapter runs EVA's scenarios as harbor tasks, at EVA's commit
+`039efa0a`. EVA's own code decides the prompts, tools, validation and scores,
+in a sidecar; harbor-voice runs the call. How it compares with EVA's own CLI:
+[PARITY.md](PARITY.md).
 
 ## Run it
 
