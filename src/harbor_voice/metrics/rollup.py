@@ -1,12 +1,12 @@
 """Aggregating across trials.
 
-**Report the median and the failure rate alongside the mean.** The mean
+Report the median and the failure rate alongside the mean. The mean
 of a metric with a heavy failure tail is largely a *failure-rate statistic*
 wearing a central-tendency costume: it moves when the number of catastrophes
 moves and barely notices what the typical trial did. Reporting all three is
 strictly more informative and costs nothing.
 
-**Invalid trials leave the denominator.** Harbor's
+Invalid trials leave the denominator. Harbor's
 ``aggregate_reward_dicts`` maps a ``None`` reward to ``0``, which puts a
 crashed trial in the same bucket as an agent that genuinely scored zero. We do
 not inherit that: an invalid trial is reported as a rate and excluded from
@@ -141,7 +141,7 @@ class TrialResults:
     """The pinned dimensions this trial may be compared along.
 
     Carried from the trajectory through ``measurement.json`` so the robustness
-    family can pair a degraded run with its baseline from **data** rather than
+    family can pair a degraded run with its baseline from data rather than
     from a filename convention somebody has to remember.
     """
 
@@ -541,7 +541,7 @@ def _median(ordered: Sequence[float]) -> float:
 def load_trial_dir(directory: Path) -> TrialResults | None:
     """Read one trial's verifier output back into scoreable form.
 
-    Reads ``measurement.json`` and ``validity.json`` — **not**
+    Reads ``measurement.json`` and ``validity.json`` — not
     ``reward.json``. The reward file is harbor's flat surface and has already
     lost the verdicts, the sample sizes and the reasons.
 
@@ -607,12 +607,12 @@ def harbor_metric_payload(
     """What a conforming harbor ``metric.py`` should emit.
 
     Harbor's hub and leaderboard want a flat ``dict[str, float|int]``, and its
-    own metric template reads a JSONL in which invalid trials have **already**
+    own metric template reads a JSONL in which invalid trials have already
     been flattened to ``0`` — unrecoverably, since that file carries no trial
     ids and no validity column. So the invalidity travels out of band, through
     the trial directories, and arrives here.
 
-    The payload reports the mean over **valid** trials and carries
+    The payload reports the mean over valid trials and carries
     ``n_invalid`` beside it, so the number harbor displays and the number we
     publish cannot silently differ. Someone reading the leaderboard can see
     that trials were dropped and how many.

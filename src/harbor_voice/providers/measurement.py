@@ -1,6 +1,6 @@
 """The measuring devices.
 
-A benchmark needs instruments that are **not** the thing being measured. Two
+A benchmark needs instruments that are not the thing being measured. Two
 of them, and both are providers:
 
 ``reference_stt``
@@ -12,8 +12,8 @@ of them, and both are providers:
 ``judge``
     Declared here so the independence rule covers it from the start.
 
-**The rule this module exists to enforce: a measuring device must not be the
-system under test.** Transcribe the agent's input with the agent's own STT and
+The rule this module exists to enforce: a measuring device must not be the
+system under test. Transcribe the agent's input with the agent's own STT and
 the divergence is zero by construction — a number that is always perfect and
 always meaningless. It is an easy mistake to make from a config file, where
 both are just a spec string, and an expensive one to notice later, because the
@@ -51,7 +51,7 @@ class ReferenceStack:
     def check_independence(self, *, agent_stt: str | None) -> None:
         """Refuse a reference that is the agent's own recogniser.
 
-        Compared at **provider** granularity, not provider-and-model: two
+        Compared at provider granularity, not provider-and-model: two
         models from one vendor share an acoustic frontend and most of their
         failure modes, so ``aws.transcribe/en-US`` is not an independent check
         on ``aws.transcribe/en-GB``. Correlated errors would cancel and the

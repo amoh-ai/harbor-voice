@@ -19,7 +19,7 @@ What it does, per turn:
 ### The floor runs on call time, not wall time
 
 Everything here — probe offsets, floor intervals, overlap, yield latency — is
-positioned on a **call timeline** built from audio durations plus the
+positioned on a call timeline built from audio durations plus the
 *observed* response latency. A harness is free to push an utterance to the
 transport in two milliseconds, but that utterance is still eight seconds of
 speech, and the caller still held the floor for eight seconds.
@@ -30,7 +30,7 @@ zero: a run that pushes bytes as fast as the queue accepts them reports
 over the agent for half a second. That number is worse than missing, because
 it looks like a finding.
 
-So a probe at ``at_s=1.0`` fires one second into the agent's **speech**, and
+So a probe at ``at_s=1.0`` fires one second into the agent's speech, and
 ``yield_latency_s`` is how much more of the agent's speech the caller heard
 after interrupting. In a real-time call every one of these numbers equals its
 wall-clock twin; off real time, these are the ones that stay meaningful. The
@@ -188,7 +188,7 @@ class DuplexDriver:
             were answered is only making the audio harder.
         conversation: L5 layers. Defaults to the simulator's, which is where a
             profile puts them.
-        clock: Session clock. Defaults to the **simulator's**, which is
+        clock: Session clock. Defaults to the simulator's, which is
             almost always what you want: two ``SessionClock`` instances start
             at different instants, so a driver with its own reads a smaller
             ``now()`` than the simulator did when it stamped ``t_produced``,
@@ -351,7 +351,7 @@ class DuplexDriver:
     ) -> tuple[tuple[AudioFrame, ...], DrainStop, tuple[ProbeResult, ...]]:
         """Collect the reply, firing probes as its audio passes their offsets.
 
-        The floor is told about the agent's speech **live** — opened when the
+        The floor is told about the agent's speech live — opened when the
         first frame arrives, closed when the reply ends — rather than
         retrospectively as :meth:`~harbor_voice.adapter.VoiceAgentAdapter.call`
         does. That is the whole difference: a yield record cannot be opened

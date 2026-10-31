@@ -1,6 +1,6 @@
 """Word-level comparison for the divergence family.
 
-The pairing being measured is **said vs heard**: what the other party's words
+The pairing being measured is said vs heard: what the other party's words
 were, against what the system transcribed from them. That is explicitly *a
 channel measurement, not human transcription truth* — and the only WER
 definition that survives perturbation, because the

@@ -5,7 +5,7 @@ reported side by side rather than picking one.
 
 The rule this module exists to enforce:
 
-    **A latency computed from two clock domains must name both.**
+    A latency computed from two clock domains must name both.
 
 The classic mistake is a first turn's *full response latency* reported under
 a time-to-first-byte name. :class:`Interval` makes that mistake hard: you cannot construct one

@@ -1,6 +1,6 @@
 """ElevenLabs text to speech.
 
-The caller voice tau-voice uses, so the request is **tau2's request**, field
+The caller voice tau-voice uses, so the request is tau2's request, field
 for field (``tau2/voice/utils/elevenlabs_utils.py::tts_elevenlabs``):
 
 - ``POST /v1/text-to-speech/{voice_id}?output_format=pcm_16000``

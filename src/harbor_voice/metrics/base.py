@@ -2,14 +2,14 @@
 
 Two rules shape everything here.
 
-**A metric reads the trajectory and never touches the live run.** That
+A metric reads the trajectory and never touches the live run. That
 is what makes ``regrade`` possible: fix a definition, re-score every historical
 trial for the price of CPU, and apply a metric invented a year later to data
 collected today.
 
-**A metric declares its preconditions and abstains outside them.** The
-enforcement is stronger than returning a sentinel — **a metric whose
-preconditions fail is never called at all**. A function that runs in conditions
+A metric declares its preconditions and abstains outside them. The
+enforcement is stronger than returning a sentinel — a metric whose
+preconditions fail is never called at all. A function that runs in conditions
 it was not designed for produces a number, and a number gets published. The
 only reliable way to prevent that is to not reach the function.
 
@@ -50,7 +50,7 @@ class Direction(StrEnum):
     """Which way is better. Needed to aggregate and to rank, never assumed.
 
     ``NEUTRAL`` is not a hedge. Turn-overlap ratio is the standing example:
-    **its polarity is task-dependent**. Overlap is rudeness in an intake
+    its polarity is task-dependent. Overlap is rudeness in an intake
     call and attentiveness in a crisis line, so a metric that declared one
     direction globally would rank half its use cases backwards.
     """
@@ -178,11 +178,11 @@ class MetricDef:
     There are two ways a metric can pair with a layer, and conflating them
     makes the pairing rule either toothless or wrong.
 
-    **Precondition pairing** (``requires=["layer:L5.backchannel"]``): the
+    Precondition pairing (``requires=["layer:L5.backchannel"]``): the
     metric exists *only because* the perturbation does. Selectivity is the
     whole family — there is no backchannel score without a backchannel.
 
-    **Sensitivity** (this field): the metric is meaningful anyway, and the
+    Sensitivity (this field): the metric is meaningful anyway, and the
     layer moves it. Said-vs-heard WER is defined on a clean line; switching
     on a codec and burst loss is what makes it *interesting*. Demanding a
     precondition here would be wrong — it would make WER inapplicable to
@@ -291,7 +291,7 @@ def evaluate_metric(defn: MetricDef, context: MetricContext) -> MetricResult:
     """Run one metric, or decline to.
 
     The declining is the interesting half. When preconditions fail the
-    function is **not called** — not called and discarded, not called and
+    function is not called — not called and discarded, not called and
     overridden. A metric body that executes outside its design conditions
     produces a plausible number, and a plausible number is indistinguishable
     from a real one by the time it reaches a table.
@@ -395,7 +395,7 @@ def metric(
 ) -> Callable[[MetricFn], MetricFn]:
     """Register a metric.
 
-    Preconditions are parsed **at decoration time**, so a typo in
+    Preconditions are parsed at decoration time, so a typo in
     ``requires=["duplex:ful"]`` is an import error rather than a metric that
     silently never applies. A metric that is quietly always N/A is worse than
     one that crashes: the column is simply absent and nobody asks why.

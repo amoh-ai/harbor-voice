@@ -1,6 +1,6 @@
 """Model providers.
 
-A provider is a **metered, fallible, capability-declaring resource**, not a
+A provider is a metered, fallible, capability-declaring resource, not a
 function. Its limits decide whether a metric is meaningful, its failures decide
 whether a *trial* is valid, and its meter is the cost column.
 

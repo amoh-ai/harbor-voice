@@ -25,20 +25,20 @@ EVA's other two axes are not supported yet: an accent needs ElevenLabs
 agents that EVA's repo does not define, and a behaviour changes the caller's
 prompt and agent. Both are refused by name.
 
-**One condition per dataset.** ``eva-adapter convert`` writes it into every
+One condition per dataset. ``eva-adapter convert`` writes it into every
 task: ``[call.config.perturbation]`` in ``voice.toml``, the task's
 ``[metadata]``, and its name (:attr:`PerturbationConfig.label`), so trials of
 two conditions never share a task, and a job over one dataset is one
 condition.
 
-**The randomness is EVA's.** The static, the packet loss and the gain draw
+The randomness is EVA's. The static, the packet loss and the gain draw
 from numpy's global generator, unseeded, as in EVA, and nothing here seeds
 it. Two runs of a condition, on either side, never hear the same noise
 sample for sample: they compare statistically (against the noise floor of
 two EVA runs), never trial by trial. The goldens seed it from outside, only
 to show the code is EVA's (``tests/test_eva_perturbation.py``).
 
-**So is the arithmetic.** EVA's perturbator scales noise by each chunk's
+So is the arithmetic. EVA's perturbator scales noise by each chunk's
 float32 RMS, and numpy 2.3 changed how a float32 sum of more than 8192
 elements rounds. A perturbed task's ``main`` therefore installs EVA's numpy
 (:data:`eva_adapter.images.EVA_NUMPY`), and a trial records the numpy it ran.

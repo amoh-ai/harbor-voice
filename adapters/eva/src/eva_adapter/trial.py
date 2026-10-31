@@ -19,21 +19,21 @@ EVA's runner does:
    counts. ``GET /files`` either way: EVA's run directory, archived attempts
    included.
 
-**Outputs**, under ``<out>/eva/``: ``summary.json`` (every attempt's end
+Outputs, under ``<out>/eva/``: ``summary.json`` (every attempt's end
 reason, validation and timings; usage per component), ``metrics.json``
 (EVA's, for the attempt that counts), ``run/`` (EVA's run directory as the
 sidecar holds it), ``attempt-<n>/attempt.json``, and the ElevenLabs agent's
 live config under ``elevenlabs/``. The ATIF-voice trajectory of the attempt
 that counts is the outcome's; core writes it where harbor reads it.
 
-**The reward** is one of EVA's record composites, ``[call.config].reward``:
+The reward is one of EVA's record composites, ``[call.config].reward``:
 ``EVA-A_pass`` (accuracy; the default), ``EVA-X_pass`` (experience) or
 ``EVA-overall_pass`` (both). It is harbor's ``reward``; all three composites
 are recorded beside it under their own names (:func:`rewards`). A record no
 attempt validated has no metrics in EVA, and so no reward here: EVA leaves it
 out of every mean, and so does the job's metric.
 
-**Why the task keeps a verifier.** The driver grades through the sidecar
+Why the task keeps a verifier. The driver grades through the sidecar
 itself, because the trial's summary and trajectory need the grade, and
 because ``main`` cannot exec into the sidecar. The task's ``tests/test.sh``
 still runs afterwards and is the reward harbor records, as in tau-voice. It
@@ -42,12 +42,12 @@ calls the same ``/grade``, which costs nothing the second time: EVA's
 ``metrics.json`` (``run_and_save_record``, normal mode), so no judge is
 called again and the numbers are the driver's.
 
-**The trial index.** EVA seeds nothing per trial: its trials of a record are
+The trial index. EVA seeds nothing per trial: its trials of a record are
 ``records/<id>/trial_<k>``, ``k`` = 0 … ``num_trials`` − 1, and pass@k is
 taken over them. The task's seed is ``k``; a job runs the task once per
 seed 0, 1, 2 (:func:`eva_adapter.main.job_config`).
 
-**Perturbations.** ``[call.config.perturbation]`` is one of EVA's conditions
+Perturbations. ``[call.config.perturbation]`` is one of EVA's conditions
 (:mod:`eva_adapter.conditions`). Every attempt's call runs EVA's own
 ``AudioPerturbator`` on the caller's audio, a new one per attempt as EVA
 builds one per conversation; a noise WAV it cannot read fails the trial

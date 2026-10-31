@@ -11,8 +11,8 @@ tests never import EVA.
   audio judges have tracks to hear: ``eva_record_1.1.2.tar.gz``.
 
 The recording predates today's scenario data, so its tool results are not
-all what EVA's tools answer now. The goldens below use the **native
-record** (``native_record``): the recording, with its tool calls run again
+all what EVA's tools answer now. The goldens below use the native
+record (``native_record``): the recording, with its tool calls run again
 through EVA's tool path and EVA's ``AuditLog`` writing their results, as
 EVA's server would write this call today.
 

@@ -9,7 +9,7 @@ OpenAI SDK EVA pins. Recorded:
   greeting), for building harbor's side from the same inputs;
 - ``wire``: every client event EVA sent, as JSON on the socket — the
   ``session.update``, the greeting item and its ``response.create``, then
-  what EVA sends when the server reports **two tool calls in one response**
+  what EVA sends when the server reports two tool calls in one response
   (``script``), with the tools really run on the record's scenario DB;
 - ``response_done``: what ``_response_has_function_calls`` and
   ``_extract_response_text`` return for ``response.done`` payloads of

@@ -4,9 +4,9 @@ Reads harbor job folders (``harbor-voice jobs start``) and tau2 result folders
 (tau2's ``--save-to`` folders, :func:`tau_voice.original.tau2_command`), and
 reports, per domain and overall:
 
-- **average reward** (Pass^1): the mean over graded tasks in each run, then
+- average reward (Pass^1): the mean over graded tasks in each run, then
   mean ± sample SEM over runs, as harbor's ``parity_experiment.json`` states it;
-- **Pass^k** for k = 1..runs, tau2's estimator: per task, C(c, k) / C(n, k)
+- Pass^k for k = 1..runs, tau2's estimator: per task, C(c, k) / C(n, k)
   with c successes in n runs, averaged over tasks;
 - diagnostics that explain a gap without being a parity claim: hallucination
   retries, termination reasons, call length, errored trials;

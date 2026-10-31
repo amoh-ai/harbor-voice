@@ -13,7 +13,7 @@
 Scoring is a library call: authors select metrics, they do not parse JSON.
 This is that call, given a name and a CLI so a shell script can reach it.
 
-**It reads one file and writes three.** That restraint is trajectory-only scoring turned into a
+It reads one file and writes three. That restraint is trajectory-only scoring turned into a
 deployment property: everything scoring needs is in the trajectory, so
 ``regrade`` over stored trajectories is the *same computation* as the original
 scoring rather than a second implementation that drifts. The moment this
@@ -105,7 +105,7 @@ def score(
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI. Returns a process exit code.
 
-    ``0`` for a scored trial, **valid or not**. An invalid measurement is not
+    ``0`` for a scored trial, valid or not. An invalid measurement is not
     a verifier failure — it is a measurement that did not hold, recorded as
     such in ``validity.json`` and quarantined by the job. Exiting
     non-zero would make harbor treat it as a crashed test, which is precisely

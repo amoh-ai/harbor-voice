@@ -4,7 +4,7 @@ The fixture is tau2's ``VoiceStreamingUserSimulator`` (control) driven with a
 scripted LLM and scripted synthesis; everything else — the policy, the
 counters, the chunking, the phone line — is tau2's real code. Ours is given
 the same script and must produce the same action, speech flag, text slice,
-tool calls and **phone-line audio bytes** at every step.
+tool calls and phone-line audio bytes at every step.
 """
 
 from __future__ import annotations

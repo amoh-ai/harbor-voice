@@ -1,6 +1,6 @@
 """ATIF-voice: the trajectory format and its recorder.
 
-The **model** and the **renderer** import eagerly; the **recorder** does not.
+The model and the renderer import eagerly; the recorder does not.
 Reading a trajectory and writing one have different dependency
 cones: scoring needs this data model and nothing else, while recording needs
 transports, simulators and the provider layer. Importing a submodule runs its

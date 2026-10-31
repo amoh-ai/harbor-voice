@@ -1,16 +1,16 @@
 """Duplex as an enforced, measured policy.
 
 The transport is always bidirectional. Half-duplex is not a second
-interface; it is a **policy** that says who may transmit, applied over a
+interface; it is a policy that says who may transmit, applied over a
 transport that could carry both directions at once.
 
 Three things that buys, none of which an interface split does:
 
-1. **Floor violations become a metric.** "This agent talked over the caller 11
+1. Floor violations become a metric. "This agent talked over the caller 11
    times" is a finding, not a crash.
-2. **You can run a half-duplex-designed agent under a full-duplex floor** and
+2. You can run a half-duplex-designed agent under a full-duplex floor and
    measure what breaks. That is an experiment, not a configuration error.
-3. **One code path.** A turn-shaped interface forces each full-duplex
+3. One code path. A turn-shaped interface forces each full-duplex
    provider to fake the other mode with its own workaround: background loops
    with terminal sentinels, a continuous 20 ms mic pump, AAD disabled plus
    explicit activity markers.

@@ -27,15 +27,15 @@ def silence_stimulus(
         frame_ms: Frame duration.
         t0: Base timestamp.
         paced: When false (the default) every frame carries ``t0`` as its
-            ``t_produced``, modelling **batch** synthesis — the whole utterance
+            ``t_produced``, modelling batch synthesis — the whole utterance
             came into existence at one instant. When true, frames are stamped
-            on a real-time schedule, modelling **streaming** synthesis. Only
+            on a real-time schedule, modelling streaming synthesis. Only
             use ``paced`` if the caller genuinely emits that fast: a frame
             cannot be transmitted before it exists, and the monotonic guard in
             :class:`~harbor_voice.audio.frame.AudioFrame` enforces it.
 
     Returns:
-        Frames enough to exercise lifecycle and framing. **Not** enough to make
+        Frames enough to exercise lifecycle and framing. Not enough to make
         a provider answer, so stream checks needing a reply still skip — the
         honest outcome rather than a vacuous pass.
     """

@@ -3,7 +3,7 @@
 The built-in loop is turn-based — a content source, a simulator, a floor.
 Some benchmarks define the call differently: tau-voice runs it in lockstep
 0.2 s steps with a caller whose turn-taking is the benchmark's own. Rather
-than grow core to fit each one, a task names a **driver** in ``voice.toml``::
+than grow core to fit each one, a task names a driver in ``voice.toml``::
 
     [call]
     driver = "tau_voice.trial:drive"

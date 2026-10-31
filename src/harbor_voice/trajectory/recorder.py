@@ -10,7 +10,7 @@ trial for the cost of CPU.
 The validity checks it runs are the ones that can only be known while the call
 is happening: whether the clean twin survived, whether the simulator stayed in
 persona, whether the transport was down too long. A failed check makes the run
-``measurement_invalid`` — **not** a failed trial, because the agent was not
+``measurement_invalid`` — not a failed trial, because the agent was not
 given a fair run and the result is not evidence about it.
 """
 
@@ -162,14 +162,14 @@ class Recorder:
         yield_latency_s: float | None = None,
         deadline_s: float | None = None,
     ) -> None:
-        """Record an interruption **and whether it landed**.
+        """Record an interruption and whether it landed.
 
         ``yielded_in_time=None`` means the holder never stopped, not that
         nobody looked: ``turns.barge_in_success_rate`` reads an absent key as
         *never*, which is why the key is written whenever it is known and
         omitted only when it genuinely is not.
 
-        ``yield_latency_s`` is in **reply-audio seconds** — how much more of
+        ``yield_latency_s`` is in reply-audio seconds — how much more of
         the agent's speech the caller heard after interrupting. It is a
         duration inside one domain rather than a difference between two
         clocks, which is what makes it comparable between a real-time call and

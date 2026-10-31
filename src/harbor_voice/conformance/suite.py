@@ -19,7 +19,7 @@ Usage from a third party's test suite::
         assert report.ok, report.summary()
 
 Checks declare what they *attest* and what they *need*. A check whose needs are
-unmet is **skipped**, never failed — a transport that does not claim
+unmet is skipped, never failed — a transport that does not claim
 ``send_dtmf`` is not broken for lacking it. The distinction matters because a
 skipped check leaves the capability unattested rather than refuted.
 """

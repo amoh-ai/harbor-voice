@@ -6,11 +6,11 @@ registers all of them into :data:`harbor_voice.metrics.base.REGISTRY`.
 Two families are registered here but will report ``not_applicable`` until the
 perturbations that make them meaningful exist:
 
-- **selectivity** needs L5. Registering it now is not premature —
+- selectivity needs L5. Registering it now is not premature —
   it is the perturbation–metric pairing working: *the perturbation is the probe that makes the
   measurement possible*, so the metric must be inert without it, and a test
   that proves it is inert is worth having before the layer lands.
-- **robustness** needs a paired clean run, which is a job-level arrangement
+- robustness needs a paired clean run, which is a job-level arrangement
   rather than something a single trajectory can supply.
 """
 
@@ -210,7 +210,7 @@ def barge_in_success_rate(context: MetricContext) -> Outcome:
     """Fraction of interruptions the agent yielded to in time.
 
     Three outcomes, not two, matching :class:`~harbor_voice.floor.YieldRecord`:
-    yielded in time, yielded **late**, and never yielded at all. Late and
+    yielded in time, yielded late, and never yielded at all. Late and
     never are different failures — one agent listens slowly, the other does
     not listen — and collapsing them loses the distinction that says which to
     fix. ``yielded_in_time`` is ``None`` on the record when the holder never
@@ -455,7 +455,7 @@ def _stage_offsets(context: MetricContext, stage: str) -> list[float]:
 def yield_latency(context: MetricContext) -> Outcome:
     """Median time from an interruption to the agent falling silent.
 
-    Computed only over interruptions the agent **did** yield to. Including
+    Computed only over interruptions the agent did yield to. Including
     the ones it ignored would need a stand-in duration for "never", and every
     available choice is wrong: the call length flatters a slow agent that
     eventually stopped, and a cap invents data. The never-yielded count is

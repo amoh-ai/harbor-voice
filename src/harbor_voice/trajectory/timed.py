@@ -2,7 +2,7 @@
 
 :mod:`~harbor_voice.trajectory.stepped` is for a call a driver ran in fixed
 ticks. A real-time call (EVA's; Full-Duplex-Bench's later) has no ticks: its
-record is per-party **speech segments** in seconds from call start — when
+record is per-party speech segments in seconds from call start — when
 each party's audio started and stopped, what it said, whether it was cut off
 — plus tool calls stamped on the same clock, usage, and the recordings. This
 turns that record into the same :class:`VoiceTrajectory`, so harbor's ATIF
@@ -10,10 +10,10 @@ tooling and our metrics read a real-time call as they read the others.
 
 The cuts are the lockstep builder's, carried over so the two read alike:
 
-- **Lines.** A party's segments join into one line across silences up to
+- Lines. A party's segments join into one line across silences up to
   ``max_gap_s``, unless the other party spoke in the silence. A turn
   detector splits a sentence at a breath; a reader does not.
-- **Exchanges** are the turns: a caller line that has words (``said``) and
+- Exchanges are the turns: a caller line that has words (``said``) and
   every agent segment that starts after it and no later than the next such
   line (``reply``). What the agent says before the caller first speaks — a
   greeting — is exchange 0, with no ``said``. Full duplex has no strict

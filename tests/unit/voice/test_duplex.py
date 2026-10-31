@@ -76,7 +76,7 @@ class TalkativeAgent(VoiceTransport):
     emits once the caller speaks over it. ``None`` means it never stops, which
     is the agent the barge-in metric exists to catch.
 
-    ``emit_gap_s`` is deliberately **slower** than ``DuplexDriver``'s 5 ms poll
+    ``emit_gap_s`` is deliberately slower than ``DuplexDriver``'s 5 ms poll
     interval. The driver fires a probe when the reply's accumulated audio
     passes its offset, so an emitter that outruns the poll loop delivers the
     whole reply between two polls, and the probe lands on the final frame with

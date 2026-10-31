@@ -1,7 +1,7 @@
 """Tool calling, and L6 acting on it.
 
-The property most of this file is defending: **a tool call is always
-answered.** AWS documents that Nova Sonic waits forever for a result it was
+The property most of this file is defending: a tool call is always
+answered. AWS documents that Nova Sonic waits forever for a result it was
 promised, and a cascade's conversation cannot continue without one either, so
 an unanswered call is a hung agent rather than a failed tool — and the timing
 numbers from that run would be about our injector.

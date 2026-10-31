@@ -9,7 +9,7 @@ Comments cite EVA's file:line. Its constants, its branches (including the
 disabled ones) and its oddities are kept, because each of them moves a
 timestamp:
 
-- **Caller → assistant** (:meth:`Bridge._send_to_assistant`): the caller's
+- Caller → assistant (:meth:`Bridge._send_to_assistant`): the caller's
   16 kHz PCM is queued as it arrives and sent in 20 ms chunks on absolute
   real-time targets, each converted to 8 kHz μ-law with fresh ``ratecv``
   state. The first chunk of an utterance logs ``audio_start`` and sends
@@ -19,17 +19,17 @@ timestamp:
   (:meth:`Bridge.notify_user_utterance_complete`). ``audio_end`` is
   back-dated to the last *full* chunk sent; ``user_speech_stop`` carries the
   event-loop time, not epoch time, as EVA's does.
-- **Silence to the assistant.** Once the assistant has spoken and stopped, the
+- Silence to the assistant. Once the assistant has spoken and stopped, the
   bridge streams 20 ms silence frames while waiting for the caller. While
   waiting for the *assistant* (the caller has stopped), the input stream
-  instead sends **18** silence frames at once on every 250 ms tick in which no
+  instead sends 18 silence frames at once on every 250 ms tick in which no
   assistant audio arrived. Nothing is sent before the assistant first speaks.
-- **Assistant → caller** (:meth:`Bridge._continuous_input_stream`): the
+- Assistant → caller (:meth:`Bridge._continuous_input_stream`): the
   assistant's μ-law is buffered and handed to the caller every 250 ms, padded
   with μ-law silence when the assistant is quiet, and *not* padded (so
   shorter, possibly empty) while it is speaking. That is what EVA's
   ElevenLabs SDK sends, as ``user_audio_chunk``.
-- **Assistant end** is detected on those 250 ms ticks once no media has
+- Assistant end is detected on those 250 ms ticks once no media has
   arrived for 200 ms, back-dated to the last chunk received, and followed by
   200 ms of catch-up silence to the assistant (paced 20 ms, on the input
   stream's task).

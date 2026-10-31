@@ -1,6 +1,6 @@
 """The transport contract.
 
-**The transport is always full-duplex.** Both directions stream continuously,
+The transport is always full-duplex. Both directions stream continuously,
 always. Half-duplex is a *floor policy* layered on top, not a second
 interface.
 
@@ -10,7 +10,7 @@ streaming frames needs none.
 
 Four abstract methods — :meth:`VoiceTransport.open`, :meth:`~VoiceTransport.tx`,
 :meth:`~VoiceTransport.rx`, :meth:`~VoiceTransport.close`. Everything else is
-**declared** in the capability matrix and checked by
+declared in the capability matrix and checked by
 :meth:`VoiceTransport.check_contract`, rather than discovered with ``getattr``
 at the call site.
 """

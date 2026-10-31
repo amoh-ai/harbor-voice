@@ -1,7 +1,7 @@
 """L5 — when they speak.
 
 Every other layer transforms a signal: L2 changes how a voice sounds, L3 puts
-a room around it, L4 puts it down a wire. L5 transforms **nothing**. It decides
+a room around it, L4 puts it down a wire. L5 transforms nothing. It decides
 *when* the caller speaks relative to the agent, which is why it is
 orthogonal: it drives the floor rather than the audio.
 
@@ -20,7 +20,7 @@ floor (:class:`~harbor_voice.floor.Bid`):
 ===============  ====================  ===========================  ===========
 Probe            Bid                   The agent is right if it     Family
 ===============  ====================  ===========================  ===========
-``interruption`` ``FLOOR``             **stops**, quickly           turns
+``interruption`` ``FLOOR``             stops, quickly           turns
 ``backchannel``  ``BACKCHANNEL``       keeps going                  selectivity
 ``vocal_tic``    ``BACKCHANNEL``       keeps going                  selectivity
 ``non_directed`` ``BACKCHANNEL``       keeps going                  selectivity
@@ -36,7 +36,7 @@ existed.
 ### Scheduling is decided before the agent replies
 
 Offsets are drawn from the ``policy`` seed stream at the start of a turn, as
-offsets from **the agent's first frame**. A probe whose offset lands past the
+offsets from the agent's first frame. A probe whose offset lands past the
 end of the reply never fires, and is recorded as such rather than
 dropped — "the agent ignored the interruption" and "the interruption never
 happened" are different findings, and the second one is about the harness.

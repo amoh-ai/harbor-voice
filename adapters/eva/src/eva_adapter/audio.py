@@ -6,8 +6,8 @@ agent under test hears and what EVA's judges listen to:
 
 - :func:`pcm16k_to_mulaw8k`: the caller's 16 kHz PCM to the wire's 8 kHz
   μ-law (``BotToBotAudioBridge._convert_pcm_to_mulaw``,
-  ``user_simulator/audio_bridge.py:332-358``). ``audioop.ratecv`` with **no
-  anti-alias filter and no state carried**: EVA passes ``None`` as the state
+  ``user_simulator/audio_bridge.py:332-358``). ``audioop.ratecv`` with no
+  anti-alias filter and no state carried: EVA passes ``None`` as the state
   for every 20 ms chunk, so each chunk is resampled as if the stream started
   there. Ported as is.
 - :func:`mulaw_8k_to_pcm16_24k`: the wire to OpenAI Realtime's 24 kHz PCM

@@ -6,7 +6,7 @@ of it, as any SDK user is. EVA's caller *is* such an agent, so this module
 speaks to it the way EVA does, and it can equally sit on the agent side of a
 call later: nothing here is caller-specific.
 
-**The protocol is the Python SDK's, version 2.53.0** — EVA's pin — spoken
+The protocol is the Python SDK's, version 2.53.0 — EVA's pin — spoken
 directly with ``websockets`` and ``httpx`` rather than through the SDK. The
 SDK is a thread-per-conversation client with callbacks; harbor's transports
 are asyncio with one ordered event stream. The wire is what has to match, so
@@ -14,19 +14,19 @@ every message below is built exactly as
 ``elevenlabs/conversational_ai/conversation.py`` builds it (cited by line),
 and the tests compare the bytes:
 
-- **Connect.** ``GET /v1/convai/conversation/get-signed-url?agent_id=…``,
+- Connect. ``GET /v1/convai/conversation/get-signed-url?agent_id=…``,
   then ``source=python_sdk&version=2.53.0`` appended to the signed URL
   (``_get_signed_url``, :435-445); a websocket with a 16 MiB message limit
   (``_run``, :823). Then one ``conversation_initiation_client_data`` message
   with the dynamic variables (``_create_initiation_message``, :460-473).
   :meth:`open` returns after that message is sent, as the SDK starts sending
   audio then — it does not wait for the server's metadata.
-- **Send.** Audio as ``{"user_audio_chunk": <base64>}``, one message per
+- Send. Audio as ``{"user_audio_chunk": <base64>}``, one message per
   chunk handed in (``input_callback``, :830-843). A failed send ends the
   session rather than raising, as the SDK's does. ``{"type": "user_activity"}``
   (:755-771), ``contextual_update`` (:773-793) and ``user_message`` (:736-753)
   are each one call.
-- **Receive** (``_handle_message_core``, :475-548), surfaced by
+- Receive (``_handle_message_core``, :475-548), surfaced by
   :meth:`events` in arrival order:
 
   - ``conversation_initiation_metadata`` sets :attr:`conversation_id`;
@@ -48,7 +48,7 @@ and the tests compare the bytes:
   A message the SDK would fail on (a missing field, bad JSON) ends the
   session, as the SDK's receive loop does. Every end yields one
   :class:`SessionEnded` and then the stream stops.
-- **After the call** (REST): :meth:`conversation_record` polls
+- After the call (REST): :meth:`conversation_record` polls
   ``GET /v1/convai/conversations/{id}`` on EVA's schedule; the record says
   how the call ended and what it cost (:func:`usage_records`).
   :meth:`fetch_audio` gets the server's recording.

@@ -5,11 +5,11 @@ The record directory is EVA's (``records/<id>/trial_<k>/``, as the sidecar's
 timeline comes from what EVA's metrics read, so the trajectory and EVA's
 scores describe the same call:
 
-- **Segments** are the bridge's ``audio_start`` / ``audio_end`` pairs in
+- Segments are the bridge's ``audio_start`` / ``audio_end`` pairs in
   ``user_simulator_events.jsonl`` (``simulated_user`` is the caller,
   ``assistant`` the agent): EVA's own speech edges, back-dated as EVA's
   bridge back-dates them, in epoch seconds.
-- **Words.** Each party's own words and what the other party heard:
+- Words. Each party's own words and what the other party heard:
 
   ====================  ===============================  ============================
   party                 ``text`` (its own words)         ``heard`` (the other's STT)
@@ -26,7 +26,7 @@ scores describe the same call:
   audio, and the caller's text can arrive just before its audio does. An
   assistant entry ending ``[interrupted]`` (EVA's partial) marks its segment
   cut off.
-- **Tools** are the audit log's ``tool_call`` / ``tool_response`` pairs, on
+- Tools are the audit log's ``tool_call`` / ``tool_response`` pairs, on
   the same clock.
 
 Time zero is the earliest stamp in the record (the caller's ``connected``),

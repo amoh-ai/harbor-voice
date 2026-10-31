@@ -16,7 +16,7 @@ config, reading the same WAVs from wherever ``--noise-dir`` (or the test)
 points it. ``tests/adapters/eva/test_eva_perturbation.py`` runs the cases on ours and
 compares.
 
-**Seeded from outside.** EVA draws the static, the packet loss and the gain
+Seeded from outside. EVA draws the static, the packet loss and the gain
 from numpy's global generator and never seeds it; each case here seeds it
 (``np.random.seed``) before building the perturbator, on both sides, so the
 two can be compared byte for byte. Inputs are built with integer arithmetic

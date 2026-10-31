@@ -4,7 +4,7 @@ Two operations, deliberately separate:
 
 ``lookup``
     What is this provider, what can it do, what does it need? Answered from
-    the **class**, with no credentials, no network and no SDK installed, so
+    the class, with no credentials, no network and no SDK installed, so
     ``doctor`` and ``caps`` can report on providers this machine cannot
     construct.
 ``create``
@@ -15,8 +15,8 @@ The split is what lets ``doctor`` check whether a configuration measures what
 the task claims: that can't be done if describing a provider requires
 constructing it.
 
-Spec strings are ``provider/model``, matching harbor and litellm. **Modality
-comes from the slot being filled, not from the string**: the CLI flag
+Spec strings are ``provider/model``, matching harbor and litellm. Modality
+comes from the slot being filled, not from the string: the CLI flag
 (``--stt``, ``--tts``, ``--llm``) already knows it, so encoding it twice would
 only create a way for the two to disagree.
 """

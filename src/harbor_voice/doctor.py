@@ -1,7 +1,7 @@
-"""Preflight for **meaning**.
+"""Preflight for meaning.
 
 harbor preflights *running*: can the agent start, are the resources there.
-This checks whether a configuration **measures what the task claims**. That
+This checks whether a configuration measures what the task claims. That
 failure is expensive because it doesn't crash: it produces a results table
 with a column quietly missing, or a number resting on a capability nobody
 verified.

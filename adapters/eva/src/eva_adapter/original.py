@@ -22,12 +22,12 @@ The caller is EVA's ElevenLabs simulator on the agents named by
 get), both read from the environment the command runs in, as are the
 judges' keys.
 
-**Keys.** None is in the command. EVA wants the agent's key inside
+Keys. None is in the command. EVA wants the agent's key inside
 ``EVA_MODEL__S2S_PARAMS``, so that one value is assembled at run time, by
 the shell that runs the command, from ``$OPENAI_API_KEY``; the command holds
 only the name. EVA's ``config.json`` redacts it (``***``).
 
-**Re-entry.** The run id is fixed (``EVA_RUN_ID``), so the same command run
+Re-entry. The run id is fixed (``EVA_RUN_ID``), so the same command run
 again on the same output directory is EVA's own re-entry on an existing run
 (``run_benchmark.py``): it validates what is there and reruns what failed,
 with a fresh attempt budget. That changes the attempt count for those

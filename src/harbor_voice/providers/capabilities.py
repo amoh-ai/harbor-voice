@@ -2,8 +2,8 @@
 
 This is :mod:`harbor_voice.capabilities` applied one level down. A *party*
 declares what it can do in a conversation; a *provider* declares what it can do
-with audio or text, and the consequence is the same: **a missing capability
-yields** ``not_applicable``, **never a zero**.
+with audio or text, and the consequence is the same: a missing capability
+yields ``not_applicable``, never a zero.
 
 The concrete case that motivates it. ``tts_first_byte`` is one of the ten
 cascade stages. Give the cascade a one-shot TTS — text in, finished blob out —
@@ -11,7 +11,7 @@ and ``tts_first_byte`` equals ``tts_complete``. The stage still reports a
 number, the number is wrong, and nothing notices. Declaring ``streams=False``
 turns that silent fiction into an explicit abstention.
 
-**Capabilities belong to the class, not the instance.** ``doctor`` must
+Capabilities belong to the class, not the instance. ``doctor`` must
 print what will be N/A before a container starts and without credentials, so a
 provider states its limits through :meth:`ProviderSpec.capabilities` and never
 by connecting first. A provider that can only describe itself once connected

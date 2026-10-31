@@ -8,11 +8,11 @@ Each time it is asked, it does what tau2's
 ``VoiceStreamingUserSimulator._generate_full_duplex_voice_message`` does, in
 two halves:
 
-1. **The context** comes from the sidecar's ``/user_context``: tau2 linearises
+1. The context comes from the sidecar's ``/user_context``: tau2 linearises
    the step record, flips roles, wraps it in the caller's system prompt and
    the role reminder, and returns the request body. Verified byte-identical to
    the request tau2's own caller builds.
-2. **The call and the reply** happen here, through our OpenAI provider, so the
+2. The call and the reply happen here, through our OpenAI provider, so the
    timing and the record are ours: tool calls go back to the sidecar's
    environment, a stop token ends the call, text becomes the line.
 """

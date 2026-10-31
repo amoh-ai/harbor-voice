@@ -1,6 +1,6 @@
 """Provider identity, metering and failure.
 
-> A provider is a **metered, fallible, capability-declaring resource**, not a
+> A provider is a metered, fallible, capability-declaring resource, not a
 > function.
 
 Three types carry that, and each exists because the obvious shortcut is wrong:
@@ -9,7 +9,7 @@ Three types carry that, and each exists because the obvious shortcut is wrong:
     Static description, readable without credentials, so ``doctor`` can
     preflight.
 ``ProviderRef``
-    What lands in a published record. Has **no field a secret could occupy**.
+    What lands in a published record. Has no field a secret could occupy.
 ``Usage``
     The meter. Audio is not billed in tokens, so harbor's ``UsageInfo`` is
     *wrapped*, not bent.
@@ -101,7 +101,7 @@ _DISPOSITIONS: dict[ProviderFailure, Disposition] = {
     ProviderFailure.STREAM_BROKEN: Disposition.INVALID,
     ProviderFailure.MALFORMED: Disposition.INVALID,
 }
-"""Routing. Configuration failures fail the **job**, not the trial.
+"""Routing. Configuration failures fail the job, not the trial.
 
 Reporting 200 identical zeros because one env var is misspelled hides the typo
 behind a plausible result table. The first trial already knows.
@@ -183,7 +183,7 @@ class Usage:
     replayed: bool = False
     """Served from a :class:`~harbor_voice.providers.cache.Cassette`.
 
-    A run with any replayed call **cannot be published as a measurement**.
+    A run with any replayed call cannot be published as a measurement.
     Separate from ``cache_hit`` because the two have opposite
     legitimacy and merging them would make the distinction unenforceable.
     """
@@ -277,7 +277,7 @@ class ProviderSpec:
 class ProviderRef:
     """What a published artifact says about a provider.
 
-    There is deliberately **no field a credential could land in**. A key in
+    There is deliberately no field a credential could land in. A key in
     ``measurement.json`` or in an ATIF trajectory is not a bug you get to fix
     later, so the type makes it unrepresentable rather than relying on everyone
     remembering to redact.
@@ -287,7 +287,7 @@ class ProviderRef:
     model: str
     region: str | None = None
     config_digest: Digest | None = None
-    """Digest of the resolved **non-secret** configuration."""
+    """Digest of the resolved non-secret configuration."""
 
     capabilities: ProviderCapabilities | None = None
 

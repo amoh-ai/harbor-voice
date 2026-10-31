@@ -2,7 +2,7 @@
 
 A cascade pipeline (STT -> LLM -> TTS) exposes seven seams. A speech-to-speech
 model exposes two: audio went in, audio came out. That asymmetry is a property
-of the system under test, and it must be **declared and recorded**, never
+of the system under test, and it must be declared and recorded, never
 inferred from which marks happened to show up.
 
 ::
@@ -65,8 +65,8 @@ S2S_OPTIONAL_STAGES: frozenset[Stage] = frozenset(
 )
 """Exposed by an S2S provider only when it volunteers them.
 
-``ASR_FINAL`` is here because **Amazon Nova Sonic emits the transcript of its
-own input** — a ``textOutput`` event with ``role: USER`` — and the original
+``ASR_FINAL`` is here because Amazon Nova Sonic emits the transcript of its
+own input — a ``textOutput`` event with ``role: USER`` — and the original
 assumption that a speech-to-speech model exposes no recognised text turned out
 to be false for it.
 
@@ -78,7 +78,7 @@ hold the LLM fixed, swap the STT — still does not. ``CASCADE_ONLY_STAGES``
 keeps the five seams that genuinely require harbor-voice to have composed the
 pipeline itself.
 
-``ASR_PARTIAL`` is deliberately **not** here: a provider that streams partials
+``ASR_PARTIAL`` is deliberately not here: a provider that streams partials
 is making a stronger claim, and no S2S provider has been verified to do so.
 """
 

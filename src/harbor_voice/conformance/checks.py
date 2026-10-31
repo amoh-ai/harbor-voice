@@ -2,10 +2,10 @@
 
 Grouped by what they need:
 
-* **static** — no session, no audio. Declaration consistency and refusal
+* static — no session, no audio. Declaration consistency and refusal
   behaviour. These always run.
-* **lifecycle** — a session, no audio. Open, close, idempotency, use-after-close.
-* **stream** — a session and a stimulus. Format conformance, clock
+* lifecycle — a session, no audio. Open, close, idempotency, use-after-close.
+* stream — a session and a stimulus. Format conformance, clock
   monotonicity, drain. Skipped without audio the provider will answer, because
   a green stream check over silence proves nothing.
 

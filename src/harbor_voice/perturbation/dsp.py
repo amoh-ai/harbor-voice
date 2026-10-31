@@ -4,7 +4,7 @@ Everything here is pure: PCM in, PCM out, no state, no clock. The stateful
 parts — a bed that advances with the call, a channel whose loss is bursty —
 live in the perturbations themselves.
 
-Loudness is handled in **RMS**, not peak, because the run mixes to a
+Loudness is handled in RMS, not peak, because the run mixes to a
 *target SNR* rather than a raw gain. ``mixed = signal + noise * volume`` with
 a fixed volume and no normalisation on either side lets the effective SNR
 drift with TTS loudness sentence to sentence — the number you set is not the number you get, and nothing records
@@ -75,7 +75,7 @@ def snr_db(signal: np.ndarray, noise: np.ndarray) -> float:
     """Signal-to-noise ratio of two aligned buffers, in dB.
 
     Returns ``+inf`` when there is no noise and ``-inf`` when there is no
-    signal. Both are **infinities on purpose**: the ratio is undefined, and
+    signal. Both are infinities on purpose: the ratio is undefined, and
     callers filter infinities out of their statistics. Letting the epsilon
     floor turn "no signal" into a finite -240 dB would put a believable-looking
     number into a published mean, which is the failure a target SNR exists to stop.
@@ -112,7 +112,7 @@ def mix_at_snr(
     """Mix noise into signal at a target SNR.
 
     Returns:
-        The mixture and the **achieved** SNR, measured after scaling rather
+        The mixture and the achieved SNR, measured after scaling rather
         than assumed from the request.
     """
     scaled, _ = scale_to_snr(signal, noise, target_db)
@@ -139,7 +139,7 @@ def linear_to_mulaw(samples: np.ndarray) -> np.ndarray:
     """Simplified mu-law, for simulating the codec's sound: sign bit plus a
     7-bit compressed magnitude.
 
-    **Not G.711 wire format** — real G.711 inverts the bits, so silence is
+    Not G.711 wire format — real G.711 inverts the bits, so silence is
     ``0xFF``, while this encodes silence as ``0x00``. For audio that goes on
     a wire, use :mod:`harbor_voice.audio.g711`.
 
@@ -187,7 +187,7 @@ def resample(samples: np.ndarray, from_hz: int, to_hz: int) -> np.ndarray:
 
 
 def resample_clean(samples: np.ndarray, from_hz: int, to_hz: int) -> np.ndarray:
-    """Anti-aliased resample, for **format adaptation** rather than effect.
+    """Anti-aliased resample, for format adaptation rather than effect.
 
     :func:`resample` deliberately aliases: a real 8 kHz telephone link folds
     energy back into the band and that folding *is* part of the channel being

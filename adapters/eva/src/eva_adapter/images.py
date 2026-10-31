@@ -5,7 +5,7 @@ The sidecar is EVA's own image at the pinned commit plus our server
 ``EVA_BASE``, from either of two places, both built from ServiceNow's public
 repo at :data:`EVA_COMMIT_FULL`:
 
-- ``eva-base:039efa0a`` — **EVA's own Dockerfile**, run on EVA's repo at the
+- ``eva-base:039efa0a`` — EVA's own Dockerfile, run on EVA's repo at the
   commit. :func:`build` makes it with ``docker build <repo>#<commit>`` when
   it is missing (a dev checkout built with ``docker build -t
   eva-base:039efa0a eva`` is the same image). This is what ``build-image``
@@ -16,7 +16,7 @@ repo at :data:`EVA_COMMIT_FULL`:
   without ``--registry``) can always build it. Tasks converted without
   ``--prebuilt`` build this one.
 
-**Which to use.** For runs of any size, ``eva-adapter build-image
+Which to use. For runs of any size, ``eva-adapter build-image
 --registry <prefix> --push`` once, and tasks converted with the same
 ``--registry``: every trial pulls the same bytes, under a tag that names the
 EVA commit and a digest of our files. Building per trial makes each sandbox

@@ -1,6 +1,6 @@
 """Amazon Nova Sonic — speech-to-speech over Bedrock bidirectional streaming.
 
-An S2S provider is a **transport**, not a
+An S2S provider is a transport, not a
 slot. Frames in, frames out, four stages instead of ten.
 
 The event protocol is read from current AWS documentation rather than
@@ -22,17 +22,17 @@ Output arrives as ``contentStart`` (carrying ``role`` and a possible
 
 Three facts from the docs that shape this file:
 
-**Input is 16 kHz, output is 24 kHz.** The asymmetry is the provider's, not
+Input is 16 kHz, output is 24 kHz. The asymmetry is the provider's, not
 ours. Our canonical is 24 kHz, so output needs no conversion and input is
 resampled at the edge — declared, and with the anti-aliased
 converter rather than the deliberately-aliasing perturbation one.
 
-**It emits the transcript of its own input** (``textOutput`` with
+It emits the transcript of its own input (``textOutput`` with
 ``role: USER``). That is why ``Stage.ASR_FINAL`` is now an S2S-optional stage.
 Said-vs-heard works against Nova Sonic; the reference-cascade ablation still does not,
 because you cannot swap the recogniser.
 
-**Sessions are capped at 8 minutes.** Declared as ``max_session_s`` so a task
+Sessions are capped at 8 minutes. Declared as ``max_session_s`` so a task
 demanding a longer call fails at load rather than mid-measurement.
 """
 
@@ -98,7 +98,7 @@ _AWS_EXTRA = "aws"
 def _require_sdk() -> Any:
     """Import the bidirectional-streaming SDK, or say how to get it.
 
-    Deliberately **not** boto3: boto3's HTTP transport does not do HTTP/2
+    Deliberately not boto3: boto3's HTTP transport does not do HTTP/2
     bidirectional event streams. This needs ``aws-sdk-bedrock-runtime`` with
     the AWS CRT client, which is a separate, Developer-Preview package.
     """
@@ -417,7 +417,7 @@ class NovaSonicTransport(VoiceTransport):
     async def tx(self, frame: AudioFrame) -> None:
         """Send one frame, converting 24 kHz -> 16 kHz at this edge.
 
-        The conversion uses the **anti-aliased** resampler. The perturbation
+        The conversion uses the anti-aliased resampler. The perturbation
         resampler folds out-of-band energy back into the signal on purpose —
         that is a simulated telephone line — and using it here would corrupt
         what the model hears and then blame the model for it.
@@ -598,7 +598,7 @@ class NovaSonicTransport(VoiceTransport):
     async def _answer_tool(self, event: dict[str, Any]) -> None:
         """Run one tool and send the three-part reply.
 
-        **Always sends a result.** The docs are explicit that Nova Sonic
+        Always sends a result. The docs are explicit that Nova Sonic
         waits for one after every ``toolUse``, and that failing to answer --
         *even on error* -- leaves the model in a waiting state. So an
         exception here becomes an error payload rather than silence: a hung
@@ -724,7 +724,7 @@ class NovaSonicTransport(VoiceTransport):
     def usage(self) -> Usage:
         """What this session consumed, in the units Nova Sonic bills.
 
-        It meters **speech tokens separately from text tokens**, which is the
+        It meters speech tokens separately from text tokens, which is the
         concrete reason harbor's ``UsageInfo`` is wrapped rather than bent:
         that model has three token fields and no notion of a speech token, so
         the speech count had nowhere truthful to go.
@@ -752,7 +752,7 @@ class NovaSonicTransport(VoiceTransport):
     def said(self) -> list[str]:
         """What Nova Sonic itself said.
 
-        Speculative text is **included**, and the name is what misled me.
+        Speculative text is included, and the name is what misled me.
         AWS's own sample displays assistant text precisely when
         ``generationStage`` is ``SPECULATIVE``, and in every observed run the
         speculative text is the only assistant text and it matches the spoken

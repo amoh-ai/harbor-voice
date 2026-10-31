@@ -10,7 +10,7 @@
 
 The layering is the design. Harbor's ``reward.json`` is ``dict[str, float|int]``
 and ``aggregate_reward_dicts`` unions keys across trials and aggregates each
-independently — a genuinely multi-dimensional surface. We keep it **unchanged**,
+independently — a genuinely multi-dimensional surface. We keep it unchanged,
 so harbor's metrics, hub and leaderboard work with zero modification, and put
 everything harbor has no vocabulary for into the two files beside it.
 
@@ -73,7 +73,7 @@ class Outputs:
     def write(self, directory: Path) -> list[Path]:
         """Write the documents, returning what was written.
 
-        ``reward.json`` is **removed** when the trial is invalid rather than
+        ``reward.json`` is removed when the trial is invalid rather than
         left behind from an earlier attempt — a stale reward file next to a
         fresh invalidity record is the worst of both.
         """
@@ -104,7 +104,7 @@ class Outputs:
 def build_reward(results: Sequence[MetricResult]) -> dict[str, float]:
     """The harbor-compatible surface: ``dict[str, float]``, nothing else.
 
-    Only metrics that **reported a number** appear. An inapplicable metric is
+    Only metrics that reported a number appear. An inapplicable metric is
     omitted rather than zeroed, which is the honest encoding available within
     harbor's format: ``aggregate_reward_dicts`` unions keys across trials and
     substitutes ``0`` for a key a given trial lacks.

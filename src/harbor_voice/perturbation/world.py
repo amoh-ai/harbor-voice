@@ -5,14 +5,14 @@ The layer that is not about audio at all.
 Full-Duplex-Bench v3's `latency_injector.py` is the only prior art, and harbor
 already owns the MCP sidecar, so this layer comes nearly free.
 
-Every other layer degrades the *call*. L6 degrades the **world the agent is
-acting on**: the booking system is slow, the lookup fails, the backend is
+Every other layer degrades the *call*. L6 degrades the world the agent is
+acting on: the booking system is slow, the lookup fails, the backend is
 down for forty seconds. It lands on the tool boundary, not the wire.
 
 ### Why this belongs in a voice benchmark specifically
 
 A text agent waiting four seconds for a tool shows a spinner. A voice agent
-waiting four seconds is **silent**, and silence in a conversation is not
+waiting four seconds is silent, and silence in a conversation is not
 neutral — the caller repeats themselves, interrupts, or hangs up. Tool latency
 is a conversational perturbation that happens to arrive through an API, and
 it is invisible to any harness that measures tools and speech separately.

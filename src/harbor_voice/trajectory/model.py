@@ -1,13 +1,13 @@
 """ATIF-voice.
 
 ATIF v1.8 already gives us a great deal: steps, content parts, subagent
-trajectories, audio **by reference** (``AudioSource{media_type, path,
+trajectories, audio by reference (``AudioSource{media_type, path,
 duration_sec}``, so referencing audio by hash costs nothing), and the RL fields
 ``prompt_token_ids`` / ``completion_token_ids`` / ``logprobs`` on
 ``Step.metrics``.
 
-What it lacks is the one thing a call needs: **a continuous timeline with
-overlapping events**. ATIF is step-based. Two parties talking over each other
+What it lacks is the one thing a call needs: a continuous timeline with
+overlapping events. ATIF is step-based. Two parties talking over each other
 is not a sequence of steps.
 
 How this extends rather than replaces it: every ATIF model sets
@@ -101,7 +101,7 @@ class TokenSpan(BaseModel):
     tokens were produced during which audio interval — especially when a
     barge-in cuts a response mid-stream.
 
-    Carried from v1 because it is the **only** RL affordance that is expensive
+    Carried from v1 because it is the only RL affordance that is expensive
     to retrofit: everything else is either already present for other
     reasons or cheap to add later, but this is a schema migration on a format
     other people have adopted.

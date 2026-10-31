@@ -14,7 +14,7 @@ get the same bytes on any platform and numpy version; each input's SHA-256 is
 in the golden too. Outputs are compared as SHA-256 of their bytes plus their
 length: any one-sample difference fails.
 
-**Except soxr's int16 output, which EVA itself does not reproduce.** libsoxr
+Except soxr's int16 output, which EVA itself does not reproduce. libsoxr
 applies TPDF dither when it writes int16 and seeds it per resampler instance,
 so ``pcm16_24k_to_mulaw_8k`` gives different bytes from one EVA process to
 the next (measured: 123 of 16 000 μ-law codes, each one quantisation step).

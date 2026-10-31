@@ -4,7 +4,7 @@ Runs inside EVA's image at the pinned commit (``eva-base:039efa0a``, built
 from EVA's Dockerfile; see ``Dockerfile``), with ``cwd`` at EVA's repo root:
 EVA loads ``data/``, ``configs/`` and its tool modules by relative path.
 
-**It does not run a call.** harbor-voice runs the call (the caller, the agent
+It does not run a call. harbor-voice runs the call (the caller, the agent
 under test, the audio path, the clock) and comes here for everything EVA
 decides by code. Each endpoint drives EVA's own classes the way EVA's
 orchestrator drives them for one record (``BenchmarkRunner._run`` and

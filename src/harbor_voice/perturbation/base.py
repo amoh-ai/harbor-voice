@@ -2,11 +2,11 @@
 
 Two rules this module exists to make unavoidable:
 
-**Everything is seeded.** A perturbation that builds an unseeded
+Everything is seeded. A perturbation that builds an unseeded
 ``np.random.default_rng()`` inside each apply cannot be reproduced, and an
 unreproducible perturbation is not a measurement.
 
-**Seeds are layered.** Deriving both the dialogue text and the interrupt
+Seeds are layered. Deriving both the dialogue text and the interrupt
 coin-flip from one key makes it impossible to hold the conversation fixed
 while varying the channel — which is the experiment the
 whole benchmark exists to run. :class:`SeedSet` derives independent streams

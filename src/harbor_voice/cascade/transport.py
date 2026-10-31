@@ -1,6 +1,6 @@
 """The reference cascade, as a transport.
 
-STT -> LLM -> TTS, composed in-process, so **harbor-voice owns every seam** and
+STT -> LLM -> TTS, composed in-process, so harbor-voice owns every seam and
 can mark all seven stages. A speech-to-speech provider exposes two.
 
 Turn boundaries are detected by input-side tail silence: once no frame has

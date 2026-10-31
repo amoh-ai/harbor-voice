@@ -3,11 +3,11 @@
 In most codebases these would be a single class with a flag. That is the bug.
 
 :class:`BlobCache`
-    Caches the **simulator's** synthesis. The caller's voice is an *input*, and
+    Caches the simulator's synthesis. The caller's voice is an *input*, and
     an input that changes between runs is not a benchmark. A hit is the normal
     case and the cache is permanent.
 :class:`Cassette`
-    Caches **agent-side** provider calls. The agent is the system under test,
+    Caches agent-side provider calls. The agent is the system under test,
     so a cached answer is not a measurement. It exists to make CI and debugging
     cheap, and every run that touches it is stamped ``replayed``.
 
@@ -193,7 +193,7 @@ Chunk = bytes | str
 
 @dataclass(slots=True)
 class Cassette:
-    """Record and replay agent-side provider calls. **Test facility only.**
+    """Record and replay agent-side provider calls. Test facility only.
 
     The agent is the system under test, so a replayed answer measures the
     cassette rather than the agent. That is useful for debugging and for CI
@@ -246,7 +246,7 @@ def require_live(usages: Sequence[Usage], *, cassette: Cassette | None = None) -
     fabricate results.
 
     Note:
-        ``cache_hit`` is **not** checked. A simulator-side hit is legitimate:
+        ``cache_hit`` is not checked. A simulator-side hit is legitimate:
         it replays the caller's voice, which is an input, not the behaviour
         under measurement.
 

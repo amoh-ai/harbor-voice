@@ -2,16 +2,16 @@
 
 A three-way choice, not an assumption:
 
-* **Script** — fixed turns. Cheapest and most reproducible, which is what RL
+* Script — fixed turns. Cheapest and most reproducible, which is what RL
   rollouts and regression suites want.
-* **Corpus** — real recorded human audio. Full-Duplex-Bench v3 uses this for
+* Corpus — real recorded human audio. Full-Duplex-Bench v3 uses this for
   disfluency because *TTS-generated "um" is not what a hesitation sounds
   like*. A simulator that can only speak synthesised text cannot port FDB, so
   corpus is a first-class source rather than an escape hatch.
-* **LLM** — a persona driven by a model. Most realistic, least reproducible,
+* LLM — a persona driven by a model. Most realistic, least reproducible,
   and the most expensive per rollout.
 
-Whatever the source, the text it yields is the **SAID** side of said-vs-heard
+Whatever the source, the text it yields is the SAID side of said-vs-heard
 : the other party's own words, against which the system's
 transcription is the hypothesis.
 """
@@ -124,7 +124,7 @@ class CorpusContent:
 
     The reason this exists: FDB v3's disfluency corpus is annotated human
     recordings, because a synthesised "um" is not a hesitation. Treat
-    disfluency as a **corpus property, not a knob**.
+    disfluency as a corpus property, not a knob.
     """
 
     clips: Sequence[CorpusClip]

@@ -2,7 +2,7 @@
 
 Two things here that no implementation we surveyed gets right together:
 
-**The bed is continuous.** EVA and tau-voice converged on
+The bed is continuous. EVA and tau-voice converged on
 this independently — the room does not fall silent when the speaker stops.
 Tiling a three-second asset from sample zero *per utterance* puts the same
 clink at the same offset every turn, and silence that bypasses the effect
@@ -10,7 +10,7 @@ chain drops the room entirely. Here the bed's position advances with
 :attr:`~harbor_voice.perturbation.base.ApplyContext.elapsed_s`, which counts
 the whole call.
 
-**SNR is targeted and then measured.** The requested dB is normalised in RMS
+SNR is targeted and then measured. The requested dB is normalised in RMS
 against the actual signal, and the *achieved* ratio is recorded per frame, so
 a run reports what it got rather than what it asked for.
 """

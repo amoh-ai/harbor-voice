@@ -1,8 +1,8 @@
 """EVA's perturbations, harbor side: EVA's own ``AudioPerturbator``, where EVA's bridge applies it.
 
-- **The code is EVA's.** ``eva_adapter.vendored.perturbation`` is compared
+- The code is EVA's. ``eva_adapter.vendored.perturbation`` is compared
   with the file in ``eva-base:039efa0a``: the same but for ``_ASSETS_DIR``.
-- **Its bytes are EVA's** (goldens). ``fixtures/call/eva_perturbation.json``
+- Its bytes are EVA's (goldens). ``fixtures/call/eva_perturbation.json``
   is EVA's perturbator run in EVA's image on seeded inputs
   (``adapters/eva/scripts/goldens/perturbation_cases.py --eva``): every noise at EVA's
   default SNR, other SNRs, static, degradation, combinations, the ambient
@@ -12,13 +12,13 @@
   rounds alike: all of them on EVA's numpy 2.2; on numpy >= 2.3, chunks of
   up to 8192 samples (numpy 2.3 changed how longer float32 sums round, and
   EVA takes each chunk's RMS that way: :data:`eva_adapter.images.EVA_NUMPY`).
-- **The bridge** puts the perturbed copy on the wire and the clean one in the
+- The bridge puts the perturbed copy on the wire and the clean one in the
   recording, and streams ambient noise whenever the caller is quiet, as
   EVA's does.
-- **The vocabulary is EVA's**: the noises, the default SNR and the settings'
+- The vocabulary is EVA's: the noises, the default SNR and the settings'
   names, from EVA's config at the commit (in the golden); accents and
   behaviours are refused by name.
-- **The original side**: EVA's own settings parse our ``EVA_PERTURBATION__*``
+- The original side: EVA's own settings parse our ``EVA_PERTURBATION__*``
   and EVA's perturbator finds its WAVs in EVA's image.
 
 The Docker tests skip without Docker or ``eva-base:039efa0a``; the perturbed

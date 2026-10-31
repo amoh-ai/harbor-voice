@@ -5,7 +5,7 @@ Realtime server and ElevenLabs simulator in ``eva-base`` (``call_eva_golden.py``
 and harbor's port with harbor's transports (``call_harbor.py``). Nothing here
 is either side's code; it plays the two services the call talks to.
 
-**The caller** (:data:`CALLER_SCRIPT`) is ElevenLabs' side of the socket, as
+The caller (:data:`CALLER_SCRIPT`) is ElevenLabs' side of the socket, as
 server messages on a wall-clock timeline from the call's start: the
 conversation metadata, the caller's speech as ``audio`` events (16 kHz PCM,
 delivered faster than real time in chunks, as ElevenLabs sends them), the
@@ -14,7 +14,7 @@ delivered faster than real time in chunks, as ElevenLabs sends them), the
 caller's ``end_call``. It is time-scripted rather than reactive so that both
 sides get the same input at the same moments; the agent is the reactive part.
 
-**The agent** (:class:`FakeRealtime`) is an OpenAI Realtime server that hears
+The agent (:class:`FakeRealtime`) is an OpenAI Realtime server that hears
 the audio it is sent: an energy VAD over each appended frame (server VAD's
 threshold, 300 ms prefix, 200 ms silence), transcripts 250 ms after the
 caller stops, scripted responses that stream audio and transcript deltas

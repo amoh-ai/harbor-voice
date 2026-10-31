@@ -1,7 +1,7 @@
 """The all-Bedrock stack — STT, LLM and TTS without Polly or Transcribe.
 
 A fallback that turned out to be better than expected. For an AWS account
-that grants Bedrock but **not** Polly or Transcribe, the cascade's STT and
+that grants Bedrock but not Polly or Transcribe, the cascade's STT and
 TTS slots have no provider. Bedrock alone can fill them:
 
 ===========  ==========================  ==========================
@@ -27,7 +27,7 @@ The instrument responds to the channel, which is the only property that makes
 it usable for a robustness curve. The flat top end is a floor effect on a
 nine-word sentence, where a single dropped word *is* 0.111.
 
-**What this stack costs us.** One STT vendor, not two. The reference-cascade ablation —
+What this stack costs us. One STT vendor, not two. The reference-cascade ablation —
 hold the LLM fixed, swap the STT — needs something to swap *to*, and without
 Transcribe there is only voxtral. The mini and small variants are not
 an ablation: they share a family and, on this audio, transcribed identically.
@@ -71,7 +71,7 @@ NOVA_TTS_MODEL = "amazon.nova-2-5-sonic"
 DEFAULT_LLM = "amazon.nova-pro-v1:0"
 """ON_DEMAND and streaming in us-east-1.
 
-Claude on Bedrock is **not** a usable default here: the bare model id
+Claude on Bedrock is not a usable default here: the bare model id
 raises "Invocation ... with on-demand throughput isn't supported. Retry
 with ... an inference profile", so it needs a ``us.``-prefixed profile id.
 Pass one explicitly if you want Claude; the failure is classified as a
@@ -134,13 +134,13 @@ def _wav(pcm: bytes, fmt: AudioFormat) -> bytes:
 class VoxtralSTT:
     """Speech to text through Bedrock's Converse API.
 
-    **One-shot, not streaming.** Converse takes a whole audio block and
+    One-shot, not streaming. Converse takes a whole audio block and
     returns a whole transcript, so there are no partials and no meaningful
     first-byte mark. ``streams=False`` in the spec says so, and the
     applicability machinery turns that into an abstention rather than a
     fabricated latency.
 
-    That makes it a good **measuring** STT — the reference transcriber runs
+    That makes it a good measuring STT — the reference transcriber runs
     offline over stored audio, where first-byte latency is meaningless — and a
     poor live cascade STT for anything that gates on partials.
     """
@@ -299,7 +299,7 @@ class BedrockLLM:
         model present the same shape upward: *the provider owns the loop, the
         harness owns the executor*.
 
-        **Text streams out as it arrives, not at the end of a round.** The
+        Text streams out as it arrives, not at the end of a round. The
         obvious implementation awaits a whole round and then yields, which
         makes ``llm_first_token`` mark the moment the round *finished*: a
         full-response latency under a first-token name. A model that
@@ -370,7 +370,7 @@ class BedrockLLM:
     ) -> tuple[list[str], list[ToolInvocation], str]:
         """One ConverseStream pass: text out through ``emit``, calls returned.
 
-        ``ToolUseBlockDelta.input`` is typed **String** in the API reference:
+        ``ToolUseBlockDelta.input`` is typed String in the API reference:
         a *fragment* of JSON, not an object. Accumulating per
         ``contentBlockIndex`` and parsing once the stream ends is the whole
         subtlety — parsing a delta as it arrives works until a set of
@@ -561,7 +561,7 @@ def _normalise(text: str) -> str:
 class NovaSonicTTS:
     """Text to speech by coercing a conversational S2S model to read aloud.
 
-    **This is a workaround and the docstring says so**, because the risk it
+    This is a workaround and the docstring says so, because the risk it
     carries is not obvious from the call site. Polly is a text-to-speech
     engine: give it a string and it speaks that string. Nova Sonic is a
     *conversational* model being instructed, in a system prompt, to behave
@@ -569,7 +569,7 @@ class NovaSonicTTS:
     silently corrupt ``said`` — the reference side of said-vs-heard —
     making every WER in the run wrong in a direction nothing would reveal.
 
-    So every synthesis is **checked**. Nova Sonic returns the text it spoke,
+    So every synthesis is checked. Nova Sonic returns the text it spoke,
     and :meth:`synthesize_checked` compares it against what was requested.
     A mismatch is surfaced, not smoothed over. Measured over bring-up it read
     text back verbatim, but "it worked when we tried it" is not a property a
@@ -604,7 +604,7 @@ class NovaSonicTTS:
 
         Implements :class:`~harbor_voice.perturbation.persona.VoiceSelectable`.
         Nova Sonic takes a ``voiceId``, which covers gender and language, and
-        the transport has always passed one. What it has **no** notion of is
+        the transport has always passed one. What it has no notion of is
         an *accent* as a separate axis — EVA's condition A varies french,
         indian, spanish and chinese accented English, and a voice catalogue
         indexed by language cannot express that.
@@ -714,7 +714,7 @@ class NovaSonicTTS:
 
 
 class NovaSonicSTT:
-    """Speech to text from Nova Sonic's transcript of its **own input**.
+    """Speech to text from Nova Sonic's transcript of its own input.
 
     Nova Sonic reports what it heard (``textOutput`` with ``role: USER``)
     alongside what it said, and
@@ -723,7 +723,7 @@ class NovaSonicSTT:
     S2S-optional stage. This exposes it as an ordinary
     :class:`~harbor_voice.providers.protocols.STTProvider`.
 
-    **Why it earns its place: it is a second vendor.**
+    Why it earns its place: it is a second vendor.
     :meth:`~harbor_voice.providers.measurement.ReferenceStack.check_independence`
     refuses a reference transcriber that shares a provider with the agent's,
     because two recognisers from one vendor share an acoustic frontend and
@@ -731,8 +731,8 @@ class NovaSonicSTT:
     and this (Amazon), both reachable through one Bedrock account, the
     reference stack is satisfiable in both directions:
 
-    - a **cascade** agent on ``aws.voxtral``, measured by ``aws.nova-stt``
-    - an **S2S** agent on ``aws.nova-sonic``, measured by ``aws.voxtral``
+    - a cascade agent on ``aws.voxtral``, measured by ``aws.nova-stt``
+    - an S2S agent on ``aws.nova-sonic``, measured by ``aws.voxtral``
 
     An S2S agent measured by this would be refused, correctly, since it would
     be the same model grading its own hearing.
@@ -833,7 +833,7 @@ _VOICES: dict[tuple[str, Gender], str] = {
 }
 """Nova Sonic voice ids by (language, gender).
 
-Deliberately short and **verified** rather than transcribed from memory. A
+Deliberately short and verified rather than transcribed from memory. A
 mapping that names a voice the service does not have fails at session open,
 mid-run, with a vendor error — far worse than :meth:`select_voice` returning
 ``False`` and the plan recording that the request went unserved. Entries are

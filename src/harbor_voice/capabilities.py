@@ -1,23 +1,23 @@
-"""What a party can do, declared and **enforced**.
+"""What a party can do, declared and enforced.
 
 An adapter can declare ``streaming_transcripts=True``, ``native_vad=True`` and
 ``pcm16/48000``, have a capability gate trust all three, and then hang forever
-polling an attribute nothing ever sets. **An advisory capability flag is not a
-capability model.**
+polling an attribute nothing ever sets. An advisory capability flag is not a
+capability model.
 
 Three rules:
 
-1. A task activating something a party cannot serve is a **load error**, not a
+1. A task activating something a party cannot serve is a load error, not a
    silent no-op. The rule: *a key that
    loads and changes nothing is worse than a key that is refused*.
-2. A metric whose preconditions are unmet reports **not_applicable**, never
+2. A metric whose preconditions are unmet reports not_applicable, never
    ``0``. A half-duplex run has no barge-in score; it has no barge-in
    *measurement*.
-3. A capability the conformance suite has not verified is **unattested** and
+3. A capability the conformance suite has not verified is unattested and
    cannot gate a published number.
 
 Internal consistency is checked at construction, which is where that failure
-is caught: a speech-to-speech party **cannot** claim
+is caught: a speech-to-speech party cannot claim
 ``asr_final``, because by definition it does not expose one.
 """
 
@@ -538,14 +538,14 @@ def evaluate(
 def combine(*verdicts: Applicability) -> Applicability:
     """Fold several applicability verdicts into one.
 
-    A metric can depend on the **party** (does this agent expose ASR?) and on
-    the **provider** (does this TTS stream?) at once. The two are evaluated
+    A metric can depend on the party (does this agent expose ASR?) and on
+    the provider (does this TTS stream?) at once. The two are evaluated
     separately, by different owners, and have to meet somewhere.
 
     The fold is ordered by severity, not by argument position:
     ``NOT_APPLICABLE`` dominates ``UNATTESTED`` dominates ``SATISFIED``. That
     ordering is the point — a metric that is inapplicable for one reason and
-    merely unverified for another is **inapplicable**, and reporting it as
+    merely unverified for another is inapplicable, and reporting it as
     unverified would invite someone to publish it with a caveat.
 
     Reasons accumulate across every verdict at the winning severity, because

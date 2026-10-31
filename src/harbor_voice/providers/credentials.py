@@ -2,7 +2,7 @@
 
 Harbor already ships a ~95-provider declarative table (``PROVIDERS``) of the
 environment variables each provider reads. We consult that table rather than
-rebuild it, and add voice-only entries in a **local overlay consulted first**.
+rebuild it, and add voice-only entries in a local overlay consulted first.
 
 Harbor has moved and reshaped that table between releases
 (``harbor.agents.model_connection`` with ``api_key_envs`` tuples, then
@@ -16,7 +16,7 @@ never.
 What this module does *not* do is resolve connections the way harbor's
 ``resolve_model_connection`` does. That function's job is rewriting env-var
 names for CLI agents running inside containers, which is a different problem
-from ours — we need to know **whether the credentials are present** so
+from ours — we need to know whether the credentials are present so
 ``doctor`` can say so before a container starts, and we need to never print
 them. So we reuse harbor's *table*, and the policy here is ours.
 """
@@ -160,7 +160,7 @@ def resolve(
             real environment.
 
     Returns:
-        A status that is safe to print. A **required** variable is one of the
+        A status that is safe to print. A required variable is one of the
         provider's ``api_key_envs`` — exactly one of them must be set, since
         they are alternatives — plus every ``extra_env`` that is not optional.
     """

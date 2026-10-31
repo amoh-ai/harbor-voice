@@ -1,9 +1,9 @@
 """The agent adapter.
 
-Division of labour: **the base owns everything hard, adapters stay thin.**
+Division of labour: the base owns everything hard, adapters stay thin.
 
 The base owns drain-to-tail-silence, floor integration, stage marking, timing
-**from real flow points**, and reconciliation of audio that bled across a turn
+from real flow points, and reconciliation of audio that bled across a turn
 boundary. An adapter owns four transport methods and a capability declaration.
 
 On timing: every duration here is built from an :class:`Interval`, which cannot

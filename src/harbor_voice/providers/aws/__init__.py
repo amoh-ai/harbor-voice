@@ -9,7 +9,7 @@ Two stacks live here, and which one you get depends on IAM:
 ``nova_sonic``
     Speech-to-speech as a transport. Needs only Bedrock.
 ``bedrock``
-    STT, LLM and TTS slots **without Polly or Transcribe** — the fallback for
+    STT, LLM and TTS slots without Polly or Transcribe — the fallback for
     a key that has Bedrock and nothing else.
 """
 

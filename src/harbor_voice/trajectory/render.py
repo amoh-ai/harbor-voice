@@ -1,14 +1,14 @@
 """Rendering a call to audio.
 
-**Mix on a timeline. Do not concatenate.**
+Mix on a timeline. Do not concatenate.
 
 Concatenating segments into one file is not a recording. The consequences
 are not cosmetic: overlapping barge-in audio lands back-to-back so an interruption
 sounds like an orderly exchange, inter-turn silence is dropped so the pacing is
 wrong, and the saved duration does not match the recorded duration.
 
-A saved recording that is not a faithful timeline rendering is **worse than no
-recording**, because it will be used to adjudicate a disagreement and it will
+A saved recording that is not a faithful timeline rendering is worse than no
+recording, because it will be used to adjudicate a disagreement and it will
 lie. If two people were talking at once, the file has to say so.
 """
 
@@ -117,7 +117,7 @@ def render_timeline(
 ) -> RenderResult:
     """Mix placed audio onto one timeline.
 
-    Overlapping sources are **summed**, so two parties talking at once sound
+    Overlapping sources are summed, so two parties talking at once sound
     like two parties talking at once. Silence between turns is preserved,
     because its length is a measurement.
 
@@ -202,7 +202,7 @@ def downsample_to_fit(
     max_bytes: int,
     floor_hz: int = 3_000,
 ) -> tuple[bytes, AudioFormat]:
-    """Step the rate down until the audio fits, **preserving duration**.
+    """Step the rate down until the audio fits, preserving duration.
 
     The step-down keeps duration intact, so every duration-based assertion still
     holds against a shrunk artifact. A render that fits by being *truncated*

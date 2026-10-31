@@ -1,12 +1,12 @@
 """The adapter seam.
 
-Task success is the **benchmark's** definition, not ours. tau-voice decides
+Task success is the benchmark's definition, not ours. tau-voice decides
 what a completed booking is; FDB decides what its labels mean; we decide
 nothing about either, and porting that decision faithfully is what the parity
 gate checks.
 
 Everything else harbor-voice measures — divergence, timing, turn-taking,
-selectivity, speech, validity — is a property of the **call** rather than the
+selectivity, speech, validity — is a property of the call rather than the
 task, and is ours precisely so that it is identical across ports. If each
 adapter reimplemented said-vs-heard WER, no two voice benchmarks would be
 comparable, and the harness would have no reason to exist.
@@ -133,14 +133,14 @@ def check_selection(
     a *missing column* — the failure mode nobody investigates, because an
     absent number raises no question.
 
-    1. **Every selected metric exists.** A typo in ``voice.toml`` becomes a
+    1. Every selected metric exists. A typo in ``voice.toml`` becomes a
        load error rather than a silently absent column.
-    2. **Every active perturbation layer has a paired metric.** A
+    2. Every active perturbation layer has a paired metric. A
        layer switched on with nothing reading it is only making the number
        worse. Pairing is satisfied two ways, because there are two kinds of
-       perturbation: a metric that **requires** the layer (selectivity —
+       perturbation: a metric that requires the layer (selectivity —
        there is no backchannel score without a backchannel), or one declaring
-       itself **sensitive** to it (WER is defined on a clean line; a codec is
+       itself sensitive to it (WER is defined on a clean line; a codec is
        what makes it interesting). Requiring the first form everywhere would
        make WER inapplicable to the clean baseline that every degraded run is
        compared against.
@@ -210,7 +210,7 @@ def require_valid_selection(
     """Raise unless the selection is sound.
 
     Raises:
-        SelectionError: Listing **every** problem, not the first. Fixing one
+        SelectionError: Listing every problem, not the first. Fixing one
             fault only to meet the next is a three-run debug cycle on a
             benchmark whose runs are not cheap.
     """

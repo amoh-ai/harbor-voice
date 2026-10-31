@@ -1,6 +1,6 @@
 """OpenAI Realtime as a :class:`~harbor_voice.transport.base.VoiceTransport`.
 
-tau-voice's default agent, so the session is **tau2's session**
+tau-voice's default agent, so the session is tau2's session
 (``tau2/voice/audio_native/openai/provider.py::configure_session``) unless a
 caller says otherwise:
 
@@ -132,7 +132,7 @@ class RealtimeSettings:
     """Session settings. Every default is tau2's.
 
     ``None`` on a field the API defaults for itself (``tool_choice``,
-    ``language``, ``noise_reduction``) leaves the field **out** of
+    ``language``, ``noise_reduction``) leaves the field out of
     ``session.update``, so the server's default applies. That is how a
     session that never sends a field — EVA's sends none of these three — is
     reproduced field for field, rather than approximated by sending the value
@@ -169,7 +169,7 @@ class RealtimeSettings:
 
     ``serial`` (EVA): the receive loop runs each call itself, in arrival
     order, reading nothing else from the server until that call is answered,
-    and sends ``response.create`` after **every** output. That is EVA's
+    and sends ``response.create`` after every output. That is EVA's
     ``_on_function_call_done``, awaited inside its event loop. With two calls
     in one response, the first ``response.create`` can reach the server
     while that response is still open, and the server then answers it with

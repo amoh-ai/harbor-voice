@@ -2,12 +2,12 @@
 
 :class:`VoiceTrial` runs a task's ``voice.toml`` one of two ways:
 
-- **Driven** (``[call]``): the task names a benchmark's call driver, and the
+- Driven (``[call]``): the task names a benchmark's call driver, and the
   call is the driver's (:mod:`harbor_voice.driven`). This is what
   ``harbor-voice drive`` runs inside a harbor environment's ``main``; harbor's
   trial, with ``VoiceCallAgent``, supplies the environment, the install and
   the verifier around it. Both benchmark adapters work this way.
-- **Built-in** (``[caller]``): harbor-voice runs the call itself, in four
+- Built-in (``[caller]``): harbor-voice runs the call itself, in four
   steps::
 
       build     providers, simulator, transport, floor, pipeline

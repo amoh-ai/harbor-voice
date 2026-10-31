@@ -1,7 +1,7 @@
 """L1 — who speaks.
 
 The second layer that transforms no samples. L3 puts a room around a voice and
-L4 puts it down a wire; L1 decides **whose voice it is in the first place**, and
+L4 puts it down a wire; L1 decides whose voice it is in the first place, and
 that happens before there is any audio to transform.
 
 It reaches the call at two points, and they are different points:
@@ -20,7 +20,7 @@ A TTS that cannot do accents will happily synthesise an "Indian-accented"
 caller in its default voice, and nothing downstream would know. That is the
 same failure a target SNR exists for on the L3 side — asking for 15 dB SNR and
 reporting 15 dB whatever came out — so it gets the same treatment: the plan
-records what was **asked for** and what was **honoured**, and a run under
+records what was asked for and what was honoured, and a run under
 ``accented`` whose TTS ignored the accent says so rather than claiming the
 condition.
 
@@ -32,7 +32,7 @@ capability — declared, not discovered by calling it and seeing what happens.
 
 ### A note on EVA
 
-EVA's ``PerturbationConfig`` makes accent and behaviour **mutually exclusive**,
+EVA's ``PerturbationConfig`` makes accent and behaviour mutually exclusive,
 because it maps each variant onto a pre-provisioned ElevenLabs agent ID and a
 call only gets one ID. So EVA cannot produce an elderly caller with an Indian
 accent.

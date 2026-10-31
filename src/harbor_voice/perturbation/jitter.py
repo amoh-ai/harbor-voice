@@ -4,7 +4,7 @@ A transport that sends whole utterances has no inter-packet interval to
 perturb; frames do.
 
 That is the whole argument, and it is worth being precise about why. Jitter is
-**packet delay variation**: frames leave evenly spaced and arrive unevenly.
+packet delay variation: frames leave evenly spaced and arrive unevenly.
 A harness whose unit on the wire is an utterance has exactly one packet per
 turn, and the variation of a single arrival is not a quantity. There is
 nothing to perturb. With 20 ms frames there are fifty packets a second and the
@@ -13,7 +13,7 @@ spacing between them is a real, measurable property of the line.
 ### Not a sample transform
 
 Every other L4 layer rewrites a frame's audio. Jitter does not touch a sample;
-it changes **when each frame arrives and in what order**. So it cannot be a
+it changes when each frame arrives and in what order. So it cannot be a
 :class:`~harbor_voice.perturbation.base.Perturbation`, whose contract is
 ``apply(pcm, ctx) -> bytes`` on one frame in isolation — jitter is not even
 *definable* on one frame, because variation needs a sequence.
@@ -32,7 +32,7 @@ in two distinct ways:
 
 ``late``
     A frame arrives after its playout deadline. The buffer has already moved
-    on, so the frame is **discarded** — it is loss, caused by delay rather
+    on, so the frame is discarded — it is loss, caused by delay rather
     than by a dropped packet, and it sounds identical to the listener.
 ``reordered``
     A frame arrives after a later one but still inside the window. The buffer
@@ -68,7 +68,7 @@ class JitterError(ValueError):
 
 
 class FramePerturbation(ABC):
-    """An L4 layer that transforms the frame **stream** rather than a frame.
+    """An L4 layer that transforms the frame stream rather than a frame.
 
     Applied by ``process_all`` after every per-frame perturbation, because
     the packets a network delays are already-encoded ones. ``process`` on a

@@ -8,7 +8,7 @@ of its own lines were cut off, what it heard only half of, how long both sides
 were silent. Collapsing that to ``list[str]`` throws away exactly what the
 benchmark is about.
 
-So a reactive source is handed the **step record** instead — what the caller
+So a reactive source is handed the step record instead — what the caller
 emitted, what it heard, and which tool results it received, per step — plus
 whatever the agent is saying right now. What it does with that record is its
 own business; tau-voice's source has tau2 render it, so the caller's LLM sees

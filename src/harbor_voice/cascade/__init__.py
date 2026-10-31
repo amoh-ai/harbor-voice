@@ -6,7 +6,7 @@ speech-to-speech provider permits that, because it exposes no seam between
 hearing and reasoning.
 
 The slots it composes live in :mod:`harbor_voice.providers`, not here. The
-cascade **consumes** providers; it does not own them — the simulator
+cascade consumes providers; it does not own them — the simulator
 and the metrics layer hold the same protocols for different purposes.
 """
 

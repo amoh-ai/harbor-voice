@@ -3,9 +3,9 @@
 tau2 degrades its caller in two places, and this runs both with tau2's own
 code (vendored verbatim in :mod:`tau_voice.tau2_audio`):
 
-- **per line** (``VoiceMixin.synthesize_voice``): draw the turn's effects,
+- per line (``VoiceMixin.synthesize_voice``): draw the turn's effects,
   insert a vocal tic into the text, synthesise, muffle;
-- **per 0.2 s step** (``VoiceStreamingUserSimulator._apply_chunk_effects``):
+- per 0.2 s step (``VoiceStreamingUserSimulator._apply_chunk_effects``):
   the scheduler fires bursts, out-of-turn speech and frame drops; the noise
   bed, burst and out-of-turn tracks are mixed under the step; the phone line
   encodes it; frame drops zero the start of the encoded step.

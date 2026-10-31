@@ -8,7 +8,7 @@ speech, whether it was cut off, plus the tool calls. This turns that record
 into the same :class:`VoiceTrajectory`, so harbor's ATIF tooling and our
 metrics read both alike.
 
-Turns are **exchanges**, as the built-in path records them: the caller's
+Turns are exchanges, as the built-in path records them: the caller's
 words (``said``) and the agent's words until the caller speaks again
 (``reply``). Anything the agent says before the caller first speaks — a
 greeting — is exchange 0, with no ``said``. Full duplex has no strict turns;

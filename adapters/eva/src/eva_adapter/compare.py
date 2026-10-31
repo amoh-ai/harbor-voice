@@ -11,30 +11,30 @@ Reads harbor job folders (``harbor-voice jobs start``; each trial's
 ``records/<id>/trial_<k>/``, ``evaluation_summary.json``), and reports, per
 domain and pooled (``overall``), for each side:
 
-- **EVA's record composites**, ``EVA-A_pass``, ``EVA-X_pass`` and
+- EVA's record composites, ``EVA-A_pass``, ``EVA-X_pass`` and
   ``EVA-overall_pass``: the mean over each run's graded trials (run k is
   EVA's trial k), then mean ± sample SEM over the runs with the per-run
   values, as harbor's ``parity_experiment.json`` states them (its rule: the
   two sides match when their run ranges overlap); and pass@k / pass^k by
   EVA's estimator (``pass_at_k.py``, over records with every trial scored);
-- **the six components** of the composites, mean ± SEM over runs;
-- **diagnostics** that explain a gap without being a parity claim:
+- the six components of the composites, mean ± SEM over runs;
+- diagnostics that explain a gap without being a parity claim:
   validation (graded, judge errored, not validated, errored, missing),
   attempts and reruns, the calls made against the trials planned, end
   reasons (the counted attempt's, and every attempt's), call length, the
   caller's turns and words per turn, the agent's response speed;
-- **tokens**, every attempt included: the agent's (``pipecat_metrics.jsonl``,
+- tokens, every attempt included: the agent's (``pipecat_metrics.jsonl``,
   which both sides write the same way), the caller's LLM (each ElevenLabs
   conversation record) and the judges' (``judge_token_usage.json``). Counts,
   never dollars.
 
-**One judge at a time.** The audio judges every trial's EVA ``config.json``
+One judge at a time. The audio judges every trial's EVA ``config.json``
 recorded (its ``metric_configs``: EVA's ``gemini-3-flash-preview`` unless it
 names another, :func:`~eva_adapter.results.audio_judges`) must be one and
 the same, so trials judged differently are never pooled, and the report
 names them.
 
-**One condition at a time.** The EVA perturbation condition compared (clean
+One condition at a time. The EVA perturbation condition compared (clean
 unless named) is checked against what every trial recorded it ran (harbor's
 ``summary.json``, EVA's ``config.json``), trials of another condition are
 never pooled, and a perturbed comparison says so in

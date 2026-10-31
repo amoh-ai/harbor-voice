@@ -10,21 +10,21 @@ transport events instead of OpenAI's SDK. Comments cite EVA's file:line.
 
 What carries over unchanged:
 
-- **Stamps.** Every timestamp is ``time.time()`` read when the event is
+- Stamps. Every timestamp is ``time.time()`` read when the event is
   handled, as EVA's ``_wall_ms()`` is. A user entry is stamped at the
   bridge's ``user_speech_start`` (else at ``speech_started``), an assistant
   entry at its first audio delta, a tool call before it runs and its
   response after.
-- **The turn records**: a new user turn only when the last one was flushed,
+- The turn records: a new user turn only when the last one was flushed,
   ``[interrupted]`` partials flushed at ``speech_started``, cancelled
   responses skipped, the three-way transcript fallback in ``response.done``.
-- **Buffer alignment.** Each track is padded up to the other before it
+- Buffer alignment. Each track is padded up to the other before it
   grows (``sync_buffer_to_position``), the user track only when the user is
   not speaking and has sent nothing for 300 ms, the assistant track only
   when the bot is not speaking. ``_bot_speaking`` is cleared only by a reset
   of a response that streamed audio, so after an ``[interrupted]`` flush it
   stays set until the next such reset, exactly as in EVA.
-- **Pacing.** Agent audio is converted to μ-law per delta and handed to the
+- Pacing. Agent audio is converted to μ-law per delta and handed to the
   bridge in 160-byte chunks, 20 ms apart, by a pacer that never catches up
   after falling behind. Nothing is cleared on barge-in: EVA sends no
   ``truncate`` and keeps playing what it had queued.

@@ -10,7 +10,7 @@ line of ``user_simulator_events.jsonl`` must be ``connection_state`` with
 reason ``goodbye`` — and so EVA's rerun gate, which is why no rule here is
 approximated.
 
-**Who does what.** The call loop (``call.py``) owns the audio: it reads the
+Who does what. The call loop (``call.py``) owns the audio: it reads the
 transport's events, routes :class:`~harbor_voice.transport.stream.OutputAudio`
 through the bridge, and hands everything else to :meth:`ElevenLabsCaller.on_event`.
 This class owns the session:
@@ -32,7 +32,7 @@ This class owns the session:
    (``:203-265``). Close the agent and save the event log *after* it returns,
    as EVA's ``stop_async`` and ``event_logger.save()`` come after.
 
-**End reasons** (what :attr:`~ElevenLabsCaller.end_reason` can be):
+End reasons (what :attr:`~ElevenLabsCaller.end_reason` can be):
 
 - ``goodbye`` — the record shows ``end_call`` (in ``termination_reason`` or a
   turn's tool results), whatever ended the session;
@@ -61,7 +61,7 @@ cancellation-safe the same way EVA's is: cancelled mid-poll, it still writes
 the latencies and the clean track and waits out the grace, and logs no
 ``session_ended``.
 
-**Deviations, all deliberate.** A websocket that cannot connect is an
+Deviations, all deliberate. A websocket that cannot connect is an
 ``error`` at once; the SDK's connect thread would die silently and EVA would
 wait out its 620 s timeout. ``elevenlabs_conversation_details.json`` holds the
 record as ElevenLabs sent it, where EVA dumps the SDK's pydantic model of it

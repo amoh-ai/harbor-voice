@@ -31,7 +31,7 @@ toolResult event after every toolUse event it sends. If your application
 fails to respond, even when an error occurs, the model enters a waiting
 state, causing unresponsive behavior."*
 
-So an injected L6 failure **still returns a result** — one carrying the error
+So an injected L6 failure still returns a result — one carrying the error
 — and never nothing. Dropping the reply would not model a broken backend; it
 would hang the agent, and every timing number from that run would be about
 our injector rather than about the agent. :meth:`ToolRouter.invoke` has no
@@ -94,7 +94,7 @@ class ToolSpec:
     def as_nova(self) -> dict[str, Any]:
         """The `promptStart.toolConfiguration.tools[]` entry for Nova Sonic.
 
-        ``inputSchema.json`` is a **serialized JSON string** here, not the
+        ``inputSchema.json`` is a serialized JSON string here, not the
         object Bedrock's Converse takes. AWS's own two pages disagree: the
         tool-configuration guide prints it as an object, while the
         input-events protocol reference types it ``"json": "{}"``. The
@@ -293,7 +293,7 @@ class ToolRouter:
     async def invoke(
         self, invocation: ToolInvocation, *, at_s: float = 0.0
     ) -> ToolResult:
-        """Run one call under L6, and **always** return something.
+        """Run one call under L6, and always return something.
 
         There is no path here that returns ``None`` or raises past the
         caller. Nova Sonic waits forever for a result it was promised, and a
@@ -415,7 +415,7 @@ class MappingExecutor:
 
 @runtime_checkable
 class ToolCallingLLM(Protocol):
-    """An LLM slot that can run a tool loop — optional, and **declared**.
+    """An LLM slot that can run a tool loop — optional, and declared.
 
     Separate from :class:`~harbor_voice.providers.protocols.LLMProvider`,
     which keeps its three methods. The rule: a provider that cannot do

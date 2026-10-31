@@ -11,7 +11,7 @@ So it gets its own slot. A :class:`WireEncoder` runs once, after every
 per-frame layer:
 
 - it may change rate and encoding, never duration — clean and transmitted
-  align **by time** across it;
+  align by time across it;
 - it is stateful across frames — a resampler and a filter carry state from
   one frame into the next, exactly as on a real line, and silence goes through
   it too;

@@ -12,7 +12,7 @@ metrics (said-vs-heard)      STT        the measuring device
 audio judge                  LLM        grading, after the call is over
 ===========================  =========  ====================================
 
-The distinction that matters: the metrics STT is held **fixed** while the
+The distinction that matters: the metrics STT is held fixed while the
 agent's STT varies. That is the reference-cascade ablation — hold the LLM fixed, swap the
 STT, and *misheard the drug name* separates from *does not know the drug*. It
 only works if the two are different objects, which is why a module named after
@@ -75,7 +75,7 @@ class LLMProvider(Protocol):
     def respond(self, prompt: str, history: Sequence[str]) -> AsyncIterator[str]:
         """Yield response fragments. The first marks ``llm_first_token``.
 
-        Fragments **concatenate**: ``"".join(chunks)`` must be the reply.
+        Fragments concatenate: ``"".join(chunks)`` must be the reply.
         They are not words, and a consumer must not insert separators. Real
         streaming APIs emit arbitrary text deltas — ``"Sure"``, ``", I'll"``,
         ``" reschedule"`` — so a space-join produces ``"Sure , I'll

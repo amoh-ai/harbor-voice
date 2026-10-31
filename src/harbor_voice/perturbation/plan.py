@@ -2,7 +2,7 @@
 
 Three invariants live here.
 
-**The clean reference is never discarded.** A chain written as
+The clean reference is never discarded. A chain written as
 ``for effect in effects: audio = effect(audio)`` overwrites the clean PCM in a
 local. The consequence is not subtle: with no reference signal there is no
 measurable SNR, no degradation ladder, and no said-vs-heard WER. Pairing the
@@ -10,13 +10,13 @@ measurable SNR, no degradation ladder, and no said-vs-heard WER. Pairing the
 text judge structurally blind to the perturbation under test. Here every
 perturbed frame carries its clean twin's digest and the twin itself is kept.
 
-**The plan is written, not just declared.** A plan type that is
+The plan is written, not just declared. A plan type that is
 defined but never constructed records nothing.
 :meth:`PerturbationPipeline.as_record` materialises every active layer, its
-parameters, its seeds, and the values actually **achieved** — so a run can
+parameters, its seeds, and the values actually achieved — so a run can
 state its own conditions and two runs can be compared.
 
-**Order is a correctness property.** Layers apply in physical order:
+Order is a correctness property. Layers apply in physical order:
 persona, speech, environment, then channel. Noise enters the room before the
 room goes down the wire; reversing them produces audio no telephone carried.
 """
@@ -128,7 +128,7 @@ class PerturbationPipeline:
             a layer in the plan record that never touched a sample.
         persona: L1 — who speaks. Lands at synthesis and at the content
             source, both of which happen before there is audio.
-        speech: L2's **text** half. Its signal half (loudness, speaking rate,
+        speech: L2's text half. Its signal half (loudness, speaking rate,
             muffling) are ordinary perturbations and go in ``perturbations``.
         encoder: The wire format, applied last — see
             :mod:`~harbor_voice.perturbation.encoder`. The only stage allowed to
@@ -291,7 +291,7 @@ class PerturbationPipeline:
     def process(self, frame: AudioFrame, *, is_speech: bool = True) -> AudioFrame:
         """Degrade one frame, retaining its clean twin.
 
-        The clean reference is stored **before** anything touches the audio,
+        The clean reference is stored before anything touches the audio,
         which is the one ordering that cannot be got wrong later.
         """
         if self.is_clean:
@@ -339,7 +339,7 @@ class PerturbationPipeline:
     ) -> tuple[AudioFrame, ...]:
         """Degrade a whole utterance, per frame and then as a stream.
 
-        The stream stage can **return fewer frames than it was given**: a
+        The stream stage can return fewer frames than it was given: a
         frame that misses its playout deadline is discarded, which is loss
         caused by delay. That is why jitter cannot live in ``process`` — a
         per-frame contract has nowhere to express "this one never arrived".

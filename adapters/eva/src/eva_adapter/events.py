@@ -6,11 +6,11 @@ caller log exactly what EVA's simulator logs and EVA's metrics code reads it
 unchanged. Two things in that file matter to the metrics and are kept as
 they are:
 
-- Every event carries ``timestamp``, epoch **milliseconds** truncated with
+- Every event carries ``timestamp``, epoch milliseconds truncated with
   ``int()`` at the moment it is logged; EVA's processor sorts the merged
   history of all its logs by it.
 - ``audio_start`` / ``audio_end`` put ``event_type``, ``user`` and
-  ``audio_timestamp`` (epoch **seconds**, a float) at the top level, not in
+  ``audio_timestamp`` (epoch seconds, a float) at the top level, not in
   ``data``. ``audio_timestamp`` is what every timing metric is built from;
   callers pass it back-dated where EVA does.
 

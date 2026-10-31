@@ -15,7 +15,7 @@ A transport declaring ``EVENT_STREAM`` yields, in arrival order:
 - :class:`InputSpeech` — the provider's VAD opening or closing on our audio,
   with its position in the input audio buffer.
 
-A transport may also yield the **session events** below, but only when its
+A transport may also yield the session events below, but only when its
 caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``).
 A stepped consumer rejects a kind it does not know — deliberately, so nothing
 is dropped unseen — so these never reach one that did not opt in:
@@ -139,7 +139,7 @@ class ResponseDone:
 class ToolCall:
     """A tool call the transport ran for the agent and answered.
 
-    Put on the stream once the answer is back and **before** it is sent to
+    Put on the stream once the answer is back and before it is sent to
     the model, so in a transport that runs calls in its receive loop it sits
     exactly where the call happened among the other events.
     """

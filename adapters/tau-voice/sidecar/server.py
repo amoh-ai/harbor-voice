@@ -4,7 +4,7 @@ Runs inside the tau2 image (its own Python; tau2 pins ``litellm<1.82.7`` and
 harbor-voice needs ``>=1.92``, so the two cannot share an environment). The
 same split as upstream harbor's ``tau3-bench`` runtime server.
 
-**It does not run a call.** harbor-voice runs the call — the caller, the clock,
+It does not run a call. harbor-voice runs the call — the caller, the clock,
 the agent transport — and comes here for the things that define the
 benchmark:
 
@@ -26,7 +26,7 @@ benchmark:
   ``tests/test.sh``), for the driver's per-attempt hallucination retry.
 - ``POST /close`` — turn harbor-voice's step log plus the tool calls recorded
   here into tau2 ``Tick`` records and write a ``SimulationRun`` to the state
-  log. Grading is **not** done here; ``tests/evaluate.py`` does it, so a call
+  log. Grading is not done here; ``tests/evaluate.py`` does it, so a call
   can be re-graded without being re-run.
 
 One session at a time per container. A trial gets its own container; a

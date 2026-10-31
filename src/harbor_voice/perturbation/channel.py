@@ -6,13 +6,13 @@ codec before the room noise produces audio no telephone ever carried.
 
 Two things here that matter more than they look:
 
-**Loss is bursty, not Bernoulli.** EVA drops frames independently at 3%;
+Loss is bursty, not Bernoulli. EVA drops frames independently at 3%;
 tau-voice models burst duration with Gilbert-Elliott. These measure different
 things — 3% i.i.d. loss is an inaudible hiss, 3% in 200 ms bursts is a dropped
 word. Any loss axis that is not burst
 parameterised measures the wrong thing.
 
-**The codec is a real codec.** mu-law at 8 kHz, with the band limiting that
+The codec is a real codec. mu-law at 8 kHz, with the band limiting that
 implies, rather than a label on an unchanged buffer.
 """
 

@@ -1,7 +1,7 @@
 """The canonical audio format, and the rules for leaving it.
 
 One internal format; conversion happens at the adapter edge
-only, and **every conversion is recorded as a stage** — a resample to 8 kHz for
+only, and every conversion is recorded as a stage — a resample to 8 kHz for
 telephony is a declared channel event, not an invisible accident.
 
 ::

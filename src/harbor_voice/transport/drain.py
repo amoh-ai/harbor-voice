@@ -88,7 +88,7 @@ async def drain_until_idle(
 ) -> DrainResult:
     """Collect frames until tail silence, stream end, or timeout.
 
-    The consumer runs as a task and is cancelled **once, at the end**, so no
+    The consumer runs as a task and is cancelled once, at the end, so no
     ``anext`` is interrupted mid-await. Only the cancellation we requested is
     suppressed — a genuine error out of the stream propagates, because a
     transport that breaks mid-turn is a finding, not a quiet short reply.

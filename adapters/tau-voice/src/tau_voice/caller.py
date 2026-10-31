@@ -72,7 +72,7 @@ class CallerVoice(Protocol):
     ``prepare`` synthesises a line (clean, nothing sent). ``emit_step`` sends
     one step of audio — speech or silence — through the signal chain and
     returns what goes on the wire; the chain is stateful (a filter rings on
-    into the next step), so it is called for **every** step, in order.
+    into the next step), so it is called for every step, in order.
     ``finish`` records a line as spoken, or as cut off.
     See :class:`tau_voice.voice.SimulatorVoice`.
     """
@@ -175,7 +175,7 @@ class CallerState:
 class PatientPolicy:
     """tau2's ``basic_turn_taking_policy`` with interruption and backchannel off.
 
-    The **control** caller. Thresholds are in steps; defaults are tau2's at
+    The control caller. Thresholds are in steps; defaults are tau2's at
     0.2 s steps (1.0 s / 5.0 s / 1.0 s / 5.0 s).
     """
 

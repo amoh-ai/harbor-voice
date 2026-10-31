@@ -9,7 +9,7 @@ where EVA has its own clients:
     caller transport ──16 kHz PCM──► Bridge ──8 kHz μ-law, 20 ms──► Recorder ──24 kHz PCM──► agent
     (elevenlabs.agents) ◄─μ-law, 250 ms─ (bridge.py) ◄──μ-law, paced 20 ms── (recorder.py) ◄─24 kHz─ (openai.realtime)
 
-**Real time, one clock.** Nothing is stepped: audio moves when it arrives,
+Real time, one clock. Nothing is stepped: audio moves when it arrives,
 frames are paced on the event loop's clock, silence is streamed while the
 caller is quiet, and every log line is stamped with ``time.time()`` when it
 happens, because EVA merges its three logs by epoch milliseconds. On Windows
@@ -17,7 +17,7 @@ the call raises the system timer resolution to 1 ms for its duration
 (:func:`fine_timer`); without it asyncio sleeps in 15.6 ms steps and 20 ms
 pacing runs at two-thirds speed.
 
-**Who does what.** The caller object (``eva_adapter.caller.ElevenLabsCaller``)
+Who does what. The caller object (``eva_adapter.caller.ElevenLabsCaller``)
 owns EVA's simulator session: ``connected`` / ``session_started``, the
 keep-alive, its own time limit, the post-hoc ``end_call`` check,
 ``session_ended``, the latencies file, the clean caller track and the 4 s

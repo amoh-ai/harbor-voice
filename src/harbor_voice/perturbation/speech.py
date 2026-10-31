@@ -1,8 +1,8 @@
 """L2 — how they speak.
 
 The layer that does not fit in one place, because speech does not. Half of L2
-changes **what the text says** before anything synthesises it; the other half
-changes **the signal** after something has.
+changes what the text says before anything synthesises it; the other half
+changes the signal after something has.
 
 =====================  ==============  ==============================  ========
 Perturbation           Applied to      What it models                  Prior art
@@ -19,7 +19,7 @@ the only version that works: an "um" spliced into a finished waveform has no
 coarticulation with its neighbours and a listener hears an edit. Synthesised
 from text it is at least a plausible utterance.
 
-**The honest limit:** TTS-generated "um" is not
+The honest limit: TTS-generated "um" is not
 what a hesitation sounds like, which is why FDB-v3 uses *recorded humans
 annotated by disfluency type*. ``vocal_tics`` here models tau's version — a
 phrase list inserted into text — and nothing here claims to be FDB's. Real
@@ -28,7 +28,7 @@ disfluency arrives as a corpus through
 
 ### Speaking rate changes pitch, and says so
 
-Resampling is time-stretch **and** pitch-shift together; separating them needs
+Resampling is time-stretch and pitch-shift together; separating them needs
 a phase vocoder, which is a different and much larger piece of work. A caller
 sped up 1.3x here sounds slightly chipmunked, and that is recorded in the plan
 rather than described as "speaking rate". Shipping a silent approximation of
@@ -76,7 +76,7 @@ class TextPerturbation(ABC):
     Same reasoning as L5 — a layer that does not transform a frame does not
     belong in the frame chain, however convenient the base class would be.
 
-    The **said** side of said-vs-heard is the text *after* this runs.
+    The said side of said-vs-heard is the text *after* this runs.
     A caller who said "I need to, um, reschedule" said that, and scoring the
     agent against the pre-tic sentence would charge it for hearing correctly.
     """
@@ -211,7 +211,7 @@ class Loudness(Perturbation):
     """Scale the caller's level — a quiet, distant, or shouting speaker.
 
     Args:
-        gain_db: Positive is louder. Clipping is **counted, not prevented**:
+        gain_db: Positive is louder. Clipping is counted, not prevented:
             a caller who shouts into a phone clips, and silently limiting it
             would model a compressor nobody said was there.
     """
@@ -250,7 +250,7 @@ class Loudness(Perturbation):
 
 
 class SpeakingRate(Perturbation):
-    """Speed the caller up or down, **pitch included**.
+    """Speed the caller up or down, pitch included.
 
     Args:
         factor: Above 1.0 is faster. 1.3 makes a caller noticeably quicker and

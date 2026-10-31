@@ -1,6 +1,6 @@
 """The voice commands.
 
-**Extend harbor's CLI; do not invent a parallel one.** Running is harbor's:
+Extend harbor's CLI; do not invent a parallel one. Running is harbor's:
 ``harbor-voice jobs`` and ``harbor-voice trials`` *are* harbor's job and trial
 commands, mounted here — the same code as ``harbor jobs`` / ``harbor trials``
 — with one convenience: with no agent given, the agent is the voice call
@@ -332,7 +332,7 @@ def listen(
 ) -> None:
     """Render a recorded call's mixed timeline to a WAV you can play.
 
-    The render **mixes**, it does not concatenate. If two parties
+    The render mixes, it does not concatenate. If two parties
     talked at once the file says so — a recording that quietly reorders an
     interruption into an orderly exchange is worse than no recording, because
     someone will use it to settle an argument.

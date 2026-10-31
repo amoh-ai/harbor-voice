@@ -14,15 +14,15 @@
 
 Three duties beyond "produce audio":
 
-**Reproducible.** Seeded per axis, so content can be held fixed while the
+Reproducible. Seeded per axis, so content can be held fixed while the
 channel varies — the experiment the whole benchmark exists to run.
 
-**Gradeable.** EVA's quiet innovation is that two of its three ``validation/``
+Gradeable. EVA's quiet innovation is that two of its three ``validation/``
 metrics grade the *simulator*, not the agent. A run whose caller drifted out of
 persona is not evidence about the agent; it is ``measurement_invalid``. The
 :class:`SimulatorFidelity` record carries what a grader needs to decide that.
 
-**Self-declaring.** It states what it can do, so a task activating a layer it
+Self-declaring. It states what it can do, so a task activating a layer it
 cannot serve is a load error rather than a silent no-op.
 """
 
@@ -126,7 +126,7 @@ class PreparedLine:
 class SimulatorFidelity:
     """What a grader needs to decide whether the caller behaved.
 
-    Deliberately **not** a score. The simulator reports facts; a judge decides
+    Deliberately not a score. The simulator reports facts; a judge decides
     whether they amount to a run worth keeping. ``in_persona`` stays ``None``
     until something measures it, rather than defaulting to a confident 1.0 —
     an unmeasured judgment has no agreement to report, and a fabricated
@@ -425,7 +425,7 @@ class UniversalSimulator:
     async def _audio_for(self, content: Content, *, text: str | None = None) -> bytes:
         """Pre-recorded audio wins; otherwise synthesise.
 
-        Pre-recorded audio is **not** re-synthesised to carry an L2 text
+        Pre-recorded audio is not re-synthesised to carry an L2 text
         rewrite. A corpus clip is the point — a real
         hesitation, recorded — and regenerating it through a TTS to insert an
         "um" would throw away the only thing it was chosen for.

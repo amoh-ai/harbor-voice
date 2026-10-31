@@ -161,7 +161,7 @@ class ToolCallingEchoLLM:
 class ToneTTS:
     """Synthesises a tone whose length is proportional to the text.
 
-    Deliberately **not** silence. A silent reference signal makes every SNR
+    Deliberately not silence. A silent reference signal makes every SNR
     measurement downstream undefined, so a "TTS" that emits zeros produces a
     pipeline that looks like it works and measures nothing. The tone carries
     no speech, so nothing should judge its *content* — but it has energy, so

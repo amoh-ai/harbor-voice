@@ -1,18 +1,18 @@
 """Named conditions: a fixed set of perturbation layers under one name.
 
-A profile is a **reproducible condition**. ``background_noise`` means the
+A profile is a reproducible condition. ``background_noise`` means the
 same layers at the same parameters in every run, so two runs under it are
 comparable, and ``summarise`` says which metrics it moves. "Some background
 noise at about 15 dB" does not survive contact with a reviewer; a name does.
 
-**Core's profiles are generic**, named for what they do. A benchmark's own
+Core's profiles are generic, named for what they do. A benchmark's own
 conditions — EVA's condition B, FDB's overlap set — belong to that
 benchmark's adapter, which registers them (:func:`register_profile`) with the
 benchmark's exact parameters, built from core layers. An adapter that
 reproduces its benchmark another way registers none: tau-voice runs tau2's
 own speech complexities through tau2's own effects code.
 
-A profile may be **declared before it can be built** — a layer not
+A profile may be declared before it can be built — a layer not
 implemented yet, a corpus not available. It still lists, ``doctor`` reports
 it, and only construction fails: "not yet" and "not supported" are different
 answers, and a condition quietly missing from the list would give the wrong
