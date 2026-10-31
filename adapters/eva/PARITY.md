@@ -79,9 +79,8 @@ Realtime server, and harbor's transports.
   - `EVA-A_pass`, `EVA-X_pass`, `EVA-overall_pass`: each run's mean over its
     graded trials (run k = EVA's trial k), mean ± sample SEM over the 3 runs;
   - **harbor's criterion:** the two sides' run ranges overlap;
-  - the components, per-record agreement (a paired sign-flip test), and
-    diagnostics: validation, reruns, end reasons, call length, response
-    speed. No trial is dropped silently: missing, errored and never-validated
+  - the components, and diagnostics: validation, reruns, end reasons, call
+    length, response speed. No trial is dropped silently: missing, errored and never-validated
     trials are counted and listed, and enter no mean.
 
 ### Reproducing it

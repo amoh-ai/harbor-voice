@@ -154,15 +154,15 @@ is a slim Python with uv. Tags carry the EVA commit and a digest of our files.
 ## Parity
 
 Harbor's job of the sample's records against EVA's own CLI on the same
-records (`original.eva_command`, in EVA's image; twice for the noise floor),
-then `compare` writes harbor's `parity_experiment.json`. The results, the
+records (`original.eva_command`, in EVA's image), then `compare` writes
+harbor's `parity_experiment.json`. The results, the
 exact EVA command, what is compared and how to reproduce it:
 [`PARITY.md`](PARITY.md).
 
 ```bash
 uv run eva-adapter sample                           # parity_records.json (30), --smoke, --all
 uv run eva-adapter compare --harbor <job folder> ... --original <EVA run dir> ... \
-    [--original2 <EVA run dir> ...] --records adapters/eva/parity_records.json
+    --records adapters/eva/parity_records.json
 ```
 
 A judge that failed during a run (a 429, say) leaves a trial graded but
@@ -251,8 +251,9 @@ degradation, and connection degradation alone: EVA's own grid.
 - `test_eva_sample.py`, `test_eva_original.py`, `test_eva_compare.py`: the
   samples (fixed, stratified, the checked-in files), EVA's command (no key
   in it), and `compare` on synthetic outputs of both sides in their real
-  layouts (`fixtures/compare`): every status counted, the statistics, one
-  condition and one audio judge at a time, judge errors, the CLI.
+  layouts (`fixtures/compare`): every status counted, run means ± SEM,
+  pass^k and the range overlap, one condition and one audio judge at a
+  time, judge-errored trials, the `extend` hook, the CLI.
 - `test_eva_trial.py`, `test_eva_convert.py`: the driver's attempt loop, the
   parity guard against EVA's recorded session, the trajectory, the tasks.
 - `test_eva_e2e.py`: one trial through `drive_here` with the real sidecar

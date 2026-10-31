@@ -3,8 +3,8 @@
 ::
 
     eva-adapter compare --harbor <job> [<job> ...] --original <EVA run> [...]
-                        [--original2 <EVA run> ...] [--records <sample>]
-                        [--trials 3] [<condition flags>] [-o parity_experiment.json]
+                        [--records <sample>] [--trials 3] [<condition flags>]
+                        [-o parity_experiment.json]
 
 Reads harbor job folders (``harbor-voice jobs start``; each trial's
 ``agent/call/eva/``) and EVA run folders (EVA itself: ``config.json``,
@@ -20,16 +20,9 @@ domain and pooled (``overall``), for each side:
 - **the six components** of the composites, mean ± SEM over runs;
 - **diagnostics** that explain a gap without being a parity claim:
   validation (graded, judge errored, not validated, errored, missing),
-  attempts and reruns, the calls made against the trials planned, judge
-  errors (a scored metric's, which a re-grade redoes, and a validation
-  judge's, which failed an attempt), re-grades, end reasons (the counted
-  attempt's, and every attempt's), call length, the caller's turns and words
-  per turn, the agent's response speed (with a two-sample KS between sides);
-- **per record**, how often each side passed: same / one side more, a paired
-  sign-flip test, the pass-rate correlation, records that pass every run on
-  one side and none on the other, and the gap the run can detect;
-- with a second original run (``original2``), all of that between the two
-  original runs too: **the noise floor** each harbor gap is read against;
+  attempts and reruns, the calls made against the trials planned, end
+  reasons (the counted attempt's, and every attempt's), call length, the
+  caller's turns and words per turn, the agent's response speed;
 - **tokens**, every attempt included: the agent's (``pipecat_metrics.jsonl``,
   which both sides write the same way), the caller's LLM (each ElevenLabs
   conversation record) and the judges' (``judge_token_usage.json``). Counts,
@@ -60,6 +53,10 @@ until the metric is re-graded from the recording (EVA's own rerun of failed
 metrics); a trial whose folders record a re-grade says so (``regraded``).
 ``eva-adapter compare`` writes ``parity_experiment.json`` (harbor's format)
 and ``.report.json`` (everything above, and every trial).
+
+:func:`compare_folders` takes further sides and an ``extend`` hook, for an
+analysis that adds to the report (more statistics, more tables) without this
+module carrying it.
 """
 
 from __future__ import annotations
@@ -67,7 +64,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import random
 import re
 import statistics
 from collections import Counter
@@ -80,7 +76,6 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import date
-from itertools import product
 from pathlib import Path
 from typing import Any
 
@@ -121,14 +116,10 @@ COMPONENTS = (
     "conversation_progression",
 )
 """The components of EVA-A (the first three) and EVA-X (``aggregation.py``)."""
-SIDES = ("harbor", "original", "original2")
-PAIRS = (("harbor", "original"), ("original", "original2"), ("harbor", "original2"))
+SIDES = ("harbor", "original")
+PAIRS = (("harbor", "original"),)
 ADAPTED_SIZE = 213
 ORIGINAL_REPO = "https://github.com/ServiceNow/eva"
-FLIPS = 20_000
-"""Random sign flips when a record set is too large to enumerate."""
-EXACT_FLIPS = 16
-"""Up to this many non-zero differences, every sign assignment is counted."""
 
 _ARCHIVE = re.compile(r"^(?P<oid>.+)_failed_attempt_(?P<n>\d+)$")
 
@@ -188,6 +179,8 @@ TrialRegrade = Callable[[Path], dict[str, Any] | None]
 (and anything else to keep), or ``None``. EVA leaves none of its own."""
 RunRegrades = Callable[[Path], Mapping[str, dict[str, Any]]]
 """An EVA run's re-grade records, from its directory, per output id."""
+Extension = Callable[[dict[str, Any], list[Trial]], str]
+"""Adds to a report from its trials; returns tables to print (``""``: none)."""
 
 
 def no_regrade(trial_dir: Path) -> dict[str, Any] | None:
@@ -640,211 +633,11 @@ def pass_k(trials: Iterable[Trial], name: str, k_max: int) -> dict[str, Any]:
     }
 
 
-def ks_2samp(a: Sequence[float], b: Sequence[float]) -> dict[str, Any] | None:
-    """Two-sample Kolmogorov–Smirnov: the statistic and its asymptotic p."""
-    if not a or not b:
-        return None
-    xs, ys = sorted(a), sorted(b)
-    n, m = len(xs), len(ys)
-    i = j = 0
-    d = 0.0
-    while i < n and j < m:
-        x = min(xs[i], ys[j])
-        while i < n and xs[i] <= x:
-            i += 1
-        while j < m and ys[j] <= x:
-            j += 1
-        d = max(d, abs(i / n - j / m))
-    en = math.sqrt(n * m / (n + m))
-    p = kolmogorov_q((en + 0.12 + 0.11 / en) * d)
-    return {"d": round(d, 4), "p": round(min(1.0, max(0.0, p)), 4), "n": [n, m]}
-
-
-def kolmogorov_q(lam: float) -> float:
-    """P(K > lam) for the Kolmogorov distribution; each series where it
-    converges (Numerical Recipes, ``pks`` / ``qks``)."""
-    if lam <= 0:
-        return 1.0
-    if lam < 1.18:
-        y = math.exp(-(math.pi**2) / (8 * lam * lam))
-        return 1 - math.sqrt(2 * math.pi) / lam * (y + y**9 + y**25 + y**49)
-    x = math.exp(-2 * lam * lam)
-    return 2 * (x - x**4 + x**9 - x**16)
-
-
-def sign_flip_p(diffs: Sequence[float], *, seed: int = 0) -> float:
-    """Paired sign-flip test: how often flipping each record's difference at
-    random gives a total at least as far from zero as the one observed.
-    Every assignment is counted when there are few enough; else
-    :data:`FLIPS` seeded draws."""
-    nonzero = [d for d in diffs if not math.isclose(d, 0.0, abs_tol=1e-12)]
-    if not nonzero:
-        return 1.0
-    observed = abs(sum(nonzero)) - 1e-9
-    if len(nonzero) <= EXACT_FLIPS:
-        signs = product((1, -1), repeat=len(nonzero))
-        hits = [
-            abs(sum(s * d for s, d in zip(flip, nonzero, strict=True))) >= observed
-            for flip in signs
-        ]
-        return sum(hits) / len(hits)
-    rng = random.Random(seed)
-    hits = 0
-    for _ in range(FLIPS):
-        total = sum(d if rng.random() < 0.5 else -d for d in nonzero)
-        hits += abs(total) >= observed
-    return hits / FLIPS
-
-
-def _pearson(xs: Sequence[float], ys: Sequence[float]) -> float | None:
-    if len(xs) < 2:
-        return None
-    try:
-        return statistics.correlation(xs, ys)
-    except statistics.StatisticsError:  # one side constant
-        return None
-
-
 def overlap(a: Sequence[float], b: Sequence[float]) -> bool | None:
     """harbor's matching criterion: the two sides' run ranges overlap."""
     if not a or not b:
         return None
     return max(a) >= min(b) and max(b) >= min(a)
-
-
-def agreement(
-    a: Sequence[Trial],
-    b: Sequence[Trial],
-    name: str,
-    k_max: int,
-    sides: tuple[str, str],
-) -> dict[str, Any]:
-    """Per record, how often each side passed ``name``.
-
-    Records are compared by pass rate over their scored trials (a trial not
-    validated on one side leaves fewer). The sign-flip test is over those
-    rate differences; the detectable gap pools both sides' per-record
-    rates: 1.96 × √2 × √(Σ p(1−p)) / n / √k, in points.
-    """
-
-    def counts(trials: Sequence[Trial]) -> dict[tuple[str, str], tuple[int, int]]:
-        by: dict[tuple[str, str], list[float]] = defaultdict(list)
-        for trial in trials:
-            v = trial.composites.get(name) if trial.status in SCORED else None
-            if v is not None:
-                by[(trial.domain, trial.record_id)].append(v)
-        return {
-            key: (sum(1 for v in vs if math.isclose(v, 1.0, abs_tol=1e-9)), len(vs))
-            for key, vs in by.items()
-        }
-
-    ca, cb = counts(a), counts(b)
-    common = sorted(set(ca) & set(cb))
-    first, second = sides
-    diffs: list[float] = []
-    rates_a: list[float] = []
-    rates_b: list[float] = []
-    histogram: Counter[int] = Counter()
-    lopsided = []
-    same = more_a = more_b = 0
-    for key in common:
-        (pa, na), (pb, nb) = ca[key], cb[key]
-        ra, rb = pa / na, pb / nb
-        diffs.append(ra - rb)
-        rates_a.append(ra)
-        rates_b.append(rb)
-        if math.isclose(ra, rb, abs_tol=1e-9):
-            same += 1
-        elif ra > rb:
-            more_a += 1
-        else:
-            more_b += 1
-        if na == nb:
-            histogram[pa - pb] += 1
-        if min(na, nb) >= 2 and ((pa == na and pb == 0) or (pb == nb and pa == 0)):
-            lopsided.append(
-                {
-                    "domain": key[0],
-                    "record_id": key[1],
-                    first: f"{pa}/{na}",
-                    second: f"{pb}/{nb}",
-                }
-            )
-    pooled = [(ca[k][0] + cb[k][0]) / (ca[k][1] + cb[k][1]) for k in common]
-    spread = (
-        math.sqrt(sum(p * (1 - p) for p in pooled)) / len(common) if common else None
-    )
-    return {
-        "records": len(common),
-        "same": same,
-        f"{first}_more": more_a,
-        f"{second}_more": more_b,
-        "count_difference": {str(k): v for k, v in sorted(histogram.items())},
-        "successes": {
-            first: sum(ca[k][0] for k in common),
-            second: sum(cb[k][0] for k in common),
-        },
-        "scored_trials": {
-            first: sum(ca[k][1] for k in common),
-            second: sum(cb[k][1] for k in common),
-        },
-        "sign_flip_p": sign_flip_p(diffs),
-        "rate_correlation": _pearson(rates_a, rates_b),
-        "flipping_records": {
-            first: sum(1 for k in common if 0 < ca[k][0] < ca[k][1]),
-            second: sum(1 for k in common if 0 < cb[k][0] < cb[k][1]),
-        },
-        "lopsided": lopsided,
-        "detectable_gap_pts": (
-            None
-            if spread is None
-            else 1.96 * math.sqrt(2) * spread / math.sqrt(k_max) * 100
-        ),
-        f"only_{first}": len(set(ca) - set(cb)),
-        f"only_{second}": len(set(cb) - set(ca)),
-    }
-
-
-def _counts(names: Iterable[str]) -> dict[str, int]:
-    return dict(sorted(Counter(names).items()))
-
-
-def judge_errors(trials: Sequence[Trial]) -> dict[str, Any]:
-    """Where a judge failed, and what a re-grade redid.
-
-    - ``judge_errors``: graded trials with a metric error (re-gradable);
-    - ``validation_judge_errors``: attempts a validation judge's error failed
-      (EVA then called again), and the trials never validated after one;
-    - ``regraded``: trials re-graded after the run, and how many are fixed.
-    """
-    refused = [t for t in trials if t.status == NOT_VALIDATED]
-    regraded = [t for t in trials if t.regraded]
-    return {
-        "judge_errors": {
-            "trials": sum(1 for t in trials if t.status == JUDGE_ERRORED),
-            "metrics": _counts(
-                m for t in trials if t.status == JUDGE_ERRORED for m in t.metric_errors
-            ),
-        },
-        "validation_judge_errors": {
-            "failed_attempts": sum(1 for t in trials for e in t.attempt_errors if e),
-            "not_validated": len(refused),
-            "not_validated_after_judge_error": sum(
-                1 for t in refused if any(t.attempt_errors)
-            ),
-            "not_validated_judge_error_every_attempt": sum(
-                1 for t in refused if t.attempt_errors and all(t.attempt_errors)
-            ),
-            "metrics": _counts(m for t in trials for e in t.attempt_errors for m in e),
-        },
-        "regraded": {
-            "trials": len(regraded),
-            "fixed": sum(1 for t in regraded if (t.regraded or {}).get("fixed")),
-            "metrics": _counts(
-                m for t in regraded for m in (t.regraded or {}).get("metrics", [])
-            ),
-        },
-    }
 
 
 def side_summary(trials: Sequence[Trial], k_max: int) -> dict[str, Any]:
@@ -867,7 +660,6 @@ def side_summary(trials: Sequence[Trial], k_max: int) -> dict[str, Any]:
         "trials": len(trials),
         "status": {s: statuses[s] for s in STATUSES},
         "calls": {"planned": len(trials), "made": sum(t.calls for t in trials)},
-        **judge_errors(trials),
         "validation_rate": validated / len(finished) if finished else None,
         "attempts": dict(sorted(Counter(attempts).items())),
         "mean_attempts": _mean(attempts),
@@ -966,22 +758,25 @@ def build_report(
     judge_runs: Mapping[str, Iterable[Path]] | None = None,
     eva_summaries: Mapping[str, Any] | None = None,
     perturbation: PerturbationConfig | None = None,
+    sides: Sequence[str] = SIDES,
 ) -> dict[str, Any]:
-    """Per scope (each domain, then ``overall``) and side; the pairs; the noise floor."""
-    sides = [s for s in SIDES if any(t.side == s for t in trials)]
+    """Per scope (each domain, then ``overall``) and side; harbor against EVA.
+
+    ``notes`` starts empty: an ``extend`` hook (:func:`compare_folders`) may
+    add to it, and it leads ``parity_experiment.json``'s notes.
+    """
+    present = [s for s in sides if any(t.side == s for t in trials)]
     domains = sorted({t.domain for t in trials})
     scopes: dict[str, dict[str, Any]] = {}
     pairs: dict[str, dict[str, Any]] = {}
     for scope in [*domains, "overall"]:
         picked = [t for t in trials if scope == "overall" or t.domain == scope]
         scopes[scope] = {
-            s: side_summary([t for t in picked if t.side == s], k_max) for s in sides
+            s: side_summary([t for t in picked if t.side == s], k_max) for s in present
         }
         for a, b in PAIRS:
-            if a not in sides or b not in sides:
+            if a not in present or b not in present:
                 continue
-            ta = [t for t in picked if t.side == a]
-            tb = [t for t in picked if t.side == b]
             entry = pairs.setdefault(f"{a}-vs-{b}", {}).setdefault(scope, {})
             for name in COMPOSITES:
                 runs_a = scopes[scope][a]["composites"][name]["runs"]
@@ -993,108 +788,19 @@ def build_report(
                     if mean_a is None or mean_b is None
                     else abs(mean_a - mean_b),
                     "ranges_overlap": overlap(runs_a, runs_b),
-                    **agreement(ta, tb, name, k_max, (a, b)),
                 }
-            speeds = [
-                [s for t in tt if t.status in SCORED for s in t.response_speeds]
-                for tt in (ta, tb)
-            ]
-            entry["response_speed_ks"] = ks_2samp(speeds[0], speeds[1])
     return {
         "condition": label_of(perturbation),
         "perturbation": as_record(perturbation),
-        "sides": sides,
+        "sides": present,
         "trials_per_record": k_max,
-        "notes": judge_notes(scopes.get("overall") or {}),
+        "notes": [],
         "scopes": scopes,
         "pairs": pairs,
-        "noise_floor": noise_floor(pairs),
         "tokens": tokens(trials, judge_runs or {}),
         "eva_summaries": dict(eva_summaries or {}),
         "trials": [asdict(t) for t in trials],
     }
-
-
-def judge_notes(sides: Mapping[str, Mapping[str, Any]]) -> list[str]:
-    """What judge errors and re-grades did to the run, per side, in words."""
-    notes = []
-    regraded = {
-        side: s["regraded"] for side, s in sides.items() if s["regraded"]["trials"]
-    }
-    if regraded:
-        notes.append(
-            "Re-graded from the recordings after judge errors (EVA's own rerun of "
-            "failed metrics; no call made again): "
-            + "; ".join(
-                f"{side} {r['trials']} trial(s), {r['fixed']} fixed "
-                f"({', '.join(r['metrics'])})"
-                for side, r in regraded.items()
-            )
-            + "."
-        )
-    left = {
-        side: s["judge_errors"]
-        for side, s in sides.items()
-        if s["judge_errors"]["trials"]
-    }
-    if left:
-        notes.append(
-            "Still graded with a judge error (the composites that need the metric "
-            "are unset until it is re-graded): "
-            + "; ".join(
-                f"{side} {e['trials']} trial(s) ({', '.join(e['metrics'])})"
-                for side, e in left.items()
-            )
-            + "."
-        )
-    validation = {
-        side: s["validation_judge_errors"]
-        for side, s in sides.items()
-        if s["validation_judge_errors"]["failed_attempts"]
-    }
-    if validation:
-        notes.append(
-            "Validation judge errors during the run: "
-            + "; ".join(
-                f"{side} {v['failed_attempts']} attempt(s) failed EVA's validation "
-                f"on a judge error ({', '.join(v['metrics'])}), "
-                f"{v['not_validated_after_judge_error']} trial(s) never validated "
-                "after one"
-                for side, v in validation.items()
-            )
-            + ". A re-grade does not undo a validation decision taken during the "
-            "run: those attempts were called again, and a trial never validated "
-            "stays unscored."
-        )
-    return notes
-
-
-def noise_floor(pairs: Mapping[str, Any]) -> dict[str, Any]:
-    """The harbor gaps against the gap between two original runs: no
-    metric may differ beyond what two EVA runs of the same system do."""
-    noise = pairs.get("original-vs-original2")
-    if not noise:
-        return {}
-    out: dict[str, Any] = {}
-    for scope, metrics in noise.items():
-        for name in COMPOSITES:
-            floor = metrics[name]["gap_pts"]
-            harbor = (
-                (pairs.get("harbor-vs-original") or {}).get(scope, {}).get(name, {})
-            )
-            harbor2 = (
-                (pairs.get("harbor-vs-original2") or {}).get(scope, {}).get(name, {})
-            )
-            gap = harbor.get("gap_pts")
-            out.setdefault(scope, {})[name] = {
-                "original_vs_original2_pts": floor,
-                "harbor_vs_original_pts": gap,
-                "harbor_vs_original2_pts": harbor2.get("gap_pts"),
-                "harbor_within_noise": None
-                if gap is None or floor is None
-                else gap <= floor,
-            }
-    return out
 
 
 def _pct(entry: Mapping[str, Any]) -> str:
@@ -1203,41 +909,22 @@ def tables(report: Mapping[str, Any]) -> str:
     if report["pairs"]:
         out += [
             "",
-            "| Pair | Scope | Metric | Gap (pts) | Ranges overlap | Records | Same | First more"
-            " | Second more | Sign-flip p | Rate r | Detectable gap (pts) |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|",
+            "| Pair | Scope | Metric | Gap (pts) | Ranges overlap |",
+            "|---|---|---|---|---|",
         ]
         for pair, scopes in report["pairs"].items():
-            first, _, second = pair.partition("-vs-")
             for scope, metrics in scopes.items():
                 for name in COMPOSITES:
                     m = metrics[name]
                     out.append(
                         f"| {pair} | {scope} | {name} | {_cell(m['gap_pts'], '.2f')} | "
-                        f"{m['ranges_overlap']} | {m['records']} | {m['same']} | "
-                        f"{m[f'{first}_more']} | {m[f'{second}_more']} | "
-                        f"{_cell(m['sign_flip_p'])} | {_cell(m['rate_correlation'], '.2f')} | "
-                        f"{_cell(m['detectable_gap_pts'], '.1f')} |"
+                        f"{m['ranges_overlap']} |"
                     )
-    if report["noise_floor"]:
-        out += [
-            "",
-            "| Scope | Metric | original vs original2 (pts) | harbor vs original | harbor vs original2"
-            " | harbor within noise |",
-            "|---|---|---|---|---|---|",
-        ]
-        for scope, metrics in report["noise_floor"].items():
-            for name, m in metrics.items():
-                out.append(
-                    f"| {scope} | {name} | {_cell(m['original_vs_original2_pts'], '.2f')} | "
-                    f"{_cell(m['harbor_vs_original_pts'], '.2f')} | "
-                    f"{_cell(m['harbor_vs_original2_pts'], '.2f')} | {m['harbor_within_noise']} |"
-                )
     out += [
         "",
-        "| Scope | Side | Validation rate | Mean attempts | End reasons (counted) | Caller turns/call"
-        " | Words/turn | Response speed (s) |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Scope | Side | Calls made / planned | Validation rate | Mean attempts"
+        " | End reasons (counted) | Caller turns/call | Words/turn | Response speed (s) |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for scope, sides in report["scopes"].items():
         for side, s in sides.items():
@@ -1245,26 +932,12 @@ def tables(report: Mapping[str, Any]) -> str:
                 f"{k} {v}" for k, v in list(s["end_reasons"].items())[:4]
             )
             out.append(
-                f"| {scope} | {side} | {_cell(s['validation_rate'], '.0%')} | "
+                f"| {scope} | {side} | {s['calls']['made']} / {s['calls']['planned']} | "
+                f"{_cell(s['validation_rate'], '.0%')} | "
                 f"{_cell(s['mean_attempts'], '.2f')} | {reasons or 'n/a'} | "
                 f"{_cell(s['caller']['turns_per_call'], '.1f')} | "
                 f"{_cell(s['caller']['words_per_turn'], '.1f')} | "
                 f"{_cell(s['response_speed_s']['mean'], '.2f')} |"
-            )
-    out += [
-        "",
-        "| Scope | Side | Calls made / planned | Judge errored (metrics) | Re-graded, fixed"
-        " | Attempts failed on a validation judge error | Not validated after one |",
-        "|---|---|---|---|---|---|---|",
-    ]
-    for scope, sides in report["scopes"].items():
-        for side, s in sides.items():
-            e, r, v = s["judge_errors"], s["regraded"], s["validation_judge_errors"]
-            out.append(
-                f"| {scope} | {side} | {s['calls']['made']} / {s['calls']['planned']} | "
-                f"{e['trials']} ({', '.join(e['metrics']) or '-'}) | "
-                f"{r['trials']}, {r['fixed']} | {v['failed_attempts']} | "
-                f"{v['not_validated_after_judge_error']} of {v['not_validated']} |"
             )
     names = sorted({k for side in report["tokens"].values() for k in side})
     if names:
@@ -1302,16 +975,21 @@ def compare_folders(
     run_notes: Sequence[str] = (),
     harbor_regrade: TrialRegrade = no_regrade,
     eva_regrades: RunRegrades = no_regrades,
+    sides: Sequence[str] = SIDES,
+    extend: Extension | None = None,
 ) -> dict[str, Any]:
     """Compare the sides from their folders; writes ``output``
     (``parity_experiment.json``) and its ``.report.json``.
 
     ``runs`` holds each side's folders: harbor job folders under ``harbor``,
-    EVA run directories under ``original``, and under ``original2`` a second
-    original run (the noise floor), each pooled. ``expected`` is what each
-    side should have, as (domain, record id, trial index); without it, every
-    side is expected to have what any side has. ``trials`` is EVA's k
-    (default: as many as the trial indices found).
+    EVA run directories under ``original``, each pooled; ``sides`` names the
+    sides allowed, so a caller can add more EVA runs under names of its own.
+    ``expected`` is what each side should have, as (domain, record id, trial
+    index); without it, every side is expected to have what any side has.
+    ``trials`` is EVA's k (default: as many as the trial indices found).
+    ``extend`` gets the report and the trials before anything is printed or
+    written: it may add to the report (its ``notes`` included) and returns
+    tables to print after these.
 
     Every trial must have run ``perturbation`` (clean when ``None``) and been
     judged by one set of audio judges: ``judge_label``
@@ -1321,9 +999,9 @@ def compare_folders(
     notes after the condition's. ``harbor_regrade`` and ``eva_regrades``
     read a re-grade's records from the folders (none by default).
     """
-    strange = sorted(set(runs) - set(SIDES))
+    strange = sorted(set(runs) - set(sides))
     if strange:
-        raise SystemExit(f"sides must be among {SIDES}; got {strange}")
+        raise SystemExit(f"sides must be among {tuple(sides)}; got {strange}")
     jobs = list(runs.get("harbor") or [])
     eva_runs = {side: list(dirs) for side, dirs in runs.items() if side != "harbor"}
     condition = label_of(perturbation)
@@ -1375,9 +1053,13 @@ def compare_folders(
         judge_runs=judge_runs,
         eva_summaries=eva_summaries,
         perturbation=perturbation,
+        sides=sides,
     )
     report["judges"] = {"audio": judge_label, "run": judges}
+    extra = extend(report, found) if extend is not None else ""
     print(tables(report))
+    if extra:
+        print(extra)
 
     ran = harbor_model(jobs)
     model = model or ran
@@ -1436,13 +1118,6 @@ def main_compare(argv: Sequence[str]) -> int:
         help="EVA run directories (EVA_OUTPUT_DIR/EVA_RUN_ID), one per domain",
     )
     parser.add_argument(
-        "--original2",
-        type=Path,
-        nargs="+",
-        default=[],
-        help="a second EVA run of the same records: the noise floor",
-    )
-    parser.add_argument(
         "--records",
         type=Path,
         help="the sample both sides ran (eva-adapter sample); a trial of it "
@@ -1463,8 +1138,6 @@ def main_compare(argv: Sequence[str]) -> int:
     args = parser.parse_args(list(argv))
     perturbation = condition_from_args(parser, args)
     runs = {"harbor": args.harbor, "original": args.original}
-    if args.original2:
-        runs["original2"] = args.original2
     expected = None
     if args.records:
         keys = {

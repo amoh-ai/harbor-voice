@@ -18,14 +18,11 @@ import pytest
 from eva_adapter.compare import GRADED
 from eva_adapter.compare import Trial
 from eva_adapter.compare import add_missing
-from eva_adapter.compare import agreement
 from eva_adapter.compare import compare_folders
 from eva_adapter.compare import describe
 from eva_adapter.compare import eva_trials
 from eva_adapter.compare import harbor_trials
-from eva_adapter.compare import ks_2samp
 from eva_adapter.compare import pass_k
-from eva_adapter.compare import sign_flip_p
 from eva_adapter.conditions import PerturbationConfig
 from eva_adapter.main import main
 
@@ -159,40 +156,41 @@ def test_diagnostics_count_every_attempt_on_both_sides(tmp_path: Path) -> None:
     assert (
         tokens["harbor"]["judge_calls"] == 7 and tokens["original"]["judge_calls"] == 2
     )
-    ks = report["pairs"]["harbor-vs-original"]["overall"]["response_speed_ks"]
-    assert ks["n"] == [12, 16] and 0 < ks["d"] <= 1
 
 
-def test_per_record_agreement_is_tau_voices_analysis(tmp_path: Path) -> None:
+def test_the_criterion_is_whether_the_run_ranges_overlap(tmp_path: Path) -> None:
     report = _compare(tmp_path)
+    assert set(report["pairs"]) == {"harbor-vs-original"}
     a = report["pairs"]["harbor-vs-original"]["overall"]["EVA-A_pass"]
-    # 1.2.2: harbor 2/3, original 3/3; 2.2.5: 0/1 vs 0/2; 16: 2/2 vs 2/3.
-    assert (a["records"], a["same"], a["harbor_more"], a["original_more"]) == (
-        3,
-        1,
-        1,
-        1,
-    )
-    assert a["count_difference"] == {"-1": 1}  # only 1.2.2 has n equal
-    assert a["successes"] == {"harbor": 4, "original": 5}
-    assert a["sign_flip_p"] == 1.0  # the differences cancel
-    assert a["flipping_records"] == {"harbor": 1, "original": 1}
-    assert a["ranges_overlap"] is True and a["lopsided"] == []
-    assert a["gap_pts"] == pytest.approx(abs(500 / 9 - 200 / 3))
-
-
-def test_the_noise_floor_is_original_against_original(tmp_path: Path) -> None:
-    report = _compare(tmp_path, noise=True)
-    assert set(report["pairs"]) == {
-        "harbor-vs-original",
-        "original-vs-original2",
-        "harbor-vs-original2",
+    # harbor [66.7, 100, 0], original [66.7, 33.3, 100].
+    assert a == {
+        "gap_pts": pytest.approx(abs(500 / 9 - 200 / 3)),
+        "ranges_overlap": True,
     }
-    floor = report["noise_floor"]["overall"]["EVA-A_pass"]
-    # original2's run 2: 1.2.2 fails, so [66.7, 33.3, 50].
-    assert floor["original_vs_original2_pts"] == pytest.approx(200 / 3 - 50)
-    assert floor["harbor_vs_original_pts"] == pytest.approx(200 / 3 - 500 / 9)
-    assert floor["harbor_within_noise"] is True
+    assert report["notes"] == [] and "noise_floor" not in report
+
+
+def test_an_extension_adds_to_the_report_and_its_notes(tmp_path: Path) -> None:
+    def extend(report: dict[str, Any], trials: list[Trial]) -> str:
+        report["mine"] = len(trials)
+        report["notes"].append("From the extension.")
+        return "| extra |"
+
+    report = _compare(tmp_path, extend=extend, notes="synthetic")
+    assert report["mine"] == 18  # 9 a side, missing ones included
+    (head,) = json.loads((tmp_path / "parity_experiment.json").read_text())
+    assert head["notes"] == "From the extension. synthetic"
+    on_disk = json.loads((tmp_path / "parity_experiment.report.json").read_text())
+    assert on_disk["mine"] == 18
+
+
+def test_a_side_beyond_harbor_and_original_needs_naming(tmp_path: Path) -> None:
+    runs = sides(tmp_path / "sides", noise=True)
+    with pytest.raises(SystemExit, match="sides must be among"):
+        _compare(tmp_path, runs=runs)
+    report = _compare(tmp_path, runs=runs, sides=("harbor", "original", "original2"))
+    assert set(report["scopes"]["overall"]) == {"harbor", "original", "original2"}
+    assert set(report["pairs"]) == {"harbor-vs-original"}
 
 
 def test_a_different_agent_on_the_two_sides_is_refused(tmp_path: Path) -> None:
@@ -248,30 +246,6 @@ def test_describe_leaves_unscored_runs_out_and_counts_values() -> None:
     ]
     found = describe(trials, lambda t: t.composites.get("EVA-A_pass"), scale=100)
     assert found["runs"] == [100.0] and found["sem"] is None and found["values"] == 1
-
-
-def test_sign_flip_is_exact_when_small() -> None:
-    assert sign_flip_p([1.0, 1.0, 1.0]) == pytest.approx(2 / 8)  # all +, or all -
-    assert sign_flip_p([0.0, 0.0]) == 1.0
-    assert sign_flip_p([1.0] * 20) == pytest.approx(2 / 2**20, abs=5e-4)  # sampled
-
-
-def test_ks_matches_known_cases() -> None:
-    same = ks_2samp([1.0, 2.0, 3.0], [1.0, 2.0, 3.0])
-    assert same is not None and same["d"] == 0.0 and same["p"] == 1.0
-    apart = ks_2samp([1.0] * 30, [5.0] * 30)
-    assert apart is not None and apart["d"] == 1.0 and apart["p"] < 1e-6
-    assert ks_2samp([], [1.0]) is None
-
-
-def test_lopsided_records_are_named() -> None:
-    harbor = [_t("harbor", "r", k, 1.0) for k in range(3)]
-    original = [_t("original", "r", k, 0.0) for k in range(3)]
-    found = agreement(harbor, original, "EVA-A_pass", 3, ("harbor", "original"))
-    assert found["lopsided"] == [
-        {"domain": "airline", "record_id": "r", "harbor": "3/3", "original": "0/3"}
-    ]
-    assert found["sign_flip_p"] == 1.0  # one record: both signs equally far
 
 
 def test_every_side_is_expected_to_have_what_any_side_has() -> None:
@@ -404,27 +378,15 @@ def _judge_errored(tmp_path: Path) -> dict[str, list[Path]]:
     return runs
 
 
-def test_judge_errors_are_results_and_said_in_the_notes(tmp_path: Path) -> None:
+def test_a_judge_errored_trial_counts_what_eva_counts(tmp_path: Path) -> None:
     report = _compare(tmp_path, runs=_judge_errored(tmp_path))
     harbor = report["scopes"]["overall"]["harbor"]
     assert harbor["status"]["judge_errored"] == 1 and harbor["status"]["graded"] == 5
-    assert harbor["judge_errors"] == {
-        "trials": 1,
-        "metrics": {"agent_speech_fidelity": 1},
-    }
-    assert harbor["validation_judge_errors"] == {
-        "failed_attempts": 3,
-        "not_validated": 1,
-        "not_validated_after_judge_error": 1,
-        "not_validated_judge_error_every_attempt": 1,
-        "metrics": {"user_speech_fidelity": 3},
-    }
     # The judge-errored trial's EVA-X still counts; its EVA-A is unset.
     assert harbor["composites"]["EVA-A_pass"]["values"] == 5
     assert harbor["composites"]["EVA-X_pass"]["values"] == 6
-    assert harbor["regraded"] == {"trials": 0, "fixed": 0, "metrics": {}}
-    assert any("Still graded with a judge error" in n for n in report["notes"])
-    assert any("does not undo a validation decision" in n for n in report["notes"])
+    errored = next(t for t in report["trials"] if t["status"] == "judge_errored")
+    assert errored["metric_errors"] == ["agent_speech_fidelity"]
 
 
 def test_a_regrade_and_the_runs_own_notes_come_from_the_caller(tmp_path: Path) -> None:
@@ -448,18 +410,18 @@ def test_a_regrade_and_the_runs_own_notes_come_from_the_caller(tmp_path: Path) -
             "16/trial_1": {"metrics": ["faithfulness"], "fixed": False}
         },
     )
-    harbor = report["scopes"]["overall"]["harbor"]
-    original = report["scopes"]["overall"]["original"]
-    assert harbor["regraded"] == {
-        "trials": 1,
-        "fixed": 1,
-        "metrics": {"agent_speech_fidelity": 1},
+    regraded = {
+        (t["side"], t["record_id"], t["trial"]): t["regraded"]
+        for t in report["trials"]
+        if t["regraded"]
     }
-    assert original["regraded"]["trials"] == 1 and original["regraded"]["fixed"] == 0
+    assert regraded == {
+        ("harbor", "1.2.2", 2): {"metrics": ["agent_speech_fidelity"], "fixed": True},
+        ("original", "16", 1): {"metrics": ["faithfulness"], "fixed": False},
+    }
     assert report["judges"]["run"] == {"audio": "as the run recorded it"}
     (head,) = json.loads((tmp_path / "parity_experiment.json").read_text())
-    assert head["notes"].startswith("How the run was judged. Re-graded from the")
-    assert head["notes"].endswith(" mine")
+    assert head["notes"] == "How the run was judged. mine"
 
 
 def test_harbor_trials_take_the_task_folder_when_no_summary_is_left(
@@ -477,13 +439,12 @@ def test_harbor_trials_take_the_task_folder_when_no_summary_is_left(
 
 
 def test_the_cli_compares_plain_folders(tmp_path: Path) -> None:
-    runs = sides(tmp_path / "sides", noise=True)
+    runs = sides(tmp_path / "sides")
     records = tmp_path / "records.json"
     records.write_text(json.dumps({"records": RECORDS}))
     out = tmp_path / "out" / "parity.json"
     argv = ["compare", "--harbor", *map(str, runs["harbor"])]
     argv += ["--original", *map(str, runs["original"])]
-    argv += ["--original2", *map(str, runs["original2"])]
     argv += ["--records", str(records), "--notes", "cli", "-o", str(out)]
     with pytest.raises(SystemExit) as done:
         main(argv)
@@ -491,11 +452,7 @@ def test_the_cli_compares_plain_folders(tmp_path: Path) -> None:
     (head,) = json.loads(out.read_text())
     assert head["parity_benchmark_size"] == 3 and head["notes"] == "cli"
     report = json.loads(out.with_suffix(".report.json").read_text())
-    assert set(report["pairs"]) == {
-        "harbor-vs-original",
-        "original-vs-original2",
-        "harbor-vs-original2",
-    }
+    assert set(report["pairs"]) == {"harbor-vs-original"}
     assert report["scopes"]["overall"]["harbor"]["status"]["missing"] == 1
 
 
