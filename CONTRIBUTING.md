@@ -84,6 +84,98 @@ the workspace (`pyproject.toml`). It has:
 [tau-voice](adapters/tau-voice) and [EVA](adapters/eva) are the two worked
 examples.
 
+## Publishing a dataset version
+
+For maintainers: this pushes images and tags a release. A version is one
+commit in each repo. The task folders go in
+[harbor-voice-datasets](https://github.com/amoh-ai/harbor-voice-datasets),
+tagged `v<version>`, and their entries go in `registry.json` here, every task
+pinned to that commit. A published entry never changes: a fix is a new
+version. `scripts/hub.py` does the publishing; run everything from one
+harbor-voice commit.
+
+**1. Images.** Push what `ghcr.io/amoh-ai` lacks and record the digests:
+
+```bash
+uv run python scripts/hub.py images --dry-run   # what would be pushed
+uv run python scripts/hub.py images             # build, push, record
+```
+
+- Commit the records it writes, `adapters/*/images.json`.
+- A tag the registry already serves is never pushed again.
+- `--force` rebuilds first; an image built without the OCI labels needs it.
+
+**2. Tasks.** Convert into a clone of the datasets repo beside this one,
+with tau2-bench at its pinned commit (`2174a60`) beside it too. Delete a
+dataset's folder before converting it again, so the version holds only what
+the converter writes now. On Windows, the clone needs `git config
+core.longpaths true`.
+
+```bash
+D=../harbor-voice-datasets/datasets
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-control --complexity control
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-regular --complexity regular
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-control-test --complexity control --split test
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-regular-test --complexity regular --split test
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-parity-control --complexity control --split parity \
+    --user-llm gpt-4.1-mini-2025-04-14
+uv run tau-voice --tau2-root ../tau2-bench --registry ghcr.io/amoh-ai \
+    --output-dir $D/tau-voice-parity-regular --complexity regular --split parity \
+    --user-llm gpt-4.1-mini-2025-04-14
+uv run eva-adapter convert --registry ghcr.io/amoh-ai --out $D/eva
+uv run eva-adapter sample --per-domain 20 --seed 300 -o eva-parity.json
+uv run eva-adapter convert --registry ghcr.io/amoh-ai --out $D/eva-parity \
+    --records-from eva-parity.json
+rm $D/eva/job.yaml $D/eva-parity/job.yaml eva-parity.json
+```
+
+- With `--registry ghcr.io/amoh-ai`, every image is pinned by digest. A
+  converter refuses to write anything if an image of this checkout isn't
+  recorded: run step 1 first.
+- The parity datasets are the samples their `PARITY.md` ran: the 40 tasks of
+  `parity_tasks.json` with the run's caller model, and EVA's 60 records.
+- `eva-adapter convert` also writes a `job.yaml` with local paths; the
+  datasets repo's CI rejects it.
+
+**3. Release the tasks.** In the datasets repo, review the diff, then:
+
+```bash
+git add -A && git commit -m "v0.1.0" && git push
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Its CI (the task checks, then `harbor lint`) must pass. Merge pull requests
+there with a merge commit: harbor fetches a task by its commit, so a commit a
+squash or a rebase drops breaks every version pinned to it.
+
+**4. Register.** Here, once the tag is on the remote:
+
+```bash
+uv run python scripts/hub.py register --datasets-repo ../harbor-voice-datasets \
+    --commit v0.1.0 --version 0.1.0 \
+    --dataset tau-voice-control "tau-voice: all 278 tau2 tasks, control speech" \
+    --dataset tau-voice-regular "tau-voice: all 278 tau2 tasks, regular speech" \
+    --dataset tau-voice-control-test "tau-voice: tau2's test split (100), control speech" \
+    --dataset tau-voice-regular-test "tau-voice: tau2's test split (100), regular speech, the leaderboard's condition" \
+    --dataset tau-voice-parity-control "tau-voice: the 40-task parity sample, control speech" \
+    --dataset tau-voice-parity-regular "tau-voice: the 40-task parity sample, regular speech" \
+    --dataset eva "EVA: all 213 records, clean audio" \
+    --dataset eva-parity "EVA: the 60-record parity sample, clean audio"
+uv run python scripts/hub.py check --datasets-repo ../harbor-voice-datasets
+```
+
+- `register` refuses, writing nothing, if the commit isn't on the remote's
+  `main` and tagged, if a name and version are already published, if a file
+  is stray, or if an image is unpinned or unrecorded.
+- Commit `registry.json`. CI checks that entries are only ever added.
+- Once the images are public, `check --anonymous` also pulls each one
+  without credentials.
+
 ## Issues and PRs
 
 - **Issues** are for bugs and feature requests. Describe the problem; you

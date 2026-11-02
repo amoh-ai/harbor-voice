@@ -45,6 +45,39 @@ the rest runs on harbor-voice's built-in call loop (see
 
 More voice benchmarks are on the way.
 
+## Datasets
+
+Converted tasks are published in
+[harbor-voice-datasets](https://github.com/amoh-ai/harbor-voice-datasets) and
+listed in this checkout's [`registry.json`](registry.json). Each version pins
+its tasks to one commit and its images to digests on `ghcr.io/amoh-ai`, so a
+version always runs the same bytes. `job-config --hub-dataset
+NAME[@VERSION]` runs one without converting anything (with no version,
+harbor picks the latest):
+
+```bash
+uv run tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.0 \
+    --trials 3 -n 4 --model openai.live/gpt-live-1 \
+    --agent-config '{"backend_model": "gpt-6-luna"}' -o job.yaml
+uv run eva-adapter job-config --hub-dataset eva@0.1.0 \
+    --model openai.realtime/gpt-realtime-1.5 -o job.yaml
+uv run harbor-voice jobs start -c job.yaml
+```
+
+| Dataset | Tasks | What |
+|---|---|---|
+| `tau-voice-control` | 278 | every tau2 task, `control` speech (clean, patient turn-taking) |
+| `tau-voice-regular` | 278 | every tau2 task, `regular` speech (accents, noise, interruptions) |
+| `tau-voice-control-test` | 100 | tau2's `test` split, `control` speech |
+| `tau-voice-regular-test` | 100 | tau2's `test` split, `regular` speech: the τ-voice leaderboard's condition |
+| `tau-voice-parity-control` | 40 | the [parity](adapters/tau-voice/PARITY.md) sample, `control` speech |
+| `tau-voice-parity-regular` | 40 | the parity sample, `regular` speech |
+| `eva` | 213 | every EVA record, clean audio |
+| `eva-parity` | 60 | the [parity](adapters/eva/PARITY.md) sample, 20 per domain |
+
+You still need the keys and the one-time ElevenLabs setup in the quickstarts
+below. To pick a few tasks, add `--task-names` with their folder names.
+
 ## Install
 
 You need Python 3.12+, [uv](https://docs.astral.sh/uv/), and Docker for local

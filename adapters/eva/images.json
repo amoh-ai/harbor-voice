@@ -1,0 +1,7 @@
+{
+  "ghcr.io/amoh-ai": {
+    "eva-main:c168c1f67a": "sha256:92dac11ab9ecd6e5e87bbb96c25031618aacd353f442646920c30270b015594d",
+    "eva-main:perturbed-92fefcaa2c": "sha256:ec60fe5d6c1016c9bd98e65c1a0f385a74443b92e72767e6938a96901fc8e931",
+    "eva-sidecar:039efa0a-21e9a0b06c": "sha256:6de7f4ff116baf7ddac7bdc7ae190b19a90987d1d1ecb45d9b59699d51ecc206"
+  }
+}

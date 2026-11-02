@@ -227,6 +227,37 @@ def test_convert_writes_tasks_and_a_k3_job(tmp_path: Path) -> None:
         )
 
 
+def test_convert_takes_a_sample_files_records(tmp_path: Path) -> None:
+    sample = tmp_path / "sample.json"
+    sample.write_text(
+        json.dumps({"records": {"itsm": ["13", "16"], "medical_hr": ["A2"]}}),
+        encoding="utf-8",
+    )
+    out = tmp_path / "tasks"
+
+    with pytest.raises(SystemExit) as done:
+        main(["convert", "--out", str(out), "--records-from", str(sample)])
+    assert done.value.code == 0
+    tasks = sorted(p.name for p in out.iterdir() if p.is_dir())
+    assert [name.split("-")[0] for name in tasks] == ["itsm", "itsm", "medical_hr"]
+
+    # --domains narrows the file; a domain it lacks is skipped, none is an error.
+    narrowed = tmp_path / "narrowed"
+    with pytest.raises(SystemExit) as done:
+        main(["convert", "--out", str(narrowed), "--records-from", str(sample),
+              "--domains", "medical_hr", "airline"])  # fmt: skip
+    assert done.value.code == 0
+    assert len([p for p in narrowed.iterdir() if p.is_dir()]) == 1
+    with pytest.raises(SystemExit) as done:
+        main(["convert", "--out", str(tmp_path / "none"), "--records-from",
+              str(sample), "--domains", "airline"])  # fmt: skip
+    assert done.value.code == 2
+
+    sample.write_text(json.dumps({"records": {"itsm": ["nope"]}}), encoding="utf-8")
+    with pytest.raises(SystemExit, match="nope"):
+        main(["convert", "--out", str(tmp_path / "bad"), "--records-from", str(sample)])
+
+
 def test_the_job_lists_one_agent_per_eva_trial(tmp_path: Path) -> None:
     from harbor.models.job.config import JobConfig
 

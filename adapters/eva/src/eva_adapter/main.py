@@ -686,8 +686,16 @@ def convert(argv: Sequence[str]) -> int:
     )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--domains", nargs="+", default=list(DOMAINS), choices=DOMAINS)
-    parser.add_argument(
+    which = parser.add_mutually_exclusive_group()
+    which.add_argument(
         "--records", nargs="+", help="only these record ids (with one domain)"
+    )
+    which.add_argument(
+        "--records-from",
+        type=Path,
+        metavar="SAMPLE",
+        help="only a sample file's records (`eva-adapter sample -o`), in each "
+        "of --domains it names",
     )
     parser.add_argument("--limit", type=int, help="first N records per domain")
     parser.add_argument(
@@ -736,9 +744,16 @@ def convert(argv: Sequence[str]) -> int:
     every = load_records()
     if args.records and len(args.domains) != 1:
         parser.error("--records needs exactly one --domains")
+    chosen = dict(every)
+    if args.records_from:
+        from eva_adapter.sample import read_records
+
+        chosen = read_records(args.records_from)  # checked against EVA's ids
+        if not set(chosen) & set(args.domains):
+            parser.error(f"{args.records_from} names none of {' '.join(args.domains)}")
     written = 0
-    for domain in args.domains:
-        ids = list(args.records or every[domain])
+    for domain in (d for d in args.domains if d in chosen):
+        ids = list(args.records or chosen[domain])
         unknown = sorted(set(ids) - set(every[domain]))
         if unknown:
             parser.error(f"not EVA {domain} records: {', '.join(unknown)}")
