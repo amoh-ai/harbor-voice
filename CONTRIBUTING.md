@@ -23,8 +23,8 @@ uv sync          # harbor-voice, both adapters, every extra, dev tools
 
 ```bash
 uv run pytest
-uv run ruff check src adapters tests
-uv run ruff format --check src adapters tests
+uv run ruff check src adapters scripts tests
+uv run ruff format --check src adapters scripts tests
 uv run ty check
 ```
 
@@ -73,7 +73,10 @@ the workspace (`pyproject.toml`). It has:
   which runs the call the way the benchmark's own harness does
   (`src/harbor_voice/driver.py` is the contract);
 - **usually a sidecar** that runs the benchmark's own code for the task, its
-  tools and its grade;
+  tools and its grade. Its `/health` reports an `API_VERSION`, which the
+  driver checks before a call: bump it on both sides when a route or a
+  request model changes (`tests/adapters/test_sidecar_api.py` fails until
+  you do);
 - **tests and fixtures** under `tests/adapters/<name>/`;
 - **a `PARITY.md`** showing the adapter reproduces the original harness, in
   harbor's parity format (`parity_experiment.json`).

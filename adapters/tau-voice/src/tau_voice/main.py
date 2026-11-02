@@ -74,7 +74,8 @@ PERSONAS = (
     "priya_patil",
 )
 """tau2's caller personas; each needs its own ElevenLabs voice, as
-``TAU2_VOICE_ID_<PERSONA>`` (tau2's ``setup_voices`` creates them)."""
+``TAU2_VOICE_ID_<PERSONA>`` (``tau-voice voices create`` makes them, as tau2's
+``setup_voices`` does; :mod:`tau_voice.personas`)."""
 VOICE_ENV = tuple(f"TAU2_VOICE_ID_{persona.upper()}" for persona in PERSONAS)
 
 # Names only, as ${VAR} templates resolved from the host at run time; values
@@ -186,7 +187,7 @@ def voice_toml(
 ) -> str:
     caller_llm = f"user_llm = {json.dumps(user_llm)}\n" if user_llm else ""
     main_image = (
-        f"docker_image = {json.dumps(images.main_image(registry))}\n"
+        f"docker_image = {json.dumps(images.pinned_main(registry))}\n"
         if prebuilt
         else ""
     )
@@ -226,7 +227,7 @@ def task_toml(
 ) -> str:
     """Harbor's ``task.toml``: the same task, for harbor's job runner."""
     main_image = (
-        f"docker_image = {json.dumps(images.main_image(registry))}\n"
+        f"docker_image = {json.dumps(images.pinned_main(registry))}\n"
         if prebuilt
         else ""
     )
@@ -328,9 +329,13 @@ def write_task(
         task_toml(task.name, domain, task_id, prebuilt=prebuilt, registry=registry),
     )
     write(task / "instruction.md", instruction_md(domain, task_id, spec))
-    write(task / "environment" / "Dockerfile", images.MAIN_DOCKERFILE)
+    main_image = images.pinned_main(registry)
+    write(
+        task / "environment" / "Dockerfile",
+        images.from_image(main_image) if "@" in main_image else images.MAIN_DOCKERFILE,
+    )
     # Built: the image is still named, so every task's build lands on one tag.
-    source = f"    image: {images.tau2_image(registry)}"
+    source = f"    image: {images.pinned_tau2(registry)}"
     if not prebuilt:
         source = "    build: ./sidecar\n" + source
         sidecar = task / "environment" / "sidecar"
@@ -382,7 +387,13 @@ def write_job_config(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(
         prog="tau-voice job-config", description=_first_line(job.__doc__)
     )
-    parser.add_argument("--dataset", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--dataset", type=Path, help="a folder of converted tasks")
+    source.add_argument(
+        "--hub-dataset",
+        metavar="NAME[@VERSION]",
+        help="a published dataset, as this checkout's registry.json pins it",
+    )
     parser.add_argument("--model", required=True, help="the S2S agent under test")
     parser.add_argument("--trials", type=int, default=1, help="tau2's --num-trials")
     parser.add_argument("-n", "--concurrent", type=int, default=1)
@@ -400,17 +411,21 @@ def write_job_config(argv: list[str]) -> None:
     )
     parser.add_argument("-o", "--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    config = job.job_config(
-        dataset=args.dataset,
-        model=args.model,
-        trials=args.trials,
-        concurrent=args.concurrent,
-        run_seed=args.run_seed,
-        job_name=args.job_name,
-        environment=args.env,
-        task_names=args.task_names,
-        agent_config=args.agent_config,
-    )
+    try:
+        config = job.job_config(
+            dataset=args.dataset,
+            hub=args.hub_dataset,
+            model=args.model,
+            trials=args.trials,
+            concurrent=args.concurrent,
+            run_seed=args.run_seed,
+            job_name=args.job_name,
+            environment=args.env,
+            task_names=args.task_names,
+            agent_config=args.agent_config,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     args.out.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     print(args.out)
 
@@ -425,6 +440,10 @@ def main(argv: list[str] | None = None) -> None:
     if argv[:1] == ["job-config"]:
         write_job_config(argv[1:])
         return
+    if argv[:1] == ["voices"]:
+        from tau_voice.personas import main_voices
+
+        sys.exit(main_voices(argv[1:]))
     if argv[:1] == ["sample"]:
         from tau_voice import sample
 
@@ -462,6 +481,10 @@ def main(argv: list[str] | None = None) -> None:
         "--user-llm", help="tau2's --user-llm, the caller's model (default: tau2's)"
     )
     args = parser.parse_args(argv)
+    try:  # before any task is written
+        images.pinned_main(args.registry), images.pinned_tau2(args.registry)
+    except images.UnpublishedImage as exc:
+        parser.error(str(exc))
 
     seed = trial_seeds(args.run_seed, 1)[0]
     written = 0

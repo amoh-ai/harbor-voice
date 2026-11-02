@@ -167,6 +167,11 @@ OWN_FILES = frozenset(
 """Record files only EVA's code writes (the worker, the server, the metrics
 runner); a ``/record`` upload carrying one is refused."""
 
+API_VERSION = 1
+"""The HTTP API this sidecar serves, reported by ``/health``. The driver
+(``eva_adapter.client.SIDECAR_API``) checks it before a call: bump both when a
+route or a request model changes (``tests/adapters/test_sidecar_api.py``)."""
+
 app = FastAPI(title="EVA sidecar")
 
 
@@ -1050,6 +1055,7 @@ def _require() -> _Session:
 def health() -> dict[str, Any]:
     return {
         "status": "ok",
+        "api": API_VERSION,
         "eva": eva.__version__,
         "commit": os.environ.get("GIT_COMMIT_SHA"),
     }

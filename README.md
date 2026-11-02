@@ -81,7 +81,7 @@ start. The full table is in the
 |---|---|
 | `OPENAI_API_KEY` | the agent under test, the caller's LLM |
 | `ELEVENLABS_API_KEY` | the caller's voice |
-| `TAU2_VOICE_ID_<PERSONA>` | one ElevenLabs voice per tau2 persona, made by tau2's `setup_voices`: two for `control`, five more for `regular` |
+| `TAU2_VOICE_ID_<PERSONA>` | one ElevenLabs voice per tau2 persona, made once by `tau-voice voices create --yes` (tau2's `setup_voices`, without a tau2 checkout): two for `control`, five more for `regular` |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | tau2's hallucination reviewer, on Bedrock |
 
 **2. Convert tasks** from a checkout of tau2-bench, which supplies the task
@@ -275,7 +275,7 @@ job's wall time. Keep it within your providers' concurrent-session limits
 | `harbor-voice doctor` / `profiles` / `metrics` | the built-in loop's conditions and metrics: what a configuration will report, abstain on, or reject |
 | `harbor-voice report <job>` | roll up built-in-loop trials and diff conditions against a baseline |
 | `harbor-voice drive` | runs a task's call driver; what `VoiceCallAgent` runs inside `main` |
-| `tau-voice …` | convert tasks; `build-image`, `job-config`; parity: `sample`, `compare` |
+| `tau-voice …` | convert tasks; `build-image`, `job-config`, `voices`; parity: `sample`, `compare` |
 | `eva-adapter …` | `convert`, `agents`, `build-image`, `job-config`; parity: `sample`, `compare` |
 
 ## Repository

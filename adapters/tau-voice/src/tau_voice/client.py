@@ -20,8 +20,33 @@ from tau_voice.reactive import Pending
 from tau_voice.reactive import StepRecord
 
 
+SIDECAR_API = 1
+"""The sidecar API this driver speaks (``API_VERSION`` in ``sidecar/server.py``).
+
+The driver is installed from the running checkout at every trial; the
+sidecar is whatever image the task names, built when the task was converted.
+:meth:`Sidecar.open` checks the two agree before anything is spent."""
+
+
 class SidecarError(RuntimeError):
     """The sidecar refused a request or is unreachable."""
+
+
+class SidecarMismatch(SidecarError):
+    """The task's sidecar serves another API than this driver speaks."""
+
+
+def mismatch(served: object, expected: int, adapter: str) -> str:
+    """Why a trial stops: the two versions, and what to do about it."""
+    have = (
+        "no API version (it predates the check)" if served is None else f"API {served}"
+    )
+    return (
+        f"the task's {adapter} sidecar serves {have}; this harbor-voice's driver "
+        f"speaks API {expected}. Run the task with the harbor-voice it was "
+        "converted with (for a hub dataset: the checkout whose registry.json lists "
+        "it), or reconvert it from this checkout."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +71,7 @@ class Sidecar:
         self._base = base_url.rstrip("/")
         self._client = client or httpx.AsyncClient(timeout=timeout_s)
         self._owns_client = client is None
+        self._api_checked = False
 
     async def aclose(self) -> None:
         if self._owns_client:
@@ -89,7 +115,17 @@ class Sidecar:
         if live_config is not None:
             body["live_config"] = dict(live_config)
             body["agent_model"] = agent_model
+        await self.check_api()
         return await self._post("/open", body)
+
+    async def check_api(self) -> None:
+        """Refuse a sidecar whose API isn't :data:`SIDECAR_API` (once per session)."""
+        if self._api_checked:
+            return
+        served = (await self._get("/health")).json().get("api")
+        if served != SIDECAR_API:
+            raise SidecarMismatch(mismatch(served, SIDECAR_API, "tau-voice"))
+        self._api_checked = True
 
     async def tool(
         self,

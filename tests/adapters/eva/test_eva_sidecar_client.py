@@ -17,9 +17,11 @@ import httpx
 import pytest
 
 from eva_adapter.client import CALL_FILE
+from eva_adapter.client import SIDECAR_API
 from eva_adapter.client import CallInfo
 from eva_adapter.client import Sidecar
 from eva_adapter.client import SidecarError
+from eva_adapter.client import SidecarMismatch
 from eva_adapter.client import pack_record
 from eva_adapter.client import unpack
 
@@ -68,6 +70,12 @@ class FakeSidecar:
         self.requests: list[httpx.Request] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
+        if (request.method, request.url.path) == ("GET", "/health"):
+            # Not recorded: every session checks the API before its first open.
+            answer = self.routes.get(
+                "GET /health", {"status": "ok", "api": SIDECAR_API}
+            )
+            return httpx.Response(200, json=answer)
         self.requests.append(request)
         answer = self.routes.get(f"{request.method} {request.url.path}")
         if answer is None:
@@ -260,3 +268,29 @@ def test_unpack_refuses_paths_that_leave_the_destination(tmp_path: Path) -> None
     with pytest.raises(tarfile.TarError):
         unpack(buffer.getvalue(), tmp_path / "dest")
     assert not (tmp_path / "escape.txt").exists()
+
+
+async def test_a_sidecar_of_another_api_stops_the_trial_before_open() -> None:
+    for health in ({"status": "ok", "api": SIDECAR_API + 1}, {"status": "ok"}):
+        fake = FakeSidecar({"GET /health": health, "POST /open": OPENED})
+        with pytest.raises(SidecarMismatch, match="reconvert") as raised:
+            await _sidecar(fake).open(domain="airline", record_id="1.1.2")
+        assert fake.requests == []  # /open never sent
+    assert "predates the check" in str(raised.value)
+
+
+async def test_the_api_is_checked_once_per_session() -> None:
+    seen: list[str] = []
+    fake = FakeSidecar({"POST /open": OPENED})
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(f"{request.method} {request.url.path}")
+        return fake(request)
+
+    sidecar = Sidecar(
+        "http://sidecar:8000",
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+    await sidecar.open(domain="airline", record_id="1.1.2")
+    await sidecar.open(domain="airline", record_id="1.1.2")  # EVA's rerun
+    assert seen == ["GET /health", "POST /open", "POST /open"]

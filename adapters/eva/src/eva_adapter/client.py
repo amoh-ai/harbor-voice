@@ -32,8 +32,33 @@ JUDGE_TIMEOUT_S = 1800.0
 at a time per model by EVA's default, each retried with backoff."""
 
 
+SIDECAR_API = 1
+"""The sidecar API this driver speaks (``API_VERSION`` in ``sidecar/server.py``).
+
+The driver is installed from the running checkout at every trial; the
+sidecar is whatever image the task names, built when the task was converted.
+:meth:`Sidecar.open` checks the two agree before anything is spent."""
+
+
 class SidecarError(RuntimeError):
     """The sidecar refused a request or is unreachable."""
+
+
+class SidecarMismatch(SidecarError):
+    """The task's sidecar serves another API than this driver speaks."""
+
+
+def mismatch(served: object, expected: int, adapter: str) -> str:
+    """Why a trial stops: the two versions, and what to do about it."""
+    have = (
+        "no API version (it predates the check)" if served is None else f"API {served}"
+    )
+    return (
+        f"the task's {adapter} sidecar serves {have}; this harbor-voice's driver "
+        f"speaks API {expected}. Run the task with the harbor-voice it was "
+        "converted with (for a hub dataset: the checkout whose registry.json lists "
+        "it), or reconvert it from this checkout."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +180,7 @@ class Sidecar:
         self._client = client or httpx.AsyncClient(timeout=timeout_s)
         self._owns_client = client is None
         self._judge_timeout_s = judge_timeout_s
+        self._api_checked = False
 
     async def aclose(self) -> None:
         if self._owns_client:
@@ -219,7 +245,17 @@ class Sidecar:
             body["framework"] = framework
         if model is not None:
             body["model"] = dict(model)
+        await self.check_api()
         return _opened(await self._post("/open", body))
+
+    async def check_api(self) -> None:
+        """Refuse a sidecar whose API isn't :data:`SIDECAR_API` (once per session)."""
+        if self._api_checked:
+            return
+        served = (await self._send("GET", "/health")).json().get("api")
+        if served != SIDECAR_API:
+            raise SidecarMismatch(mismatch(served, SIDECAR_API, "EVA"))
+        self._api_checked = True
 
     async def tool(self, name: str, arguments: Mapping[str, Any]) -> ToolReply:
         """Run one tool call on the scenario DB, as EVA's server runs it."""

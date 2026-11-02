@@ -8,7 +8,8 @@
                         [--background-noise <noise> [--snr-db 15]]
                         [--connection-degradation] [--sidecar-env NAME ...]
     eva-adapter build-image [--registry <prefix> --push] [--from-source] [--force]
-    eva-adapter job-config --dataset datasets/eva --model openai.realtime/gpt-realtime-1.5 \\
+    eva-adapter job-config (--dataset datasets/eva | --hub-dataset eva@0.1.0) \\
+                           --model openai.realtime/gpt-realtime-1.5 \\
                            [--trials 3] [-n 4] [--env daytona]
                            [--override-storage-mb <MB>] -o job.yaml
     eva-adapter agents ...        EVA's ElevenLabs caller agents (agents.py)
@@ -235,7 +236,7 @@ def _environment(
     perturbed: bool = False,
     sidecar_env: Sequence[str] = (),
 ) -> str:
-    image = images.main_image(registry, perturbed=perturbed)
+    image = images.pinned_main(registry, perturbed=perturbed)
     main_image = f"docker_image = {json.dumps(image)}\n" if prebuilt else ""
     return f"""{main_image}build_timeout_sec = 3600
 {RESOURCES}
@@ -435,9 +436,15 @@ def write_task(
     write(
         task / "instruction.md", instruction_md(domain, record_id, spec, perturbation)
     )
-    write(task / "environment" / "Dockerfile", images.main_dockerfile(perturbed))
+    main_image = images.pinned_main(registry, perturbed=perturbed)
+    write(
+        task / "environment" / "Dockerfile",
+        images.from_image(main_image)
+        if prebuilt and "@" in main_image
+        else images.main_dockerfile(perturbed),
+    )
     if prebuilt:
-        source = f"    image: {images.sidecar_image(registry)}"
+        source = f"    image: {images.pinned_sidecar(registry)}"
     else:
         # Built where it runs, from EVA's public repo; every task's build
         # lands on one tag.
@@ -490,6 +497,31 @@ RETRY_ON = (
 """Infrastructure only. A record EVA never validated is a result (unscored),
 not an error, and is never retried here: EVA's own reruns already ran."""
 METRIC = TEMPLATE / "metrics" / "eva_mean.py"
+REGISTRY = Path(__file__).resolve().parents[4] / "registry.json"
+"""The published datasets, at the root of this harbor-voice checkout."""
+
+
+def hub_dataset(spec: str, registry: Path | None = None) -> dict[str, Any]:
+    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest)
+    in ``registry``; a name or version it doesn't list is a ``ValueError``.
+
+    Harbor fetches the tasks at the commit ``registry`` pins, so the dataset
+    is the one this checkout was released with."""
+    name, _, version = spec.partition("@")
+    registry = REGISTRY if registry is None else registry
+    if not registry.is_file():
+        raise ValueError(f"no {registry.name} at {registry.parent}")
+    entries = json.loads(registry.read_text(encoding="utf-8"))
+    versions = [entry["version"] for entry in entries if entry["name"] == name]
+    if not versions:
+        listed = sorted({entry["name"] for entry in entries})
+        raise ValueError(f"{name!r} is not in {registry.name}; it lists {listed}")
+    if version and version not in versions:
+        raise ValueError(f"{name} has no version {version!r}; it has {versions}")
+    entry: dict[str, Any] = {"name": name, "registry_path": str(registry)}
+    if version:
+        entry["version"] = version
+    return entry
 
 
 def trial_seeds(trials: int = NUM_TRIALS) -> list[int]:
@@ -499,7 +531,8 @@ def trial_seeds(trials: int = NUM_TRIALS) -> list[int]:
 
 def job_config(
     *,
-    dataset: Path,
+    dataset: Path | None = None,
+    hub: str | None = None,
     model: str = REFERENCE_AGENT,
     trials: int = NUM_TRIALS,
     concurrent: int = 1,
@@ -516,19 +549,27 @@ def job_config(
     per trial index (``kwargs.seed``) with one attempt each; harbor pools
     them into one metric, which keys on agent name and model, not kwargs.
 
-    ``storage_mb`` sets each trial's disk (harbor's ``override_storage_mb``;
-    the tasks ask for none, so the backend's default applies without it).
+    The tasks are a local ``dataset`` folder or a published ``hub`` dataset
+    (:func:`hub_dataset`). ``storage_mb`` sets each trial's disk (harbor's
+    ``override_storage_mb``; the tasks ask for none, so the backend's default
+    applies without it).
     """
     from harbor_voice.capabilities import Pipeline
     from harbor_voice.harbor_agent import harbor_parses_model_names
     from harbor_voice.trial import AgentSpec
 
+    dataset_entry: dict[str, Any]
+    if hub is not None and dataset is None:
+        dataset_entry = hub_dataset(hub)
+    elif dataset is not None and hub is None:
+        dataset_entry = {"path": str(dataset.resolve())}
+    else:
+        raise ValueError("name one of: a dataset folder, a hub dataset")
     extra: dict[str, Any] = {}
     if agent_config:
         extra["agent_json"] = AgentSpec(
             pipeline=Pipeline.S2S, s2s=model, config={"s2s": agent_config}
         ).model_dump_json()
-    dataset_entry: dict[str, Any] = {"path": str(dataset.resolve())}
     if task_names:
         dataset_entry["task_names"] = task_names
     config: dict[str, Any] = {
@@ -680,6 +721,11 @@ def convert(argv: Sequence[str]) -> int:
         sidecar_env_names(args.sidecar_env)
     except ValueError as exc:
         parser.error(str(exc))
+    try:  # before any task is written
+        images.pinned_sidecar(args.registry)
+        images.pinned_main(args.registry, perturbed=perturbation is not None)
+    except images.UnpublishedImage as exc:
+        parser.error(str(exc))
     others = conditions_in(args.out) - {label_of(perturbation)}
     if others:
         parser.error(
@@ -748,7 +794,13 @@ def write_job_config(argv: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="eva-adapter job-config", description=_first_line(job_config.__doc__)
     )
-    parser.add_argument("--dataset", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--dataset", type=Path, help="a folder of converted tasks")
+    source.add_argument(
+        "--hub-dataset",
+        metavar="NAME[@VERSION]",
+        help="a published dataset, as this checkout's registry.json pins it",
+    )
     parser.add_argument("--model", default=REFERENCE_AGENT, help="the S2S agent")
     parser.add_argument("--trials", type=int, default=NUM_TRIALS, help="EVA's k")
     parser.add_argument("-n", "--concurrent", type=int, default=1)
@@ -765,9 +817,10 @@ def write_job_config(argv: Sequence[str]) -> int:
     )
     parser.add_argument("-o", "--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    _dump_yaml(
-        job_config(
+    try:
+        config = job_config(
             dataset=args.dataset,
+            hub=args.hub_dataset,
             model=args.model,
             trials=args.trials,
             concurrent=args.concurrent,
@@ -776,9 +829,10 @@ def write_job_config(argv: Sequence[str]) -> int:
             task_names=args.task_names,
             agent_config=args.agent_config,
             storage_mb=args.override_storage_mb,
-        ),
-        args.out,
-    )
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    _dump_yaml(config, args.out)
     print(args.out)
     return 0
 

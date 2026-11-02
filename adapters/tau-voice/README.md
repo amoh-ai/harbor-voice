@@ -56,7 +56,7 @@ start):
 |---|---|
 | `OPENAI_API_KEY` | the agent under test; the caller's LLM; tau2's listener decisions |
 | `ELEVENLABS_API_KEY` | the caller's voice |
-| `TAU2_VOICE_ID_<PERSONA>` | one ElevenLabs voice per tau2 persona (tau2's `setup_voices` makes them): `MATT_DELANEY`, `LISA_BRENNER` (`control`), `MILDRED_KAPLAN`, `ARJUN_ROY`, `WEI_LIN`, `MAMADOU_DIALLO`, `PRIYA_PATIL` (`regular`) |
+| `TAU2_VOICE_ID_<PERSONA>` | one ElevenLabs voice per tau2 persona: `MATT_DELANEY`, `LISA_BRENNER` (`control`), `MILDRED_KAPLAN`, `ARJUN_ROY`, `WEI_LIN`, `MAMADOU_DIALLO`, `PRIYA_PATIL` (`regular`). `tau-voice voices create --yes` makes them once, as tau2's `setup_voices` does (same prompts, settings and seed), and prints these lines; `tau-voice voices list` prints them again |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | tau2's hallucination reviewer, Claude Opus 4.5 on Bedrock |
 | `TAU_VOICE_REVIEW_MODEL` | optional: another reviewer model |
 

@@ -11,10 +11,15 @@ its average::
     python -m tau_voice.main job-config --dataset datasets/tau-voice \\
         --model openai.realtime/gpt-realtime-1.5 --trials 3 -n 4 -o job.yaml
     harbor-voice jobs start -c job.yaml
+
+``--hub-dataset tau-voice-control@0.1.0`` runs a published dataset instead of
+a local folder: harbor fetches its tasks at the commit this checkout's
+``registry.json`` pins, so the dataset is the one this code was released with.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -39,11 +44,34 @@ RETRY_ON = (
     "SandboxBuildFailedError",
 )
 METRIC = TEMPLATE / "metrics" / "tau2_mean.py"
+REGISTRY = Path(__file__).resolve().parents[4] / "registry.json"
+"""The published datasets, at the root of this harbor-voice checkout."""
+
+
+def hub_dataset(spec: str, registry: Path | None = None) -> dict[str, Any]:
+    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest)
+    in ``registry``; a name or version it doesn't list is a ``ValueError``."""
+    name, _, version = spec.partition("@")
+    registry = REGISTRY if registry is None else registry
+    if not registry.is_file():
+        raise ValueError(f"no {registry.name} at {registry.parent}")
+    entries = json.loads(registry.read_text(encoding="utf-8"))
+    versions = [entry["version"] for entry in entries if entry["name"] == name]
+    if not versions:
+        listed = sorted({entry["name"] for entry in entries})
+        raise ValueError(f"{name!r} is not in {registry.name}; it lists {listed}")
+    if version and version not in versions:
+        raise ValueError(f"{name} has no version {version!r}; it has {versions}")
+    entry: dict[str, Any] = {"name": name, "registry_path": str(registry)}
+    if version:
+        entry["version"] = version
+    return entry
 
 
 def job_config(
     *,
-    dataset: Path,
+    dataset: Path | None = None,
+    hub: str | None = None,
     model: str,
     trials: int = 1,
     concurrent: int = 1,
@@ -53,18 +81,26 @@ def job_config(
     environment: str | None = None,
     agent_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """The job's own parts. ``environment`` names harbor's backend (``docker``,
-    ``daytona``, ``ec2``, ...); account settings (an EC2 AMI, key pair, ...)
-    are the user's and go in ``environment.kwargs`` of their copy.
+    """The job's own parts. The tasks are a local ``dataset`` folder or a
+    published ``hub`` dataset (:func:`hub_dataset`). ``environment`` names
+    harbor's backend (``docker``, ``daytona``, ``ec2``, ...); account settings
+    (an EC2 AMI, key pair, ...) are the user's and go in
+    ``environment.kwargs`` of their copy.
 
     ``agent_config`` is the agent's s2s settings (OpenAI Live's
     ``backend_model``), sent as its ``agent_json``; ``model`` still names it."""
+    dataset_entry: dict[str, Any]
+    if hub is not None and dataset is None:
+        dataset_entry = hub_dataset(hub)
+    elif dataset is not None and hub is None:
+        dataset_entry = {"path": str(dataset.resolve())}
+    else:
+        raise ValueError("name one of: a dataset folder, a hub dataset")
     extra: dict[str, Any] = {}
     if agent_config:
         extra["agent_json"] = AgentSpec(
             pipeline=Pipeline.S2S, s2s=model, config={"s2s": agent_config}
         ).model_dump_json()
-    dataset_entry: dict[str, Any] = {"path": str(dataset.resolve())}
     if task_names:
         dataset_entry["task_names"] = task_names
     config: dict[str, Any] = {

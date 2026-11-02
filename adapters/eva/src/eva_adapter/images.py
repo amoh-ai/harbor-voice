@@ -32,11 +32,18 @@ repo at the commit and checked, because EVA's perturbator runs in ``main``.
 
 Neither image holds a secret (EVA is public; keys arrive as environment
 variables at run time), so a public registry needs no pull credentials.
+
+The images published for the harbor-voice hub are recorded by digest in
+``adapters/eva/images.json`` (:data:`RECORD`, written by ``scripts/hub.py
+images``). Tasks converted with a registry recorded there name each image by
+that digest (:func:`pinned`), so a published dataset pulls the same bytes for
+good, even if a tag is pushed again.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import subprocess
 from pathlib import Path
 
@@ -48,6 +55,22 @@ EVA_COMMIT_FULL = "039efa0a80916a2e59ca83b330f6ed6fd63ab4db"
 """``eva_adapter.EVA_COMMIT``, in full: what every image is built from."""
 SIDECAR = Path(__file__).resolve().parents[2] / "sidecar"
 SIDECAR_FILES = ("Dockerfile", "server.py", "aggregate.py")
+RECORD = Path(__file__).resolve().parents[2] / "images.json"
+"""Published images, ``{registry: {"name:tag": "sha256:..."}}``."""
+SOURCE = "https://github.com/amoh-ai/harbor-voice"
+LABELS = {
+    "org.opencontainers.image.source": SOURCE,
+    "org.opencontainers.image.licenses": "Apache-2.0 AND MIT",
+}
+"""OCI labels on every image; ``source`` links a registry package to the repo.
+Labels are build arguments, not Dockerfile lines, so they leave tags alone."""
+DESCRIPTIONS = {
+    "eva-sidecar": f"EVA's sidecar: ServiceNow's EVA at {EVA_COMMIT} (MIT License, "
+    "Copyright (c) 2026 ServiceNow) with harbor-voice's server (Apache-2.0)",
+    "eva-main": "EVA's main container: python-slim and uv; harbor-voice is "
+    "installed at trial start. perturbed-* adds EVA's numpy and fetches EVA's "
+    "noise WAVs (MIT License, Copyright (c) 2026 ServiceNow)",
+}
 
 EVA_BASE = f"eva-base:{EVA_COMMIT}"
 """EVA's own Dockerfile at the commit (the sidecar Dockerfile's default)."""
@@ -145,6 +168,79 @@ def main_image(registry: str | None = None, *, perturbed: bool = False) -> str:
     return _named("eva-main", f"perturbed-{digest}" if perturbed else digest, registry)
 
 
+def refs(registry: str | None = None) -> list[str]:
+    """The images :func:`build` makes (sidecar on ``eva-base``), by tag."""
+    return [
+        sidecar_image(registry),
+        main_image(registry),
+        main_image(registry, perturbed=True),
+    ]
+
+
+class UnpublishedImage(LookupError):
+    """A registry with published images lacks the one a task would name."""
+
+
+def published(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """``{registry: {"name:tag": digest}}``, empty before anything is published."""
+    path = RECORD if path is None else path
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def pinned(image: str, registry: str | None) -> str:
+    """``image`` as a task names it: by digest if ``registry`` is recorded.
+
+    A registry in :data:`RECORD` must hold every image its tasks name, so a
+    checkout whose sidecar files changed since the images were published
+    fails here instead of naming a tag nobody pushed. Any other registry
+    (your own) names images by tag, as before.
+    """
+    if registry is None:
+        return image
+    prefix = registry.rstrip("/")
+    record = published().get(prefix)
+    if record is None:
+        return image
+    digest = record.get(image.removeprefix(prefix + "/"))
+    if digest is None:
+        raise UnpublishedImage(
+            f"{image} is not in {RECORD.name}, which records what was published "
+            f"to {prefix}: publish it (scripts/hub.py images), or convert from "
+            "the commit that recorded the images you mean"
+        )
+    return f"{image}@{digest}"
+
+
+def pinned_sidecar(registry: str | None = None) -> str:
+    """The sidecar as a prebuilt task names it (:func:`pinned`)."""
+    return pinned(sidecar_image(registry), registry)
+
+
+def pinned_main(registry: str | None = None, *, perturbed: bool = False) -> str:
+    """``main`` as a prebuilt task names it (:func:`pinned`)."""
+    return pinned(main_image(registry, perturbed=perturbed), registry)
+
+
+def from_image(image: str) -> str:
+    """``main``'s Dockerfile for a task that names a published ``main``.
+
+    Harbor builds it only when a run forces builds; then it is that same
+    image, pinned, rather than a fresh build of python-slim.
+    """
+    return (
+        f"# main: the published image this task names (docker_image).\nFROM {image}\n"
+    )
+
+
+def _labels(name: str) -> list[str]:
+    labels = {**LABELS, "org.opencontainers.image.description": DESCRIPTIONS[name]}
+    return [
+        arg for key, value in labels.items() for arg in ("--label", f"{key}={value}")
+    ]
+
+
 def exists(image: str) -> bool:
     result = subprocess.run(
         ["docker", "image", "inspect", image],
@@ -211,6 +307,7 @@ def build(
                 "build",
                 "--platform",
                 PLATFORM,
+                *_labels("eva-sidecar"),
                 "-t",
                 sidecar,
                 "--build-arg",
@@ -224,7 +321,8 @@ def build(
         if force or not exists(main):
             # No build context: the Dockerfile copies nothing from disk.
             subprocess.run(
-                ["docker", "build", "-t", main, "-"],
+                ["docker", "build", "--platform", PLATFORM, *_labels("eva-main")]
+                + ["-t", main, "-"],
                 input=main_dockerfile(perturbed).encode(),
                 check=True,
             )

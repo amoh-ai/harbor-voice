@@ -577,3 +577,49 @@ def test_a_folder_holds_one_condition(
         assert refused.value.code == 2
         assert "holds tasks of condition coffee_shop-15db" in capsys.readouterr().err
     assert len([p for p in tmp_path.iterdir() if p.is_dir()]) == 1
+
+
+def test_a_published_registry_names_images_by_digest(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(images, "RECORD", tmp_path / "images.json")
+    hub = "ghcr.io/amoh-ai"
+    sidecar, clean, perturbed = images.refs(hub)
+    digest = {ref: "sha256:" + f"{n}" * 64 for n, ref in enumerate((sidecar, clean), 1)}
+    record = {ref.removeprefix(hub + "/"): d for ref, d in digest.items()}
+    images.RECORD.write_text(json.dumps({hub: record}), encoding="utf-8")
+
+    task = write_task(tmp_path, "airline", "1.1.2", registry=hub)
+    assert _compose(task)["services"]["eva"]["image"] == f"{sidecar}@{digest[sidecar]}"
+    config = VoiceTaskConfig.from_toml(task / "voice.toml")
+    assert config.environment is not None
+    assert config.environment.docker_image == f"{clean}@{digest[clean]}"
+    dockerfile = (task / "environment" / "Dockerfile").read_text(encoding="utf-8")
+    assert f"FROM {clean}@{digest[clean]}" in dockerfile.splitlines()
+    # The perturbed main isn't recorded: converting a condition fails first.
+    with pytest.raises(SystemExit):
+        main(["convert", "--out", str(tmp_path / "noisy"), "--domains", "airline",
+              "--limit", "1", "--registry", hub, "--background-noise",
+              "coffee_shop"])  # fmt: skip
+    assert not (tmp_path / "noisy").exists()
+
+
+def test_job_config_runs_a_hub_dataset(tmp_path: Path, monkeypatch) -> None:
+    from eva_adapter import main as eva_main
+
+    registry = tmp_path / "registry.json"
+    entry = {"name": "eva", "version": "0.1.0", "description": "", "tasks": []}
+    registry.write_text(json.dumps([entry]), encoding="utf-8")
+    monkeypatch.setattr(eva_main, "REGISTRY", registry)
+    out = tmp_path / "job.yaml"
+    with pytest.raises(SystemExit):  # one of --dataset, --hub-dataset
+        main(["job-config", "-o", str(out)])
+    with pytest.raises(SystemExit):
+        main(["job-config", "--hub-dataset", "eva@9", "-o", str(out)])
+    with pytest.raises(SystemExit) as done:
+        main(["job-config", "--hub-dataset", "eva@0.1.0", "-o", str(out)])
+    assert done.value.code == 0
+    raw = yaml.safe_load(out.read_text(encoding="utf-8"))
+    assert raw["datasets"] == [
+        {"name": "eva", "registry_path": str(registry), "version": "0.1.0"}
+    ]

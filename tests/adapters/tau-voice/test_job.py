@@ -71,3 +71,31 @@ def test_an_agents_settings_travel_as_its_agent_json(tmp_path: Path) -> None:
     assert spec["config"] == {"s2s": {"backend_model": "gpt-6-luna"}}
     plain = job_config(dataset=tmp_path, model="m")
     assert "agent_json" not in plain["agents"][0]["kwargs"]
+
+
+def test_a_hub_dataset_is_named_as_this_checkouts_registry_pins_it(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import pytest
+
+    from tau_voice import job
+
+    registry = tmp_path / "registry.json"
+    entry = {"name": "tau-voice-control", "description": "", "tasks": []}
+    versions = [{**entry, "version": "0.1.0"}, {**entry, "version": "0.2.0"}]
+    registry.write_text(json.dumps(versions), encoding="utf-8")
+    monkeypatch.setattr(job, "REGISTRY", registry)
+
+    raw = job_config(hub="tau-voice-control@0.1.0", model="m", task_names=["airline-*"])
+    (dataset,) = JobConfig.model_validate(raw).datasets
+    assert dataset.is_registry() and dataset.registry_path == registry
+    assert (dataset.name, dataset.version) == ("tau-voice-control", "0.1.0")
+    assert dataset.task_names == ["airline-*"]
+    # No version: harbor runs the latest.
+    assert "version" not in job.hub_dataset("tau-voice-control")
+    with pytest.raises(ValueError, match="no version '9'"):
+        job.hub_dataset("tau-voice-control@9")
+    with pytest.raises(ValueError, match="not in registry.json"):
+        job.hub_dataset("eva@0.1.0")
+    with pytest.raises(ValueError, match="name one of"):
+        job_config(dataset=tmp_path, hub="tau-voice-control", model="m")

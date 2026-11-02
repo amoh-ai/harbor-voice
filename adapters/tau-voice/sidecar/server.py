@@ -98,6 +98,11 @@ STATE_PATH = Path(
 )
 MAX_ERRORS = int(os.environ.get("TAU_VOICE_MAX_ERRORS", "10"))
 
+API_VERSION = 1
+"""The HTTP API this sidecar serves, reported by ``/health``. The driver
+(``tau_voice.client.SIDECAR_API``) checks it before a call: bump both when a
+route or a request model changes (``tests/adapters/test_sidecar_api.py``)."""
+
 app = FastAPI(title="tau-voice runtime")
 
 _tau2_usage = _llm_utils.get_response_usage
@@ -646,8 +651,8 @@ def _require() -> _Session:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, Any]:
+    return {"status": "ok", "api": API_VERSION}
 
 
 ASSET_DIRS = {

@@ -163,3 +163,42 @@ def test_every_compose_variable_reaches_a_remote_backend(tmp_path: Path) -> None
         ).environment.env
     )
     assert passed | (templated - host_only) <= declared
+
+
+def test_a_published_registry_names_images_by_digest(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import json
+
+    from tau_voice.main import main
+
+    monkeypatch.setattr(images, "RECORD", tmp_path / "images.json")
+    hub = "ghcr.io/amoh-ai"
+    runtime, main_tag = images.refs(hub)
+    record = {runtime.removeprefix(hub + "/"): "sha256:" + "1" * 64}
+    images.RECORD.write_text(json.dumps({hub: record}), encoding="utf-8")
+    # A tag the record lacks (the sidecar changed since publishing) fails
+    # before any task is written.
+    with pytest.raises(SystemExit):
+        main(["--tau2-root", ".", "--output-dir", str(tmp_path / "out"),
+              "--domains", "airline", "--task-ids", "7", "--registry", hub])  # fmt: skip
+    assert not (tmp_path / "out").exists()
+
+    record[main_tag.removeprefix(hub + "/")] = "sha256:" + "2" * 64
+    images.RECORD.write_text(json.dumps({hub: record}), encoding="utf-8")
+    task = write_task(
+        tmp_path, "airline", "7", complexity="control", seed=1, registry=hub
+    )
+    compose = yaml.safe_load(
+        (task / "environment" / "docker-compose.yaml").read_text(encoding="utf-8")
+    )
+    assert compose["services"]["tau2"]["image"] == f"{runtime}@sha256:{'1' * 64}"
+    config = VoiceTaskConfig.from_toml(task / "voice.toml")
+    assert config.environment is not None
+    assert config.environment.docker_image == f"{main_tag}@sha256:{'2' * 64}"
+    dockerfile = (task / "environment" / "Dockerfile").read_text(encoding="utf-8")
+    assert f"FROM {main_tag}@sha256:{'2' * 64}" in dockerfile.splitlines()
+    # Any other registry still names images by tag.
+    other = write_task(tmp_path / "o", "airline", "7", complexity="control", seed=1,
+                       registry="ghcr.io/org")  # fmt: skip
+    assert "@sha256:" not in (other / "task.toml").read_text(encoding="utf-8")

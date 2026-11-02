@@ -23,9 +23,21 @@ jobs:
         run: uv sync --locked
       - name: Lint
         run: |
-          uv run ruff check src adapters tests
-          uv run ruff format --check src adapters tests
+          uv run ruff check src adapters scripts tests
+          uv run ruff format --check src adapters scripts tests
       - name: Types
         run: uv run ty check
       - name: Tests
         run: uv run pytest -q
+      # registry.json and the image digests are well-formed, and every
+      # published entry is unchanged since the base (a fix is a new version).
+      - name: Registry
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          against=()
+          if [ -n "$BASE" ] && git fetch --depth=1 origin "$BASE"; then
+            against=(--against "$BASE")
+          fi
+          uv run python scripts/hub.py check "${against[@]}"

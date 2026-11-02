@@ -19,7 +19,7 @@ copy: import `harbor.*` directly, and bump the pin deliberately.
 ```bash
 uv sync                                   # dev environment (adapter included)
 uv run pytest                             # all tests
-uv run ruff check src adapters tests && uv run ruff format src adapters tests
+uv run ruff check src adapters scripts tests && uv run ruff format src adapters scripts tests
 uv run ty check
 ```
 

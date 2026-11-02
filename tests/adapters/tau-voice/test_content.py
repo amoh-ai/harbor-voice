@@ -233,3 +233,36 @@ async def test_the_listener_names_tau2s_decision_model_and_its_cache() -> None:
         900,
         768,
     )
+
+
+async def test_a_sidecar_of_another_api_stops_the_trial_before_open() -> None:
+    from tau_voice.client import SIDECAR_API
+    from tau_voice.client import SidecarMismatch
+
+    def serve(api: object) -> tuple[Sidecar, list[str]]:
+        seen: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(f"{request.method} {request.url.path}")
+            if request.url.path == "/health":
+                return httpx.Response(200, json={"status": "ok", "api": api})
+            return httpx.Response(200, json={"opened": True})
+
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        return Sidecar("http://sidecar", client=client), seen
+
+    open_args = {
+        "domain": "airline",
+        "task_id": "7",
+        "speech_complexity": "control",
+        "seed": 1,
+    }
+    for api in (SIDECAR_API + 1, None):
+        sidecar, seen = serve(api)
+        with pytest.raises(SidecarMismatch, match="reconvert"):
+            await sidecar.open(**open_args)
+        assert seen == ["GET /health"]
+    sidecar, seen = serve(SIDECAR_API)
+    await sidecar.open(**open_args)
+    await sidecar.open(**open_args)  # a hallucination retry
+    assert seen == ["GET /health", "POST /open", "POST /open"]

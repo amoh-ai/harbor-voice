@@ -86,7 +86,7 @@ python = ".venv"
 all = "error"
 
 [tool.ty.src]
-include = ["src/harbor_voice", "adapters/tau-voice/src", "adapters/eva/src"]
+include = ["src/harbor_voice", "adapters/tau-voice/src", "adapters/eva/src", "scripts"]
 exclude = [
     "adapters/tau-voice/src/tau_voice/tau2_audio/[a-z]*.py",
     "adapters/eva/src/eva_adapter/vendored/[a-z]*.py",
