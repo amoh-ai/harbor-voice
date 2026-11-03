@@ -329,32 +329,68 @@ def listen(
     out: Annotated[Path, typer.Option(help="Where to write the WAV.")] = Path(
         "timeline.wav"
     ),
+    audio_dir: Annotated[
+        Path | None,
+        typer.Option(
+            help="Where the recording is; default: the trajectory's folder and "
+            "every folder under it."
+        ),
+    ] = None,
 ) -> None:
-    """Render a recorded call's mixed timeline to a WAV you can play.
+    """Write a recorded call's timeline to a WAV you can play.
 
-    The render mixes, it does not concatenate. If two parties
-    talked at once the file says so — a recording that quietly reorders an
-    interruption into an orderly exchange is worse than no recording, because
-    someone will use it to settle an argument.
+    The recording is the call as it happened, both parties on one timeline:
+    if they talked at once, the file says so — a recording that quietly
+    reorders an interruption into an orderly exchange is worse than no
+    recording, because someone will use it to settle an argument.
+
+    A trajectory names its recording by content hash and never inlines it.
+    The call writes the WAV beside the trajectory (tau-voice's ``both.wav``,
+    EVA's ``audio_mixed.wav``); this finds it there by that hash.
     """
+    import shutil
+
     from harbor_voice.verify import load_trajectory
 
     traj = load_trajectory(trajectory)
     mixed = traj.artifacts.mixed_timeline
     if mixed is None:
         typer.secho(
-            "this trajectory stores no mixed timeline (tier "
-            f"{traj.artifacts.tier}); re-run with --artifacts tier1 or higher",
+            f"this trajectory names no recording (tier {traj.artifacts.tier})",
             fg="yellow",
             err=True,
         )
         raise typer.Exit(2)
-    typer.echo(f"{mixed.duration_s:.2f}s, {mixed.bytes} bytes, digest {mixed.digest}")
-    typer.secho(
-        f"audio is stored by reference; fetch {mixed.digest} from the "
-        f"artifact store to write {out}",
-        fg="yellow",
-    )
+    root = audio_dir if audio_dir is not None else trajectory.parent
+    found = _find_audio(mixed.digest, mixed.bytes, root)
+    if found is None:
+        typer.secho(
+            f"no WAV under {root} is the recording ({mixed.digest}, "
+            f"{mixed.duration_s:.2f}s); point --audio-dir at the folder that has it",
+            fg="red",
+            err=True,
+        )
+        raise typer.Exit(1)
+    if out.resolve() != found.resolve():
+        out.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(found, out)
+    typer.echo(f"{out}: {mixed.duration_s:.2f}s, from {found}")
+
+
+def _find_audio(digest: str, size: int, root: Path) -> Path | None:
+    """The WAV under ``root`` whose bytes hash to ``digest`` (``sha256:<hex>``).
+
+    Only files of the recorded ``size`` are hashed, so a trial folder full of
+    other audio costs one ``stat`` per file.
+    """
+    import hashlib
+
+    want = digest.removeprefix("sha256:")
+    for path in sorted(root.rglob("*.wav")):
+        if path.is_file() and path.stat().st_size == size:
+            if hashlib.sha256(path.read_bytes()).hexdigest() == want:
+                return path
+    return None
 
 
 # ----------------------------------------------------------------- inspect

@@ -259,7 +259,8 @@ job's wall time. Keep it within your providers' concurrent-session limits
   EVA when its validation fails. Every attempt is kept, and the last one
   counts.
 - **Reading a call:** `harbor-voice show <trajectory.json>` summarises it,
-  and `harbor-voice listen <trajectory.json>` renders it to a WAV.
+  and `harbor-voice listen <trajectory.json> --out call.wav` writes its
+  recording, found in the trial folder by its hash.
   `harbor view` shows the call as text; it has no audio or timeline view.
 
 ## The core library
@@ -302,7 +303,7 @@ job's wall time. Keep it within your providers' concurrent-session limits
 |---|---|
 | `harbor-voice trials start` / `jobs start` | harbor's runners; the agent defaults to `VoiceCallAgent` |
 | `harbor-voice status <job>` | a running job: counts, reward so far, each trial's phase |
-| `harbor-voice show` / `listen <trajectory>` | summarise a recorded call; render it to a WAV |
+| `harbor-voice show` / `listen <trajectory>` | summarise a recorded call; write its recording to a WAV |
 | `harbor-voice caps` | provider capability matrices, and which credentials are missing |
 | `harbor-voice conformance` | the provider conformance suite |
 | `harbor-voice doctor` / `profiles` / `metrics` | the built-in loop's conditions and metrics: what a configuration will report, abstain on, or reject |
