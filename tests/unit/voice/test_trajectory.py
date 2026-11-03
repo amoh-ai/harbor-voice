@@ -96,6 +96,40 @@ class TestVoiceTrajectory:
         assert recovered.config_matrix is not None
         assert recovered.config_matrix.profile == "telephony"
 
+    def test_trajectory_json_reads_in_any_encoding(self, tmp_path, monkeypatch) -> None:
+        """Harbor reads it with the platform's encoding: cp1252 on Windows."""
+        from pathlib import Path
+
+        from harbor.utils import trajectory_utils
+
+        read_text = Path.read_text
+        monkeypatch.setattr(  # Windows' default, wherever this runs
+            Path,
+            "read_text",
+            lambda self, encoding=None, **kw: read_text(
+                self, encoding=encoding or "cp1252", **kw
+            ),
+        )
+        voice = VoiceTrajectory(trial_id="t1", task="You said “P”, café")
+        path = tmp_path / "trajectory.json"
+
+        # Unescaped, the UTF-8 holds 0x9d (in ”), which cp1252 can't decode.
+        path.write_text(voice.to_atif().model_dump_json(), encoding="utf-8")
+        with pytest.raises(UnicodeDecodeError):
+            trajectory_utils.load_model_usage_from_trajectory(path)
+
+        text = voice.to_atif_json()
+        assert text.isascii() and "\\u201c" in text
+        assert Trajectory.model_validate_json(text) == voice.to_atif()
+        path.write_text(text, encoding="utf-8")
+        trajectory_utils.load_model_usage_from_trajectory(path)  # reads now
+        assert (
+            VoiceTrajectory.from_atif(
+                Trajectory.model_validate_json(path.read_text())
+            ).task
+            == voice.task
+        )
+
     def test_a_non_voice_atif_document_is_refused(self) -> None:
         plain = VoiceTrajectory().to_atif()
         plain.extra = {}

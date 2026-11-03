@@ -410,7 +410,7 @@ async def run_task(
             attempt=attempt_index,
         )
         (out_dir / "trajectory.json").write_text(
-            trajectory.to_atif().model_dump_json(indent=2), encoding="utf-8"
+            trajectory.to_atif_json(), encoding="utf-8"
         )
         return summary
     finally:
@@ -574,7 +574,7 @@ def _add_usage(
             Trajectory.model_validate_json(atif.read_text(encoding="utf-8"))
         )
         voice = voice.model_copy(update={"usage": (*voice.usage, *records)})
-        atif.write_text(voice.to_atif().model_dump_json(indent=2), encoding="utf-8")
+        atif.write_text(voice.to_atif_json(), encoding="utf-8")
     return summary
 
 

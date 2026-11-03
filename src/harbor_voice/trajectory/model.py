@@ -21,6 +21,7 @@ data for ours.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from enum import StrEnum
 from typing import Any
@@ -464,6 +465,20 @@ class VoiceTrajectory(BaseModel):
             final_metrics=self._final_metrics(len(steps)),
             extra={VOICE_EXTRA_KEY: self.model_dump(mode="json")},
         )
+
+    def to_atif_json(self) -> str:
+        """:meth:`to_atif` as ``trajectory.json``'s text, all ASCII.
+
+        The same JSON, with every non-ASCII character escaped (``”`` as
+        ``\\u201d``). Harbor 0.25.0 reads ``trajectory.json`` with the
+        platform's default encoding (``load_model_usage_from_trajectory``),
+        which on Windows is cp1252. cp1252 can't decode some UTF-8 bytes
+        (``0x9d``, in ``”``), and harbor doesn't catch that error, so a
+        transcript holding one would end the job. ASCII reads the same in
+        every encoding.
+        """
+        document = json.loads(self.to_atif().model_dump_json())
+        return json.dumps(document, indent=2, ensure_ascii=True)
 
     def _final_metrics(self, steps: int) -> FinalMetrics:
         """Token totals over every metered part of the call; no cost.

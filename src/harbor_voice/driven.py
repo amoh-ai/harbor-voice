@@ -84,7 +84,5 @@ async def drive_here(
     if outcome.trajectory is not None:
         path = trajectory_path or out_dir / "trajectory.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            outcome.trajectory.to_atif().model_dump_json(indent=2), encoding="utf-8"
-        )
+        path.write_text(outcome.trajectory.to_atif_json(), encoding="utf-8")
     return outcome
