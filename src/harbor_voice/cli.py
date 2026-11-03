@@ -25,7 +25,7 @@ import typer
 
 voice_app = typer.Typer(
     name="voice",
-    help="Voice evaluation: preflight, profiles, capabilities, conformance.",
+    help="Voice evaluation on harbor: run jobs, read calls, preflight conditions.",
     no_args_is_help=True,
 )
 
@@ -224,19 +224,19 @@ def caps(
 # -------------------------------------------------------------- conformance
 
 
-@voice_app.command()
+@voice_app.command(hidden=True)
 def conformance(
     provider: Annotated[str, typer.Argument(help="Provider to verify.")],
 ) -> None:
-    """Run the portable conformance suite.
+    """Point at the conformance suite, which runs from a test, not here.
 
-    This is what moves a claim from ``UNATTESTED`` to ``attested``. Until it
-    runs, every number resting on that claim is usable for debugging and not
-    for a published result.
+    The suite is what moves a claim from ``UNATTESTED`` to ``attested``. It
+    needs a live session, so it runs from a test:
+    ``harbor_voice.conformance.run_conformance``.
     """
     typer.secho(
-        f"conformance for {provider!r} needs a live session and is not wired "
-        f"to the CLI yet; the suite itself is in harbor_voice.conformance",
+        f"conformance for {provider!r} needs a live session, so it runs from a "
+        "test: harbor_voice.conformance.run_conformance (its docstring shows how)",
         fg="yellow",
     )
     raise typer.Exit(2)

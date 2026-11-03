@@ -842,7 +842,7 @@ SPEC = ProviderSpec(
 )
 """Static description, readable without credentials or the SDK.
 
-Nothing is attested: ``harbor-voice conformance aws.nova-sonic`` is what moves
+Nothing is attested: ``harbor_voice.conformance`` against a live session moves
 a claim into ``attested``, and until it runs every number resting on these
 reports as ``unattested``.
 """

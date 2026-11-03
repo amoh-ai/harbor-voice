@@ -876,6 +876,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         sys.exit(main_compare(argv[1:]))
     if command in COMMANDS:
         sys.exit(COMMANDS[command](argv[1:]))
+    if command in ("-h", "--help"):
+        print(__doc__)
+        sys.exit(0)
     print(__doc__, file=sys.stderr)
     sys.exit(2)
 

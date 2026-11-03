@@ -61,7 +61,8 @@ declaration for everything optional.
    package's `register_all`. A new vendor also goes in `_VENDORS`
    (`src/harbor_voice/trial.py`).
 2. Test it offline, against a fake socket; no test calls a real API.
-3. Run `harbor-voice conformance <provider>` to verify what it declares.
+3. Verify what it declares with `harbor_voice.conformance.run_conformance`,
+   from a test against a live session (the module's docstring shows how).
 
 ## Adding a benchmark
 

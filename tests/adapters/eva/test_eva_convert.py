@@ -654,3 +654,16 @@ def test_job_config_runs_a_hub_dataset(tmp_path: Path, monkeypatch) -> None:
     assert raw["datasets"] == [
         {"name": "eva", "registry_path": str(registry), "version": "0.1.0"}
     ]
+
+
+@pytest.mark.parametrize(
+    ("argv", "code"), [(["--help"], 0), (["-h"], 0), ([], 2), (["nope"], 2)]
+)
+def test_help_succeeds_and_an_unknown_command_fails(
+    argv: list[str], code: int, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as done:
+        main(argv)
+    assert done.value.code == code
+    shown = capsys.readouterr()
+    assert "eva-adapter convert" in (shown.out if code == 0 else shown.err)

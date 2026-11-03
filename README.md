@@ -270,7 +270,9 @@ job's wall time. Keep it within your providers' concurrent-session limits
 - **Transports and providers.** A transport is always full-duplex audio
   frames, and half duplex is a policy on top. Optional operations
   (truncation, events, text) are declared per provider and checked, not
-  probed. `harbor-voice conformance` tests a provider against that contract.
+  probed. The conformance suite (`harbor_voice.conformance.run_conformance`,
+  run from a test against a live session) checks a provider against that
+  contract.
 
   | Kind | Providers |
   |---|---|
@@ -305,7 +307,6 @@ job's wall time. Keep it within your providers' concurrent-session limits
 | `harbor-voice status <job>` | a running job: counts, reward so far, each trial's phase |
 | `harbor-voice show` / `listen <trajectory>` | summarise a recorded call; write its recording to a WAV |
 | `harbor-voice caps` | provider capability matrices, and which credentials are missing |
-| `harbor-voice conformance` | the provider conformance suite |
 | `harbor-voice doctor` / `profiles` / `metrics` | the built-in loop's conditions and metrics: what a configuration will report, abstain on, or reject |
 | `harbor-voice report <job>` | roll up built-in-loop trials and diff conditions against a baseline |
 | `harbor-voice drive` | runs a task's call driver; what `VoiceCallAgent` runs inside `main` |
