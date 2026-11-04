@@ -1,11 +1,24 @@
 [project]
 name = "harbor-voice"
 version = "0.1.0"
-description = "Voice-agent evaluation on harbor: calls, callers, the audio layer stack, and ATIF-voice trajectories."
+description = "Evaluate voice agents on phone-call benchmarks, on harbor."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
+authors = [{ name = "amoh-ai" }]
 requires-python = ">=3.12"
+keywords = ["voice agents", "speech-to-speech", "evaluation", "benchmark", "harbor"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     # Pinned: harbor-voice uses some of harbor's internal APIs (TrialPaths,
     # EnvironmentConfig, the installed-agent base); a bump is a deliberate step.
@@ -29,6 +42,14 @@ live = ["aiortc==1.15.0"]
 # Cloud backends are harbor's; these pass its extras through.
 daytona = ["harbor[daytona]==0.25.0"]
 ec2 = ["harbor[ec2]==0.25.0"]
+# The benchmark adapters, released with harbor-voice at the same version.
+tau-voice = ["harbor-voice-tau-voice-adapter==0.1.0"]
+eva = ["harbor-voice-eva-adapter==0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/amoh-ai/harbor-voice"
+Repository = "https://github.com/amoh-ai/harbor-voice"
+Issues = "https://github.com/amoh-ai/harbor-voice/issues"
 
 [project.scripts]
 harbor-voice = "harbor_voice.cli:main"

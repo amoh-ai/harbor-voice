@@ -120,23 +120,22 @@ class _ProgressRelay:
         return True
 
 
-class _Wheels:
-    """Wheels of the running code, built once per process and shared."""
+class _Packages:
+    """The running code's packages for ``main``, resolved once per process."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._built: dict[str, install.Wheel] = {}
+        self._resolved: dict[str, install.Package] = {}
         self._dir = Path(tempfile.mkdtemp(prefix="harbor-voice-wheels-"))
 
-    def get(self, module: str) -> install.Wheel:
+    def get(self, module: str) -> install.Package:
         with self._lock:
-            if module not in self._built:
-                (wheel,) = install.build_wheels([module], self._dir / module)
-                self._built[module] = wheel
-            return self._built[module]
+            if module not in self._resolved:
+                self._resolved[module] = install.package_for(module, self._dir / module)
+            return self._resolved[module]
 
 
-_wheels = _Wheels()
+_packages = _Packages()
 
 
 class VoiceCallAgent(BaseInstalledAgent):
@@ -176,10 +175,10 @@ class VoiceCallAgent(BaseInstalledAgent):
     @override
     async def install(self, environment: BaseEnvironment) -> None:
         started = time.monotonic()
-        wheel = await asyncio.to_thread(_wheels.get, "harbor_voice")
-        await install.install_into(environment, [wheel], extras=self.agent_extras())
+        package = await asyncio.to_thread(_packages.get, "harbor_voice")
+        await install.install_into(environment, [package], extras=self.agent_extras())
         self.logger.info(
-            f"install: {wheel.distribution} {wheel.version} into main "
+            f"install: {package.distribution} {package.version} into main "
             f"({time.monotonic() - started:.0f} s)"
         )
 
@@ -197,8 +196,8 @@ class VoiceCallAgent(BaseInstalledAgent):
 
         try:
             driver = config.call.driver.partition(":")[0]
-            wheel = await asyncio.to_thread(_wheels.get, driver)
-            await install.install_into(environment, [wheel])
+            package = await asyncio.to_thread(_packages.get, driver)
+            await install.install_into(environment, [package])
         except install.InstallError as exc:
             raise VoiceInfrastructureError(str(exc)) from exc
 

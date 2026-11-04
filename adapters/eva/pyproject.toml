@@ -1,8 +1,24 @@
 [project]
 name = "harbor-voice-eva-adapter"
 version = "0.1.0"
-description = "harbor-voice adapter for EVA (ServiceNow's voice-agent benchmark)."
+description = "harbor-voice's adapter for EVA, ServiceNow's voice-agent benchmark."
+authors = [{ name = "amoh-ai" }]
+license = "Apache-2.0 AND MIT"
+license-files = ["LICENSE", "src/eva_adapter/vendored/LICENSE"]
+readme = "README.md"
 requires-python = ">=3.12"
+keywords = ["voice agents", "speech-to-speech", "evaluation", "benchmark", "harbor", "eva"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 # harbor-voice itself is the host environment, not a declared dependency, the
 # same arrangement as harbor's own adapters. These are what this adapter adds.
 dependencies = [
@@ -15,12 +31,20 @@ dependencies = [
 [project.scripts]
 eva-adapter = "eva_adapter.main:main"
 
+[project.urls]
+Homepage = "https://github.com/amoh-ai/harbor-voice"
+Repository = "https://github.com/amoh-ai/harbor-voice"
+Issues = "https://github.com/amoh-ai/harbor-voice/issues"
+
 [build-system]
-requires = ["hatchling>=1,<2"]
+requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eva_adapter"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/eva_adapter"]
 
 [tool.uv]
 package = true

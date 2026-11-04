@@ -667,3 +667,41 @@ def test_help_succeeds_and_an_unknown_command_fails(
     assert done.value.code == code
     shown = capsys.readouterr()
     assert "eva-adapter convert" in (shown.out if code == 0 else shown.err)
+
+
+def test_job_config_without_a_checkout_names_the_repository(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from harbor_voice import datasets
+
+    from eva_adapter import main as eva_main
+
+    monkeypatch.setattr(eva_main, "REGISTRY", None)
+    monkeypatch.setattr(datasets, "checkout_registry", lambda: None)
+    out = tmp_path / "job.yaml"
+    with pytest.raises(SystemExit) as done:
+        main(["job-config", "--hub-dataset", "eva@0.1.0", "-o", str(out)])
+    assert done.value.code == 0
+    raw = yaml.safe_load(out.read_text(encoding="utf-8"))
+    assert raw["datasets"] == [
+        {"name": "eva", "repo": datasets.REPO, "version": "0.1.0"}
+    ]
+
+
+def test_judges_prints_the_model_list(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as done:
+        main(["judges"])
+    assert done.value.code == 0
+    printed = json.loads(capsys.readouterr().out)
+    assert printed == json.loads(JUDGES.read_text(encoding="utf-8"))
+    assert {d["model_name"] for d in printed} >= set(JUDGE_MODELS)
+
+
+def test_the_packaged_files_are_inside_the_package() -> None:
+    import eva_adapter
+
+    from eva_adapter import agents
+
+    package = Path(eva_adapter.__file__).resolve().parent
+    for path in (METRIC, JUDGES, agents.SPEC_PATH):
+        assert path.is_file() and package in path.parents, path

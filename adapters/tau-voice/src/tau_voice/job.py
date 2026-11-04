@@ -13,22 +13,21 @@ its average::
     harbor-voice jobs start -c job.yaml
 
 ``--hub-dataset tau-voice-control@0.1.0`` runs a published dataset instead of
-a local folder: harbor fetches its tasks at the commit this checkout's
-``registry.json`` pins, so the dataset is the one this code was released with.
+a local folder: harbor fetches its tasks at the commit ``registry.json``
+pins (:mod:`harbor_voice.datasets`).
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
+from harbor_voice import datasets
 from harbor_voice.capabilities import Pipeline
 from harbor_voice.harbor_agent import harbor_parses_model_names
 from harbor_voice.trial import AgentSpec
 
 from tau_voice.main import TAU2_RUN_SEED
-from tau_voice.main import TEMPLATE
 from tau_voice.main import trial_seeds
 
 AGENT = "harbor_voice.harbor_agent:VoiceCallAgent"
@@ -43,29 +42,16 @@ RETRY_ON = (
     "HealthcheckError",
     "SandboxBuildFailedError",
 )
-METRIC = TEMPLATE / "metrics" / "tau2_mean.py"
-REGISTRY = Path(__file__).resolve().parents[4] / "registry.json"
-"""The published datasets, at the root of this harbor-voice checkout."""
+METRIC = Path(__file__).resolve().parent / "metrics" / "tau2_mean.py"
+REGISTRY = datasets.checkout_registry()
+"""The checkout's ``registry.json``; ``None`` when installed from an index."""
 
 
 def hub_dataset(spec: str, registry: Path | None = None) -> dict[str, Any]:
-    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest)
-    in ``registry``; a name or version it doesn't list is a ``ValueError``."""
-    name, _, version = spec.partition("@")
-    registry = REGISTRY if registry is None else registry
-    if not registry.is_file():
-        raise ValueError(f"no {registry.name} at {registry.parent}")
-    entries = json.loads(registry.read_text(encoding="utf-8"))
-    versions = [entry["version"] for entry in entries if entry["name"] == name]
-    if not versions:
-        listed = sorted({entry["name"] for entry in entries})
-        raise ValueError(f"{name!r} is not in {registry.name}; it lists {listed}")
-    if version and version not in versions:
-        raise ValueError(f"{name} has no version {version!r}; it has {versions}")
-    entry: dict[str, Any] = {"name": name, "registry_path": str(registry)}
-    if version:
-        entry["version"] = version
-    return entry
+    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest):
+    :func:`harbor_voice.datasets.hub_dataset`, against ``registry`` or this
+    checkout's."""
+    return datasets.hub_dataset(spec, REGISTRY if registry is None else registry)
 
 
 def job_config(

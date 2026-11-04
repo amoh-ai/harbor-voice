@@ -84,13 +84,13 @@ class _Environment:
 
 @pytest.fixture(autouse=True)
 def _no_wheel_builds(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    def build(modules: list[str], out: Path) -> list[install.Wheel]:
-        name = "harbor" if modules == ["harbor_voice"] else modules[0]
-        return [install.Wheel(name, "0.0", tmp_path / f"{name}-0.0.whl")]
+    def package_for(module: str, out_dir: Path) -> install.Wheel:
+        name = "harbor" if module == "harbor_voice" else module
+        return install.Wheel(name, "0.0", tmp_path / f"{name}-0.0.whl")
 
-    monkeypatch.setattr(install, "build_wheels", build)
+    monkeypatch.setattr(install, "package_for", package_for)
     monkeypatch.setattr(install, "distribution_of", lambda module: "harbor")
-    monkeypatch.setattr(harbor_agent, "_wheels", harbor_agent._Wheels())
+    monkeypatch.setattr(harbor_agent, "_packages", harbor_agent._Packages())
 
 
 def _agent(tmp_path: Path, **kwargs: object) -> VoiceCallAgent:
@@ -120,8 +120,8 @@ def test_the_model_is_the_agent_under_test(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("declared", "with_extra"),
     [
-        (["voice"], True),  # internal: harbor[voice]
-        ([], False),  # public: voice deps are core, no extra
+        (["voice"], True),  # voice dependencies in an extra
+        ([], False),  # voice dependencies in the core, no extra
     ],
 )
 async def test_install_puts_harbor_voice_into_main(
@@ -145,7 +145,7 @@ async def test_install_puts_harbor_voice_into_main(
     ("declared", "suffix"),
     [
         (["live", "voice"], "[voice,live]"),
-        (["live"], "[live]"),  # public: voice deps are core
+        (["live"], "[live]"),  # voice dependencies in the core
         ([], ""),  # an older harbor-voice without the extra
     ],
 )

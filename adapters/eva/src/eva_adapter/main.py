@@ -12,6 +12,7 @@
                            --model openai.realtime/gpt-realtime-1.5 \\
                            [--trials 3] [-n 4] [--env daytona]
                            [--override-storage-mb <MB>] -o job.yaml
+    eva-adapter judges            EVA's judge deployments, for EVA_MODEL_LIST
     eva-adapter agents ...        EVA's ElevenLabs caller agents (agents.py)
     eva-adapter sample ...        the records a parity comparison runs (sample.py)
     eva-adapter compare --harbor <job> ... --original <EVA run> ...
@@ -59,6 +60,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from harbor_voice import datasets
+
 from eva_adapter import EVA_COMMIT
 from eva_adapter import images
 from eva_adapter.agents import agent_env_var
@@ -78,7 +81,7 @@ from eva_adapter.trial import REWARDS
 DOMAINS = ("airline", "itsm", "medical_hr")
 TEMPLATE = Path(__file__).resolve().parents[2] / "template"
 RECORDS = TEMPLATE / "records.json"
-JUDGES = Path(__file__).resolve().parents[2] / "judges.json"
+JUDGES = Path(__file__).resolve().parent / "judges.json"
 """EVA's judge deployments, the value of ``EVA_MODEL_LIST`` (keys by
 ``os.environ/`` reference only)."""
 JUDGE_MODELS = (
@@ -496,32 +499,17 @@ RETRY_ON = (
 )
 """Infrastructure only. A record EVA never validated is a result (unscored),
 not an error, and is never retried here: EVA's own reruns already ran."""
-METRIC = TEMPLATE / "metrics" / "eva_mean.py"
-REGISTRY = Path(__file__).resolve().parents[4] / "registry.json"
-"""The published datasets, at the root of this harbor-voice checkout."""
+METRIC = Path(__file__).resolve().parent / "metrics" / "eva_mean.py"
+REGISTRY = datasets.checkout_registry()
+"""The checkout's ``registry.json``; ``None`` when installed from an index."""
 
 
 def hub_dataset(spec: str, registry: Path | None = None) -> dict[str, Any]:
-    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest)
-    in ``registry``; a name or version it doesn't list is a ``ValueError``.
-
-    Harbor fetches the tasks at the commit ``registry`` pins, so the dataset
-    is the one this checkout was released with."""
-    name, _, version = spec.partition("@")
-    registry = REGISTRY if registry is None else registry
-    if not registry.is_file():
-        raise ValueError(f"no {registry.name} at {registry.parent}")
-    entries = json.loads(registry.read_text(encoding="utf-8"))
-    versions = [entry["version"] for entry in entries if entry["name"] == name]
-    if not versions:
-        listed = sorted({entry["name"] for entry in entries})
-        raise ValueError(f"{name!r} is not in {registry.name}; it lists {listed}")
-    if version and version not in versions:
-        raise ValueError(f"{name} has no version {version!r}; it has {versions}")
-    entry: dict[str, Any] = {"name": name, "registry_path": str(registry)}
-    if version:
-        entry["version"] = version
-    return entry
+    """Harbor's dataset entry for ``name@version`` (or ``name``, the latest):
+    :func:`harbor_voice.datasets.hub_dataset`, against ``registry`` or this
+    checkout's. Harbor fetches the tasks at the commit ``registry.json``
+    pins."""
+    return datasets.hub_dataset(spec, REGISTRY if registry is None else registry)
 
 
 def trial_seeds(trials: int = NUM_TRIALS) -> list[int]:
@@ -852,10 +840,21 @@ def write_job_config(argv: Sequence[str]) -> int:
     return 0
 
 
+def print_judges(argv: Sequence[str]) -> int:
+    """Print EVA's judge deployments, the value of ``EVA_MODEL_LIST``."""
+    parser = argparse.ArgumentParser(
+        prog="eva-adapter judges", description=_first_line(print_judges.__doc__)
+    )
+    parser.parse_args(argv)
+    sys.stdout.write(JUDGES.read_text(encoding="utf-8"))
+    return 0
+
+
 COMMANDS = {
     "convert": convert,
     "build-image": build_image,
     "job-config": write_job_config,
+    "judges": print_judges,
 }
 
 

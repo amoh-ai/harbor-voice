@@ -41,3 +41,37 @@ jobs:
             against=(--against "$BASE")
           fi
           uv run python scripts/hub.py check "${against[@]}"
+
+  # What a release would publish: only the packages' own files, at one
+  # version, and installable with no checkout.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+      - name: Build
+        run: uv build --all-packages --out-dir dist
+      - name: Contents and versions
+        run: uv run --no-project python scripts/check_dist.py dist
+      - name: Metadata
+        run: uvx twine check --strict dist/*
+      - name: Install without a checkout
+        run: |
+          uv venv "$RUNNER_TEMP/clean" --python 3.13
+          source "$RUNNER_TEMP/clean/bin/activate"
+          core=$(ls dist/harbor_voice-*.whl)
+          uv pip install "$core[tau-voice,eva]" dist/harbor_voice_*_adapter-*.whl
+          cd "$RUNNER_TEMP"
+          harbor-voice --help > /dev/null
+          tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
+            --model openai.realtime/gpt-realtime-1.5 -o tau.yaml
+          eva-adapter job-config --hub-dataset eva@0.1.0 \
+            --model openai.realtime/gpt-realtime-1.5 -o eva.yaml
+          grep -q "repo: amoh-ai/harbor-voice" tau.yaml
+          grep -q "repo: amoh-ai/harbor-voice" eva.yaml
+          eva-adapter judges | python -c "import json, sys; json.load(sys.stdin)"
+          eva-adapter agents show > /dev/null
+          status=0; tau-voice voices create > /dev/null 2>&1 || status=$?
+          test "$status" -eq 2

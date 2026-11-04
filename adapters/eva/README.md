@@ -13,13 +13,17 @@ persona and a goal, so an evaluation runs end to end with no human listener.
 This adapter runs EVA's scenarios as harbor tasks, at EVA's commit
 `039efa0a`. EVA's own code decides the prompts, tools, validation and scores,
 in a sidecar; harbor-voice runs the call. How it compares with EVA's own CLI:
-[PARITY.md](PARITY.md).
+[PARITY.md](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/PARITY.md).
 
 The agent under test is OpenAI Realtime (`openai.realtime`, e.g.
 `gpt-realtime-1.5`, EVA's reference system), the only agent the adapter takes
 for now.
 
 ## Run it
+
+From a checkout of harbor-voice (`uv sync`). With `pip install
+"harbor-voice[eva]"`, `agents`, `judges` and `job-config` work the same
+without `uv run`; converting tasks needs the checkout.
 
 ```bash
 # Once: EVA's two caller agents, created in your ElevenLabs account as EVA's
@@ -61,8 +65,8 @@ protocol. `EVA_SIDECAR_METRIC_CONFIGS` is the sidecar's channel for the one
 EVA setting a run may want, which judges grade (`sidecar/server.py`); EVA
 ignores the name itself.
 
-**The judges' model list** is [`judges.json`](judges.json):
-`EVA_MODEL_LIST="$(cat adapters/eva/judges.json)"`. It names every judge
+**The judges' model list** is [`judges.json`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/src/eva_adapter/judges.json):
+`EVA_MODEL_LIST="$(eva-adapter judges)"`. It names every judge
 deployment EVA's metrics ask for, as EVA's published setup runs them, and
 holds only `os.environ/…` references, never a key:
 
@@ -131,7 +135,7 @@ and each judge), `metrics.json` (EVA's, for the attempt that counts), `run/`
 `EVA-overall_pass`, is harbor's `reward`; `reward.json` also holds all three
 composites under their own names, and the job metric reports each one's
 mean. A record no attempt validated has no reward: EVA scores
-no such record, and the job metric (`template/metrics/eva_mean.py`) counts
+no such record, and the job metric (`src/eva_adapter/metrics/eva_mean.py`) counts
 it as unscored. EVA's run-level numbers (pass@k, pass^k, CIs) come from
 `sidecar/aggregate.py` over the trials' `metrics.json`.
 
@@ -177,7 +181,7 @@ Harbor's job of the sample's records against EVA's own CLI on the same
 records (`original.eva_command`, in EVA's image), then `compare` writes
 harbor's `parity_experiment.json`. The results, the
 exact EVA command, what is compared and how to reproduce it:
-[`PARITY.md`](PARITY.md).
+[`PARITY.md`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/PARITY.md).
 
 ```bash
 uv run eva-adapter sample                           # parity_records.json (30), --all
@@ -195,7 +199,7 @@ from the recordings.
 
 EVA's audio perturbations, under EVA's own names (`EVA_PERTURBATION__*`),
 run by EVA's own `AudioPerturbator`
-([`vendored/perturbation.py`](src/eva_adapter/vendored/perturbation.py),
+([`vendored/perturbation.py`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/src/eva_adapter/vendored/perturbation.py),
 EVA's file at the commit but for where it finds the WAVs; MIT, see `vendored/LICENSE`)
 where EVA's bridge runs it: on every chunk of the caller's audio before the
 agent hears it (the recording keeps the clean copy, which EVA's
@@ -262,7 +266,7 @@ degradation, and connection degradation alone: EVA's own grid.
 
 ## Tests
 
-In [`tests/adapters/eva/`](../../tests/adapters/eva), with their fixtures;
+In [`tests/adapters/eva/`](https://github.com/amoh-ai/harbor-voice/tree/main/tests/adapters/eva), with their fixtures;
 `scripts/goldens/` regenerates the fixtures recorded from EVA's code.
 
 - `test_eva_perturbation.py`: the vendored file against EVA's image; the

@@ -1233,8 +1233,14 @@ daytona = [
 ec2 = [
     { name = "harbor", extra = ["ec2"] },
 ]
+eva = [
+    { name = "harbor-voice-eva-adapter" },
+]
 live = [
     { name = "aiortc" },
+]
+tau-voice = [
+    { name = "harbor-voice-tau-voice-adapter" },
 ]
 
 [package.dev-dependencies]
@@ -1257,10 +1263,12 @@ requires-dist = [
     { name = "harbor", specifier = "==0.25.0" },
     { name = "harbor", extras = ["daytona"], marker = "extra == 'daytona'", specifier = "==0.25.0" },
     { name = "harbor", extras = ["ec2"], marker = "extra == 'ec2'", specifier = "==0.25.0" },
+    { name = "harbor-voice-eva-adapter", marker = "extra == 'eva'", editable = "adapters/eva" },
+    { name = "harbor-voice-tau-voice-adapter", marker = "extra == 'tau-voice'", editable = "adapters/tau-voice" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "websockets", specifier = ">=13.0" },
 ]
-provides-extras = ["aws", "live", "daytona", "ec2"]
+provides-extras = ["aws", "live", "daytona", "ec2", "tau-voice", "eva"]
 
 [package.metadata.requires-dev]
 dev = [

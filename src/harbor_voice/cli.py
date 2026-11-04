@@ -461,6 +461,33 @@ def with_default_agent(argv: list[str]) -> list[str]:
     return [*argv[:2], "--agent", CALL_AGENT, *skip, *rest]
 
 
+_JOB_RUNNERS = ("jobs", "job")
+_NAMES_DATASET = ("-d", "--dataset")
+_NAMES_REGISTRY = ("--repo", "--registry-path", "--registry-url")
+
+
+def with_default_registry(argv: list[str]) -> list[str]:
+    """``jobs start -d NAME@VERSION`` with no registry reads harbor-voice's.
+
+    That is the checkout's ``registry.json`` when run from a checkout, and the
+    repository's otherwise (:func:`harbor_voice.datasets.registry_args`). A
+    job config (``-c``) names its own datasets, so it is left alone.
+    """
+    if len(argv) < 2 or argv[0] not in _JOB_RUNNERS or argv[1] != "start":
+        return argv
+    rest = argv[2:]
+
+    def given(flags: tuple[str, ...]) -> bool:
+        long = tuple(f"{flag}=" for flag in flags if flag.startswith("--"))
+        return any(arg in flags or arg.startswith(long) for arg in rest)
+
+    if not given(_NAMES_DATASET) or given(_NAMES_REGISTRY) or given(("-c", "--config")):
+        return argv
+    from harbor_voice.datasets import registry_args
+
+    return [*argv, *registry_args()]
+
+
 def _mount_harbor() -> None:
     from harbor.cli.jobs import jobs_app
     from harbor.cli.trials import trials_app
@@ -475,7 +502,7 @@ def main() -> None:  # pragma: no cover - entry point
     import sys
 
     _mount_harbor()
-    voice_app(args=with_default_agent(sys.argv[1:]))
+    voice_app(args=with_default_registry(with_default_agent(sys.argv[1:])))
 
 
 if __name__ == "__main__":  # pragma: no cover - entry point

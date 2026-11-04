@@ -16,8 +16,14 @@ You need Python 3.12+, [uv](https://docs.astral.sh/uv/), and Docker for the
 tests that run the benchmarks' own code.
 
 ```bash
+git clone https://github.com/amoh-ai/harbor-voice
+cd harbor-voice
 uv sync          # harbor-voice, both adapters, every extra, dev tools
 ```
+
+From a checkout, each trial installs harbor-voice and the adapter into its
+environment from these source folders, so a change runs as it is. An install
+from PyPI installs the same released versions instead.
 
 ## Before you open a PR
 
@@ -81,6 +87,12 @@ the workspace (`pyproject.toml`). It has:
 - **tests and fixtures** under `tests/adapters/<name>/`;
 - **a `PARITY.md`** showing the adapter reproduces the original harness, in
   harbor's parity format (`parity_experiment.json`).
+
+To release it with harbor-voice, add its package and driver module to
+`DRIVER_DISTRIBUTIONS` (`src/harbor_voice/install.py`) and to `PACKAGES` in
+`scripts/check_dist.py`, and give harbor-voice an extra that pins it. Files
+the installed commands read (a metric script, a setup spec) go inside the
+package; what only converting needs (templates, the sidecar) stays beside it.
 
 [tau-voice](adapters/tau-voice) and [EVA](adapters/eva) are the two worked
 examples.
@@ -176,6 +188,37 @@ uv run python scripts/hub.py check --datasets-repo ../harbor-voice-datasets
 - Commit `registry.json`. CI checks that entries are only ever added.
 - Once the images are public, `check --anonymous` also pulls each one
   without credentials.
+
+## Releasing
+
+harbor-voice and its two adapters (`harbor-voice-tau-voice-adapter`,
+`harbor-voice-eva-adapter`) are released together, at one version: a trial
+installs a driver at harbor-voice's own version.
+
+1. Set the version in `pyproject.toml`, `adapters/tau-voice/pyproject.toml`
+   and `adapters/eva/pyproject.toml`, and in harbor-voice's `tau-voice` and
+   `eva` extras. Run `uv lock`.
+2. Check what would be published:
+
+   ```bash
+   uv build --all-packages --out-dir dist
+   uv run python scripts/check_dist.py dist --tag v<version>
+   ```
+
+   It fails on a file outside the packages' own code, metadata and licenses,
+   on anything that looks like a credential, a local path or an email
+   address, and on versions that disagree. CI runs it on every PR.
+3. Merge to `main`. Optionally, run the Release workflow by hand first: it
+   publishes to TestPyPI.
+4. Tag the merge commit and push the tag:
+
+   ```bash
+   git tag v<version> && git push origin v<version>
+   ```
+
+   The Release workflow tests, builds, checks and publishes all three
+   packages to PyPI with trusted publishing, then creates the GitHub release.
+   A version on PyPI can't be replaced, only yanked.
 
 ## Issues and PRs
 

@@ -41,7 +41,7 @@ How the draw works:
 | Harness | EVA's own CLI at `039efa0a`, unchanged (`eva` in EVA's image) | a harbor-voice job of `adapters/eva` tasks |
 | Agent | `EVA_FRAMEWORK=openai_realtime`, `EVA_MODEL__S2S=gpt-realtime-1.5`, EVA's defaults | `openai.realtime/gpt-realtime-1.5` with EVA's settings (checked against EVA's own `session.update` every attempt) |
 | Caller | EVA's ElevenLabs simulator on `EVA_EN_USER_F` / `EVA_EN_USER_M` | the same two agents through `elevenlabs.agents` |
-| Judges | `EVA_MODEL_LIST` ([`judges.json`](judges.json)); audio judges below | the same, in every trial's sidecar |
+| Judges | `EVA_MODEL_LIST` ([`judges.json`](src/eva_adapter/judges.json)); audio judges below | the same, in every trial's sidecar |
 | Validation, reruns | EVA's, ≤ 3 attempts | EVA's code in the sidecar, ≤ 3 attempts |
 | Trials | `EVA_NUM_TRIALS=3` | the agent once per seed 0, 1, 2 (EVA's trial index) |
 

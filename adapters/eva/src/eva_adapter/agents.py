@@ -4,7 +4,7 @@ EVA's paper ran its callers as four ElevenLabs agents set up by hand in the
 UI from a table (``docs/experiment_setup.md:133-188``). Nothing in EVA's repo
 pins those settings, and ElevenLabs fills everything the table leaves out
 with defaults that can change. So the table lives here as data —
-``adapters/eva/elevenlabs/agents.json`` — and every run can show which caller
+``eva_adapter/elevenlabs/agents.json`` — and every run can show which caller
 produced it:
 
 - :func:`payload` — one agent's ``POST /v1/convai/agents/create`` body: the
@@ -42,8 +42,8 @@ from typing import Any
 
 from harbor_voice.providers.elevenlabs.agents import AgentsAPI
 
-SPEC_PATH = Path(__file__).resolve().parents[2] / "elevenlabs" / "agents.json"
-"""``adapters/eva/elevenlabs/agents.json``."""
+SPEC_PATH = Path(__file__).resolve().parent / "elevenlabs" / "agents.json"
+"""``eva_adapter/elevenlabs/agents.json``."""
 
 PERSONA_GENDER: dict[int, str] = {1: "F", 2: "M"}
 """EVA's persona → agent gender (``elevenlabs.py:31``)."""
