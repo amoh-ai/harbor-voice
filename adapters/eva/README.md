@@ -15,9 +15,19 @@ This adapter runs EVA's scenarios as harbor tasks, at EVA's commit
 in a sidecar; harbor-voice runs the call. How it compares with EVA's own CLI:
 [PARITY.md](PARITY.md).
 
+The agent under test is OpenAI Realtime (`openai.realtime`, e.g.
+`gpt-realtime-1.5`, EVA's reference system), the only agent the adapter takes
+for now.
+
 ## Run it
 
 ```bash
+# Once: EVA's two caller agents, created in your ElevenLabs account as EVA's
+# setup defines them. Each prints its ID: set EVA_EN_USER_F and EVA_EN_USER_M.
+uv run eva-adapter agents show                      # what would be created (offline)
+uv run eva-adapter agents create --agent en_f --yes
+uv run eva-adapter agents create --agent en_m --yes
+
 # Tasks: one per EVA record (airline 50, itsm 80, medical_hr 83), and job.yaml
 # for the reference system over EVA's k = 3 trials.
 uv run eva-adapter convert --out datasets/eva

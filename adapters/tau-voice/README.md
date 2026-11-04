@@ -109,6 +109,8 @@ seeds a call's effects with `hash(task.id)`; the sidecar image pins
 
 ## Agents
 
+The adapter takes these two agents; more are on the way.
+
 | | OpenAI Realtime (`openai.realtime`) | OpenAI Live (`openai.live`) |
 |---|---|---|
 | Model | one speech model, e.g. `gpt-realtime-1.5` | `gpt-live-1`, a speech frontend delegating to a backend (e.g. `gpt-6-luna`) that reasons and calls tools |
