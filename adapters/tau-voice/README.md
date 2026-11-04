@@ -15,9 +15,13 @@ This adapter runs τ-Voice's 278 tasks (airline 50, retail 114, telecom 114)
 as harbor tasks, at tau3-bench's commit `2174a60`. tau3-bench's own code holds
 each task, its tools, the caller's prompts and the grade, in a sidecar;
 harbor-voice runs the call step for step as tau3-bench's harness does. How it
-compares with tau3-bench's own `tau2 run`: [PARITY.md](PARITY.md).
+compares with tau3-bench's own `tau2 run`: [PARITY.md](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/tau-voice/PARITY.md).
 
 ## Run it
+
+From a checkout of harbor-voice (`uv sync`). With `pip install
+"harbor-voice[tau-voice]"`, `voices` and `job-config` work the same without
+`uv run`; converting tasks needs the checkout.
 
 ```bash
 # Tasks: one per tau2 task in the base split (airline 50, retail 114,
@@ -45,7 +49,7 @@ no `--agent-config`.
 
 `job-config` lists the agent once per tau2 trial seed (tau2's run seed 300
 gives 626729, 373753, 361454, ...), retries infrastructure failures three
-times, and its metric (`template/metrics/tau2_mean.py`) leaves errored
+times, and its metric (`src/tau_voice/metrics/tau2_mean.py`) leaves errored
 trials out of the mean, as tau2 does. `--env daytona` (or any harbor
 backend) runs the trials remotely.
 
@@ -144,7 +148,7 @@ start); the sidecar is tau2 at the commit plus `sidecar/server.py` and
 Harbor's job of the parity tasks against tau2's own `tau2 run` on the same
 tasks (`original.tau2_command`, in the tau2 image), then `compare` writes
 harbor's `parity_experiment.json`. The results, the exact tau2 command, what
-is compared and how to reproduce it: [`PARITY.md`](PARITY.md).
+is compared and how to reproduce it: [`PARITY.md`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/tau-voice/PARITY.md).
 
 ```bash
 uv run tau-voice sample --tau2-root ../tau2-bench    # parity_tasks.json (40)
@@ -155,7 +159,7 @@ uv run tau-voice compare --harbor <job folder> ... --original <tau2 save folder>
 
 ## Tests
 
-In [`tests/adapters/tau-voice/`](../../tests/adapters/tau-voice), with their
+In [`tests/adapters/tau-voice/`](https://github.com/amoh-ai/harbor-voice/tree/main/tests/adapters/tau-voice), with their
 fixtures.
 
 - Goldens recorded from tau2's own code in the sidecar image

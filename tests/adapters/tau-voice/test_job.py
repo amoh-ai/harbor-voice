@@ -99,3 +99,28 @@ def test_a_hub_dataset_is_named_as_this_checkouts_registry_pins_it(
         job.hub_dataset("eva@0.1.0")
     with pytest.raises(ValueError, match="name one of"):
         job_config(dataset=tmp_path, hub="tau-voice-control", model="m")
+
+
+def test_without_a_checkout_the_hub_dataset_names_the_repository(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from harbor_voice import datasets
+
+    from tau_voice import job
+
+    monkeypatch.setattr(job, "REGISTRY", None)
+    monkeypatch.setattr(datasets, "checkout_registry", lambda: None)
+    raw = job_config(hub="tau-voice-control@0.1.0", model="m")
+    (dataset,) = JobConfig.model_validate(raw).datasets
+    assert (dataset.name, dataset.version, dataset.repo) == (
+        "tau-voice-control",
+        "0.1.0",
+        datasets.REPO,
+    )
+
+
+def test_the_metric_ships_inside_the_package() -> None:
+    import tau_voice
+
+    assert METRIC.is_file()
+    assert METRIC.parent.parent == Path(tau_voice.__file__).resolve().parent

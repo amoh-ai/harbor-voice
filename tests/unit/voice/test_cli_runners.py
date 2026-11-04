@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from typer.testing import CliRunner
 
@@ -9,6 +11,7 @@ from harbor_voice import cli
 from harbor_voice.cli import CALL_AGENT
 from harbor_voice.cli import SKIP_MODEL_PARSING
 from harbor_voice.cli import with_default_agent
+from harbor_voice.cli import with_default_registry
 from harbor_voice.harbor_agent import harbor_parses_model_names
 
 pytestmark = pytest.mark.unit
@@ -79,5 +82,46 @@ def test_the_flags_we_add_are_harbors(runner: str) -> None:
     parser: an option harbor does not have fails before ``--help`` prints."""
     cli._mount_harbor()
     argv = with_default_agent([runner, "start", "-m", "openai.live/gpt-live-1"])
+    result = CliRunner().invoke(cli.voice_app, [*argv, "--help"])
+    assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize(
+    "dataset", [["-d", "eva@0.1.0"], ["--dataset", "eva"], ["--dataset=eva"]]
+)
+def test_a_named_dataset_reads_harbor_voices_registry(
+    dataset: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from harbor_voice import datasets
+
+    argv = ["jobs", "start", *dataset, "-m", "openai.realtime/gpt-realtime-1.5"]
+    monkeypatch.setattr(datasets, "checkout_registry", lambda: None)
+    assert with_default_registry(argv) == [*argv, "--repo", datasets.REPO]
+    monkeypatch.setattr(datasets, "checkout_registry", lambda: Path("registry.json"))
+    assert with_default_registry(argv)[-2:] == ["--registry-path", "registry.json"]
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["jobs", "start", "-d", "eva", "--repo", "someone/registry"],
+        ["jobs", "start", "-d", "eva", "--registry-path=registry.json"],
+        ["jobs", "start", "-d", "eva", "--registry-url", "https://example.com/r.json"],
+        ["jobs", "start", "-c", "job.yaml"],
+        ["jobs", "start", "-p", "datasets/eva"],
+        ["trials", "start", "-p", "datasets/eva/task"],
+        ["jobs", "resume", "-p", "jobs/x"],
+    ],
+)
+def test_a_chosen_registry_or_no_dataset_is_left_alone(argv: list[str]) -> None:
+    assert with_default_registry(argv) == argv
+
+
+def test_the_registry_flags_are_harbors(monkeypatch: pytest.MonkeyPatch) -> None:
+    from harbor_voice import datasets
+
+    cli._mount_harbor()
+    monkeypatch.setattr(datasets, "checkout_registry", lambda: None)
+    argv = with_default_registry(with_default_agent(["jobs", "start", "-d", "eva"]))
     result = CliRunner().invoke(cli.voice_app, [*argv, "--help"])
     assert result.exit_code == 0, result.output

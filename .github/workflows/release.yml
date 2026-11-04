@@ -1,0 +1,63 @@
+name: Release
+
+# Publishes harbor-voice and its two adapters, at one version, when a version
+# tag (v0.1.0) is pushed: to PyPI, with a GitHub release for the tag. A manual
+# run publishes the same packages to TestPyPI instead. Auth is PyPI trusted
+# publishing (OIDC): no token is stored anywhere.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ github.event_name == 'push' && 'pypi' || 'testpypi' }}
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+
+      - name: Test
+        run: |
+          uv sync --locked
+          uv run pytest -q
+
+      - name: Build
+        run: uv build --all-packages --out-dir dist
+
+      - name: Check the packages
+        run: |
+          tag=()
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag=(--tag "$GITHUB_REF_NAME"); fi
+          uv run --no-project python scripts/check_dist.py dist "${tag[@]}"
+          uvx twine check --strict dist/*
+
+      - name: Publish to PyPI
+        if: github.event_name == 'push'
+        run: uv publish --trusted-publishing always dist/*
+
+      - name: Publish to TestPyPI
+        if: github.event_name == 'workflow_dispatch'
+        run: >-
+          uv publish --trusted-publishing always
+          --publish-url https://test.pypi.org/legacy/ dist/*
+
+      - name: GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --verify-tag

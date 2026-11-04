@@ -13,7 +13,7 @@ without one, with the same requests:
   the persona's short description.
 
 The prompts and settings are tau2's, copied verbatim into
-``adapters/tau-voice/elevenlabs/personas.json``. tau2 says the same seed and
+``tau_voice/elevenlabs/personas.json``. tau2 says the same seed and
 prompt give the same voice.
 
 Voices already on the account (``GET /v1/voices``, named ``tau2_<persona>``)
@@ -34,8 +34,8 @@ from typing import Any
 
 import httpx
 
-SPEC_PATH = Path(__file__).resolve().parents[2] / "elevenlabs" / "personas.json"
-"""``adapters/tau-voice/elevenlabs/personas.json``."""
+SPEC_PATH = Path(__file__).resolve().parent / "elevenlabs" / "personas.json"
+"""``tau_voice/elevenlabs/personas.json``."""
 API_BASE = "https://api.elevenlabs.io"
 TIMEOUT_S = 120.0
 """Voice Design renders previews before it answers."""

@@ -18,7 +18,7 @@ Every setting is in EVA's own variable names (``.env.example``), so the
 command is the one EVA documents; everything it leaves out is EVA's default.
 The caller is EVA's ElevenLabs simulator on the agents named by
 ``EVA_EN_USER_F`` / ``EVA_EN_USER_M``, and the judges are ``EVA_MODEL_LIST``
-(``adapters/eva/judges.json``, the same file the harbor side's sidecars
+(``eva_adapter/judges.json``, the same file the harbor side's sidecars
 get), both read from the environment the command runs in, as are the
 judges' keys.
 

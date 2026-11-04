@@ -15,9 +15,9 @@ Set `DAYTONA_API_KEY`. Each trial is a Docker-in-Docker sandbox sized from
 the task.
 
 ```bash
-uv run tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
     --model openai.realtime/gpt-realtime-1.5 --env daytona -o job.yaml
-uv run harbor-voice jobs start -c job.yaml
+harbor-voice jobs start -c job.yaml
 ```
 
 ## EC2
@@ -46,7 +46,7 @@ The published datasets name prebuilt images on `ghcr.io/amoh-ai`, so a fresh
 environment pulls them. Tasks you convert yourself build their images in each
 environment by default, which takes minutes on a fresh cloud sandbox. To
 avoid that, build the images once, push them to a registry the backend can
-pull from, and convert against it:
+pull from, and convert against it, from a checkout:
 
 ```bash
 uv run tau-voice build-image --registry <prefix> --push
