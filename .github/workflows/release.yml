@@ -18,13 +18,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  # Tests, builds and checks the packages, with no right to publish them.
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: ${{ github.event_name == 'push' && 'pypi' || 'testpypi' }}
-    permissions:
-      id-token: write
-      contents: write
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
@@ -46,18 +43,53 @@ jobs:
           uv run --no-project python scripts/check_dist.py dist "${tag[@]}"
           uvx twine check --strict dist/*
 
-      - name: Publish to PyPI
-        if: github.event_name == 'push'
-        run: uv publish --trusted-publishing always dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
 
-      - name: Publish to TestPyPI
-        if: github.event_name == 'workflow_dispatch'
-        run: >-
-          uv publish --trusted-publishing always
-          --publish-url https://test.pypi.org/legacy/ dist/*
+  # Uploads what the build job made, one package at a time: the adapters
+  # first, so harbor-voice's extras resolve once it is up. Files already on
+  # the index are skipped, so a failed run can be re-run as is.
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ github.event_name == 'push' && 'pypi' || 'testpypi' }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v10.3.3
 
+      - name: Publish
+        env:
+          UV_PUBLISH_URL: ${{ github.event_name == 'push' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
+          UV_PUBLISH_CHECK_URL: ${{ github.event_name == 'push' && 'https://pypi.org/simple/' || 'https://test.pypi.org/simple/' }}
+        run: |
+          for package in harbor_voice_tau_voice_adapter harbor_voice_eva_adapter harbor_voice; do
+            uv publish --trusted-publishing always "dist/$package"-*
+          done
+
+  github-release:
+    needs: publish
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
       - name: GitHub release
-        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --verify-tag
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --repo "$GITHUB_REPOSITORY" --generate-notes --verify-tag

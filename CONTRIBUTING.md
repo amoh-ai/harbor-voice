@@ -90,7 +90,8 @@ the workspace (`pyproject.toml`). It has:
 
 To release it with harbor-voice, add its package and driver module to
 `DRIVER_DISTRIBUTIONS` (`src/harbor_voice/install.py`) and to `PACKAGES` in
-`scripts/check_dist.py`, and give harbor-voice an extra that pins it. Files
+`scripts/check_dist.py` and the publish loop in `.github/workflows/release.yml`,
+and give harbor-voice an extra that pins it. Files
 the installed commands read (a metric script, a setup spec) go inside the
 package; what only converting needs (templates, the sidecar) stays beside it.
 
