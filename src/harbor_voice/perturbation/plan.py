@@ -45,6 +45,8 @@ from harbor_voice.perturbation.conversation import ConversationPlan
 from harbor_voice.perturbation.encoder import WireEncoder
 from harbor_voice.perturbation.jitter import FramePerturbation
 from harbor_voice.perturbation.persona import PersonaPlan
+from harbor_voice.perturbation.speech import SpeakingRate
+from harbor_voice.perturbation.speech import SpeechError
 from harbor_voice.perturbation.speech import SpeechPlan
 from harbor_voice.perturbation.world import WorldPlan
 
@@ -155,7 +157,13 @@ class PerturbationPipeline:
         world: WorldPlan | None = None,
         encoder: WireEncoder | None = None,
     ) -> None:
-        ordered = sorted(perturbations, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
+        layers = list(perturbations)
+        if any(isinstance(p, SpeakingRate) for p in layers):
+            raise SpeechError(
+                "speaking rate applies to whole utterances, not frames: "
+                "pass it as SpeechPlan(rate=...)"
+            )
+        ordered = sorted(layers, key=lambda p: (_LAYER_ORDER[p.layer], p.name))
         # Split by shape rather than asking the caller to. A frame-stream
         # layer runs after every per-frame one: a codec runs in the handset
         # and the network delays what it produced, never the other way round.

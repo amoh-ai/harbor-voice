@@ -229,3 +229,77 @@ def low_pass(
     kernel = kernel / np.sum(kernel)
     padded = np.pad(samples, (half, half), mode="edge")
     return np.convolve(padded, kernel, mode="valid")
+
+
+def low_pass_kernel(*, cutoff_hz: float, rate_hz: int, taps: int = 255) -> np.ndarray:
+    """A steep linear-phase low-pass kernel (Blackman-windowed sinc, unity DC gain).
+
+    Steeper than :func:`low_pass`, and returned rather than applied, so a
+    stateful filter can carry its history across frames.
+    """
+    np = _numpy()
+    if taps < 3 or taps % 2 == 0:
+        raise ValueError(f"taps must be odd and at least 3, got {taps}")
+    normalised = min(cutoff_hz / rate_hz, 0.5)
+    n = np.arange(taps) - taps // 2
+    kernel = np.sinc(2.0 * normalised * n) * np.blackman(taps)
+    return kernel / np.sum(kernel)
+
+
+def time_stretch(
+    samples: np.ndarray,
+    factor: float,
+    rate_hz: int,
+    *,
+    window_ms: float = 30.0,
+    tolerance_ms: float = 10.0,
+) -> np.ndarray:
+    """Change how fast an utterance is spoken, keeping its pitch (WSOLA).
+
+    ``factor`` above 1.0 is faster; the result is about ``len / factor``
+    samples. Needs the whole utterance.
+    """
+    np = _numpy()
+    if factor <= 0:
+        raise ValueError(f"factor must be positive, got {factor}")
+    if factor == 1.0 or samples.size == 0:
+        return samples.copy()
+    window = max(4, int(rate_hz * window_ms / 1000.0) // 2 * 2)
+    hop = window // 2
+    tolerance = max(1, int(rate_hz * tolerance_ms / 1000.0))
+    out_len = max(1, round(samples.size / factor))
+
+    # padding keeps every search and the last overlap in range
+    pad = window + tolerance
+    x = np.concatenate([np.zeros(pad), samples, np.zeros(pad + window)])
+    # periodic Hann: overlapping halves sum to one
+    taper = np.hanning(window + 1)[:window]
+    out = np.zeros(out_len + window)
+    weight = np.zeros(out_len + window)
+
+    start = pad
+    written = 0
+    k = 0
+    while written < out_len:
+        segment = x[start : start + window]
+        out[written : written + window] += segment * taper
+        weight[written : written + window] += taper
+        written += hop
+        k += 1
+
+        # next window: the stretch near its nominal start that best continues this one
+        natural = x[start + hop : start + hop + window]
+        nominal = pad + round(k * hop * factor)
+        lo = max(0, nominal - tolerance)
+        hi = min(x.size - window, nominal + tolerance)
+        if hi < lo:
+            break
+        region = x[lo : hi + window]
+        score = np.correlate(region, natural, mode="valid")
+        energy = np.convolve(region**2, np.ones(window), mode="valid")
+        score = score / np.sqrt(energy + _EPSILON)
+        start = lo + int(np.argmax(score))
+
+    covered = weight > _EPSILON
+    out[covered] /= weight[covered]
+    return out[:out_len]

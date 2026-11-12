@@ -1,15 +1,15 @@
 """L2 — how they speak.
 
-The layer that does not fit in one place, because speech does not. Half of L2
-changes what the text says before anything synthesises it; the other half
-changes the signal after something has.
+The layer that does not fit in one place, because speech does not. Part of L2
+changes what the text says before anything synthesises it, part changes the
+whole synthesised utterance, and the rest changes the signal frame by frame.
 
 =====================  ==============  ==============================  ========
 Perturbation           Applied to      What it models                  Prior art
 =====================  ==============  ==============================  ========
 ``vocal_tics``         text            "um", "you know", mid-sentence  tau
 ``disfluency``         text / corpus   real hesitation                 FDB-v3
-``speaking_rate``      signal          faster or slower delivery       —
+``speaking_rate``      utterance       faster or slower delivery       —
 ``loudness``           signal          a quiet or shouting caller      —
 ``dynamic_muffling``   signal          a hand over the mic, movement   tau
 =====================  ==============  ==============================  ========
@@ -26,14 +26,11 @@ phrase list inserted into text — and nothing here claims to be FDB's. Real
 disfluency arrives as a corpus through
 :class:`~harbor_voice.simulator.content.CorpusContent`, not from this module.
 
-### Speaking rate changes pitch, and says so
+### Speaking rate applies to the whole utterance
 
-Resampling is time-stretch and pitch-shift together; separating them needs
-a phase vocoder, which is a different and much larger piece of work. A caller
-sped up 1.3x here sounds slightly chipmunked, and that is recorded in the plan
-rather than described as "speaking rate". Shipping a silent approximation of
-prosody and calling it speaking rate would be exactly the kind of plausible
-wrong number this design exists to make unavailable.
+A faster caller finishes sooner, which a frame-at-a-time stage cannot produce.
+So the rate stretches each synthesised utterance, pitch kept, before the clean
+reference is kept.
 """
 
 from __future__ import annotations
@@ -56,6 +53,8 @@ from harbor_voice.perturbation.base import SeedSet
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import numpy as np
+
+    from harbor_voice.audio.format import AudioFormat
 
 _PROSODY_STREAM = "prosody"
 
@@ -249,89 +248,96 @@ class Loudness(Perturbation):
         return {"gain_db": self._gain_db}
 
 
-class SpeakingRate(Perturbation):
-    """Speed the caller up or down, pitch included.
+class SpeakingRate:
+    """How fast the caller talks, applied to each synthesised utterance.
 
     Args:
-        factor: Above 1.0 is faster. 1.3 makes a caller noticeably quicker and
-            noticeably higher — this is resampling, not a phase vocoder, and
-            the pitch shift is real. ``pitch_preserved: false`` goes into the
-            plan so nobody reads this as prosody control.
+        factor: Above 1.0 is faster; the utterance comes out about
+            ``1 / factor`` as long, at the same pitch.
 
-    The frame length is held constant, which is what the clean reference requires of
-    anything in the signal chain: a faster caller delivers *more* speech per
-    frame, so the tail of a sped-up utterance is padded with the silence the
-    caller would really have left, and a slowed one is truncated at the frame
-    boundary and continues in the next.
+    Pass it as ``SpeechPlan(rate=...)``, not as a frame perturbation.
+    Pre-recorded audio is left as it is.
     """
 
     def __init__(self, *, factor: float = 1.0) -> None:
-        super().__init__(name="speaking_rate", layer=Layer.SPEECH)
         if factor <= 0:
             raise SpeechError(f"factor must be positive: {factor}")
         self._factor = factor
-        self._carry: np.ndarray | None = None
+        self._ratio = RunningMean()
 
-    @override
-    def apply(self, pcm: bytes, ctx: ApplyContext) -> bytes:
-        if self._factor == 1.0:
+    @property
+    def name(self) -> str:
+        return "speaking_rate"
+
+    @property
+    def layer(self) -> Layer:
+        return Layer.SPEECH
+
+    @property
+    def key(self) -> LayerKey:
+        return LayerKey(layer=Layer.SPEECH, name=self.name)
+
+    @property
+    def factor(self) -> float:
+        return self._factor
+
+    def apply(self, pcm: bytes, fmt: AudioFormat) -> bytes:
+        """Stretch one whole utterance; a rate of one returns it untouched."""
+        if self._factor == 1.0 or not pcm:
             return pcm
-        np = _numpy()
+        if fmt.channels != 1:
+            raise SpeechError(
+                f"speaking rate needs mono audio, got {fmt.channels} channels"
+            )
         samples = dsp.to_array(pcm)
-        want = samples.size
+        stretched = dsp.time_stretch(samples, self._factor, fmt.sample_rate_hz)
+        self._ratio.add(samples.size / max(stretched.size, 1))
+        return dsp.to_pcm(stretched)
 
-        rate = ctx.fmt.sample_rate_hz
-        resampled = dsp.resample_clean(samples, rate, round(rate / self._factor))
-        if self._carry is not None and self._carry.size:
-            resampled = np.concatenate([self._carry, resampled])
-
-        if resampled.size >= want:
-            out = resampled[:want]
-            self._carry = resampled[want:]
-        else:
-            out = np.zeros(want, dtype=resampled.dtype)
-            out[: resampled.size] = resampled
-            self._carry = None
-
-        self._record(
-            factor=self._factor,
-            carried_samples=float(0 if self._carry is None else self._carry.size),
-        )
-        return dsp.to_pcm(out)
-
-    @override
     def reset(self, seeds: SeedSet) -> None:
         del seeds  # deterministic
-        self._carry = None
+        self._ratio = RunningMean()
+
+    def params(self) -> dict[str, Any]:
+        return {"factor": self._factor, "pitch_preserved": True, "method": "wsola"}
+
+    def achieved(self) -> dict[str, float]:
+        return self._ratio.as_record("factor")
 
     @override
-    def params(self) -> dict[str, Any]:
-        return {"factor": self._factor, "pitch_preserved": False}
+    def __repr__(self) -> str:
+        return f"SpeakingRate(factor={self._factor})"
 
 
 class DynamicMuffling(Perturbation):
     """Intermittent low-pass, as if the caller turned away or covered the mic.
 
-    tau's version, and the reason it is *dynamic*: a constant low-pass is a
-    stationary channel that an agent's front end adapts to once and then
-    ignores. Muffling that comes and goes is the hard case, and it is the one
-    that happens in a real call.
+    tau's version. Muffling that comes and goes is harder for an agent than
+    a constant low-pass, which its front end adapts to once.
 
     Args:
-        probability: Chance of entering a muffled stretch at each decision.
-        cutoff_hz: Low-pass corner while muffled.
-        segment_s: Mean length of a muffled stretch.
-        transition_s: Fade in and out, so the onset is not a click that a VAD
-            reads as an event of its own.
+        probability: Chance of starting a stretch, decided each unmuffled
+            frame (0.02 at 20 ms frames is about once a second).
+        cutoff_hz: Low-pass corner while muffled (tau: 1.5 kHz).
+        segment_s: Length of a stretch (tau: 0.5 s).
+        transition_s: Fade in and out (tau: 0.1 s).
+        attenuation_db: Level change while muffled (tau: 0).
+        taps: Filter length, odd.
+
+    The filter and the fade carry across frames, so frame boundaries add no
+    clicks. The filter delays every frame by ``latency_samples`` (about 5 ms
+    at 24 kHz).
     """
 
     def __init__(
         self,
         *,
-        probability: float = 0.15,
-        cutoff_hz: float = 1200.0,
-        segment_s: float = 1.5,
+        probability: float = 0.02,
+        cutoff_hz: float = 1500.0,
+        segment_s: float = 0.5,
         transition_s: float = 0.1,
+        attenuation_db: float = 0.0,
+        taps: int = 255,
     ) -> None:
         super().__init__(name="dynamic_muffling", layer=Layer.SPEECH)
         if not 0.0 <= probability <= 1.0:
@@ -342,51 +348,83 @@ class DynamicMuffling(Perturbation):
             raise SpeechError(f"segment_s must be positive: {segment_s}")
         if transition_s < 0:
             raise SpeechError(f"transition_s cannot be negative: {transition_s}")
+        if taps < 3 or taps % 2 == 0:
+            raise SpeechError(f"taps must be odd and at least 3: {taps}")
         self._probability = probability
         self._cutoff_hz = cutoff_hz
         self._segment_s = segment_s
         self._transition_s = transition_s
+        self._attenuation_db = attenuation_db
+        self._taps = taps
         self._rng: Any = None
         self._remaining_s = 0.0
         self._muffled_s = 0.0
         self._total_s = 0.0
+        self._mix = 0.0
+        self._history: np.ndarray | None = None
+        self._kernel: np.ndarray | None = None
+        self._kernel_rate = 0
+
+    @property
+    def latency_samples(self) -> int:
+        """The constant delay the stream filter adds."""
+        return self._taps // 2
 
     @override
     def apply(self, pcm: bytes, ctx: ApplyContext) -> bytes:
+        np = _numpy()
+        samples = dsp.to_array(pcm)
+        n = samples.size
+        if n == 0:
+            return pcm
+        rate = ctx.fmt.sample_rate_hz
         duration = ctx.fmt.duration_s(len(pcm))
         self._total_s += duration
 
-        if self._remaining_s <= 0.0:
-            if float(self._rng.random()) < self._probability:
-                self._remaining_s = self._segment_s
-            else:
-                self._record(muffled_fraction=self._muffled_s / self._total_s)
-                return pcm
+        kernel = self._kernel_for(rate)
+        if self._history is None:
+            self._history = np.zeros(self._taps - 1)
+        stream = np.concatenate([self._history, samples])
+        self._history = stream[-(self._taps - 1) :]
+        dry = stream[self.latency_samples : self.latency_samples + n]
 
-        self._remaining_s -= duration
-        self._muffled_s += duration
-
-        samples = dsp.to_array(pcm)
-        muffled = dsp.low_pass(
-            samples, cutoff_hz=self._cutoff_hz, rate_hz=ctx.fmt.sample_rate_hz
-        )
-        blended = self._blend(samples, muffled, ctx)
+        if self._remaining_s <= 0.0 and float(self._rng.random()) < self._probability:
+            self._remaining_s = self._segment_s
+        target = 1.0 if self._remaining_s > 0.0 else 0.0
+        if target:
+            self._remaining_s -= duration
+            self._muffled_s += duration
         self._record(muffled_fraction=self._muffled_s / self._total_s)
-        return dsp.to_pcm(blended)
 
-    def _blend(self, dry: np.ndarray, wet: np.ndarray, ctx: ApplyContext) -> np.ndarray:
-        """Fade between dry and muffled across the transition window."""
-        if self._transition_s <= 0:
-            return wet
+        if target == 0.0 and self._mix == 0.0:
+            return dsp.to_pcm(dry)
+        envelope = self._envelope(target, n, rate)
+        wet = np.convolve(stream, kernel, mode="valid") * 10.0 ** (
+            self._attenuation_db / 20.0
+        )
+        return dsp.to_pcm(dry * (1.0 - envelope) + wet * envelope)
+
+    def _envelope(self, target: float, n: int, rate: int) -> np.ndarray:
+        """Move the mix toward ``target`` at the transition's pace, from where it is."""
         np = _numpy()
-        n = dry.size
-        fade = max(1, int(self._transition_s * ctx.fmt.sample_rate_hz))
-        if fade >= n:
-            ramp = np.linspace(0.0, 1.0, n, dtype=dry.dtype)
+        if self._transition_s <= 0:
+            envelope = np.full(n, target)
         else:
-            ramp = np.ones(n, dtype=dry.dtype)
-            ramp[:fade] = np.linspace(0.0, 1.0, fade, dtype=dry.dtype)
-        return dry * (1.0 - ramp) + wet * ramp
+            step = 1.0 / max(1, int(self._transition_s * rate))
+            direction = 1.0 if target > self._mix else -1.0
+            ramp = self._mix + direction * step * np.arange(1, n + 1)
+            low, high = sorted((self._mix, target))
+            envelope = np.clip(ramp, low, high)
+        self._mix = float(envelope[-1])
+        return envelope
+
+    def _kernel_for(self, rate: int) -> np.ndarray:
+        if self._kernel is None or self._kernel_rate != rate:
+            self._kernel = dsp.low_pass_kernel(
+                cutoff_hz=self._cutoff_hz, rate_hz=rate, taps=self._taps
+            )
+            self._kernel_rate = rate
+        return self._kernel
 
     @override
     def reset(self, seeds: SeedSet) -> None:
@@ -394,6 +432,8 @@ class DynamicMuffling(Perturbation):
         self._remaining_s = 0.0
         self._muffled_s = 0.0
         self._total_s = 0.0
+        self._mix = 0.0
+        self._history = None
 
     @override
     def params(self) -> dict[str, Any]:
@@ -402,6 +442,9 @@ class DynamicMuffling(Perturbation):
             "cutoff_hz": self._cutoff_hz,
             "segment_s": self._segment_s,
             "transition_s": self._transition_s,
+            "attenuation_db": self._attenuation_db,
+            "taps": self._taps,
+            "latency_samples": self.latency_samples,
         }
 
 
@@ -409,18 +452,20 @@ class DynamicMuffling(Perturbation):
 
 
 class SpeechPlan:
-    """The L2 text-side layers, beside the signal chain.
+    """The L2 layers that run before the signal chain: text and utterance.
 
     The signal-side L2 perturbations are ordinary
     :class:`~harbor_voice.perturbation.base.Perturbation` objects and go in
-    the pipeline's chain like any other. Only the text rewriters need a home
-    of their own, because they run before there is audio.
+    the pipeline's chain like any other. The text rewriters run before there
+    is audio, and the speaking rate runs on each whole utterance once there
+    is, so both live here.
     """
 
     def __init__(
         self,
         transforms: Sequence[TextPerturbation] = (),
         *,
+        rate: SpeakingRate | None = None,
         seeds: SeedSet | None = None,
     ) -> None:
         names = [t.name for t in transforms]
@@ -431,6 +476,7 @@ class SpeechPlan:
                 f"transform, or the plan record cannot say which produced what"
             )
         self._transforms = tuple(transforms)
+        self._rate = rate
         self._seeds = seeds or SeedSet.derive(0)
         self.reset(self._seeds)
 
@@ -439,18 +485,31 @@ class SpeechPlan:
         return self._transforms
 
     @property
+    def rate(self) -> SpeakingRate | None:
+        return self._rate
+
+    @property
+    def _rate_active(self) -> bool:
+        return self._rate is not None and self._rate.factor != 1.0
+
+    @property
     def is_empty(self) -> bool:
-        return not self._transforms
+        return not self._transforms and not self._rate_active
 
     @property
     def active_layers(self) -> frozenset[LayerKey]:
-        return frozenset(t.key for t in self._transforms)
+        keys = {t.key for t in self._transforms}
+        if self._rate is not None and self._rate_active:
+            keys.add(self._rate.key)
+        return frozenset(keys)
 
     def reset(self, seeds: SeedSet | None = None) -> None:
         if seeds is not None:
             self._seeds = seeds
         for transform in self._transforms:
             transform.reset(self._seeds)
+        if self._rate is not None:
+            self._rate.reset(self._seeds)
 
     def apply(self, text: str) -> str:
         """Run every transform, in declaration order."""
@@ -458,13 +517,25 @@ class SpeechPlan:
             text = transform.apply(text)
         return text
 
+    def stretch(self, pcm: bytes, fmt: AudioFormat) -> bytes:
+        """Apply the speaking rate to one synthesised utterance."""
+        return self._rate.apply(pcm, fmt) if self._rate is not None else pcm
+
     def as_record(self) -> dict[str, dict[str, Any]]:
-        return {
+        record = {
             str(t.key): {"params": t.params(), "achieved": t.achieved()}
             for t in self._transforms
         }
+        if self._rate is not None and self._rate_active:
+            record[str(self._rate.key)] = {
+                "params": self._rate.params(),
+                "achieved": self._rate.achieved(),
+            }
+        return record
 
     @override
     def __repr__(self) -> str:
-        layers = ", ".join(str(t.key) for t in self._transforms) or "none"
+        layers = (
+            ", ".join(str(k) for k in sorted(self.active_layers, key=str)) or "none"
+        )
         return f"SpeechPlan({layers})"

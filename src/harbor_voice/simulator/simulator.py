@@ -444,7 +444,8 @@ class UniversalSimulator:
         chunks = [
             chunk async for chunk in self._tts.synthesize(text, party=self._party)
         ]
-        return b"".join(chunks)
+        # L2's speaking rate, on the whole line, before the clean copy is kept
+        return self._pipeline.speech.stretch(b"".join(chunks), self._fmt)
 
     def _frame_up(self, pcm: bytes) -> tuple[AudioFrame, ...]:
         """Split a buffer into canonical frames, stamped at synthesis time.
