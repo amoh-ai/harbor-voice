@@ -48,9 +48,16 @@ How the draw works:
 What differs is the call loop only: harbor's port of EVA's bridge and
 Realtime server, and harbor's transports.
 
-- **Setup:** 2026-10-29, both sides on Daytona, at the same time. Each side
+- **Setup:** both sides on Daytona, at the same time. Each side
   ran in six shares of 10 records, two calls at once per share (24
   ElevenLabs calls at peak). Clean condition, no perturbation.
+- **Rerun of medical_hr `T6.1`:** in the first run, harbor's trial 1 of
+  `T6.1` never validated: all three attempts failed EVA's validation on a
+  judge error (a 502 from the judge's endpoint on `user_speech_fidelity`),
+  which left that run with 19 medical_hr records. `T6.1` was rerun on both
+  sides together, with the same source, caller agents, judges and
+  concurrency, and its three trials replace the first run's on both sides.
+  Every record has three graded trials a side.
 - **The original command**, one per domain (`original.eva_command`):
 
   ```bash
@@ -125,20 +132,20 @@ Pass rates in %, mean ± SEM over the 3 runs, per-run values in brackets:
 | itsm | EVA-A | 68.3 ± 8.3 [60, 85, 60] | 66.7 ± 6.0 [70, 55, 75] | yes |
 | itsm | EVA-X | 61.7 ± 7.3 [75, 60, 50] | 55.0 ± 5.0 [60, 60, 45] | yes |
 | itsm | EVA-overall | 45.0 ± 5.8 [45, 55, 35] | 40.0 ± 2.9 [35, 40, 45] | yes |
-| medical_hr | EVA-A | 36.7 ± 4.4 [35, 30, 45] | 28.9 ± 2.0 [25, 31.6, 30] | yes |
-| medical_hr | EVA-X | 68.3 ± 4.4 [75, 60, 70] | 66.1 ± 4.6 [75, 63.2, 60] | yes |
-| medical_hr | EVA-overall | 23.3 ± 6.7 [30, 10, 30] | 11.8 ± 4.4 [20, 10.5, 5] | yes |
-| overall | EVA-A | 47.2 ± 4.3 [40, 55, 46.7] | 45.2 ± 3.3 [43.3, 40.7, 51.7] | yes |
-| overall | EVA-X | 65.0 ± 2.9 [70, 65, 60] | 58.6 ± 4.0 [66.7, 54.2, 55] | yes |
-| overall | EVA-overall | 32.8 ± 1.5 [33.3, 35, 30] | 26.8 ± 1.8 [26.7, 23.7, 30] | yes |
+| medical_hr | EVA-A | 40.0 ± 2.9 [40, 35, 45] | 31.7 ± 1.7 [30, 30, 35] | yes |
+| medical_hr | EVA-X | 70.0 ± 5.8 [80, 60, 70] | 65.0 ± 2.9 [70, 65, 60] | yes |
+| medical_hr | EVA-overall | 26.7 ± 6.0 [35, 15, 30] | 13.3 ± 3.3 [20, 10, 10] | yes |
+| overall | EVA-A | 48.3 ± 4.4 [41.7, 56.7, 46.7] | 46.1 ± 3.9 [45, 40, 53.3] | yes |
+| overall | EVA-X | 65.6 ± 3.4 [71.7, 65, 60] | 58.3 ± 3.3 [65, 55, 55] | yes |
+| overall | EVA-overall | 33.9 ± 2.0 [35, 36.7, 30] | 27.2 ± 2.4 [26.7, 23.3, 31.7] | yes |
 
 **Harbor's criterion holds on all 12 rows.**
 
-- **EVA-A** agrees closely: overall −2.0 points; per record, 37 the same, 10
+- **EVA-A** agrees closely: overall −2.2 points; per record, 37 the same, 10
   more on harbor, 13 more on the original (sign-flip p = 0.64).
-- **EVA-X and EVA-overall** are lower on harbor (−6.4 and −6.0 points; p =
-  0.26 and 0.23). The difference is in turn-taking
-  (0.814 vs 0.847).
+- **EVA-X and EVA-overall** are lower on harbor (−7.2 and −6.7 points; p =
+  0.18 and 0.19). The difference is in turn-taking (0.814 vs 0.848): see
+  [Why EVA-X is lower](#why-eva-x-is-lower).
 - **medical_hr EVA-A** is the weakest row: on its 20 records harbor never
   passed more often, the original did on 5 (p = 0.062).
 - No second original run was made, so the gaps are not yet set against
@@ -148,9 +155,73 @@ Components, overall (mean ± SEM):
 
 | Component | Original | Harbor |
 |---|---|---|
-| task completion | 0.756 ± 0.049 | 0.771 ± 0.021 |
-| faithfulness | 0.336 ± 0.023 | 0.335 ± 0.012 |
+| task completion | 0.756 ± 0.049 | 0.767 ± 0.025 |
+| faithfulness | 0.342 ± 0.022 | 0.339 ± 0.015 |
 | agent speech fidelity | 0.993 | 0.991 |
-| turn taking | 0.847 ± 0.015 | 0.814 ± 0.018 |
-| conciseness | 0.727 | 0.727 |
-| conversation progression | 0.692 | 0.698 |
+| turn taking | 0.848 ± 0.017 | 0.814 ± 0.017 |
+| conciseness | 0.728 | 0.728 |
+| conversation progression | 0.694 | 0.697 |
+
+## Why EVA-X is lower
+
+The numbers here are read from each graded trial's `metrics.json`,
+`pipecat_metrics.jsonl` and `user_simulator_events.jsonl`, on both sides.
+
+**The gap is in turn-taking alone.** EVA-X needs turn-taking ≥ 0.8,
+conversation progression ≥ 0.5 and conciseness ≥ 0.5. Calls that fail it on
+turn-taking only are 29.4% on the original side and 36.7% on harbor's, which
+is the whole EVA-X gap; progression (5.0%, 4.4%) and conciseness (0%, 0.6%)
+fail about equally.
+
+**How EVA flags an interruption.** EVA's bridge closes the caller's audio
+turn (`audio_end`) once no caller audio has arrived for 600 ms
+(`USER_END_DETECTION_DELAY_INTERVALS`), about 600–665 ms after the caller's
+last chunk. The turn-taking metric marks a turn `agent_interrupt` when the
+agent's `audio_start` comes while the caller's turn is still open, whether or
+not the two overlap, and scores it at most 0.5. With about 7 scored turns a
+call, 3 flagged turns take a call below 0.8.
+
+| | Original | Harbor |
+|---|---|---|
+| scored turns | 1,282 | 1,295 |
+| flagged `agent_interrupt` | 24.9% | 30.4% |
+| of those, 0 ms overlap | 84% | 82% |
+| calls with turn-taking ≥ 0.8 | 69.4% | 61.1% |
+
+**At the same reply speed, both sides are flagged alike.** Per agent
+response: OpenAI's model response time (`speech_stopped` to first audio at
+the server), and whether the agent's `audio_start` reached the bridge before
+the caller's `audio_end`. In the responses where OpenAI ended the caller's
+turn within −100 to 300 ms of the bridge's last caller chunk (495 original,
+536 harbor):
+
+| Model response | Original: share, flagged | Harbor: share, flagged |
+|---|---|---|
+| under 600 ms | 36.6%, 97% | 43.8%, 98% |
+| 600–650 ms | 11.5%, 61% | 13.2%, 66% |
+| 650–700 ms | 13.5%, 36% | 12.1%, 29% |
+| 700–750 ms | 8.7%, 9% | 9.5%, 10% |
+| 750 ms and over | 29.7%, 1% | 21.3%, 3% |
+
+Over all responses (1,365 original, 1,395 harbor), 24.2% and 30.1% are
+flagged by this reading. Binned by when OpenAI ended the caller's turn and by
+model response time, harbor's flag rate per bin over the original's mix of
+bins gives 25.2% (the original's own: 24.2%), and the original's rates over
+harbor's mix give 29.6% (harbor's own: 30.1%). The extra flags come from more
+of harbor's responses being fast, not from a response being scored
+differently.
+
+**Harbor's sessions replied faster.** Per call, the median model response
+was 760 ms on the original side and 712 ms on harbor's. Both sides open the
+same session (harbor's is checked against EVA's own `session.update` on every
+attempt).
+
+**EVA-X is this sensitive within each side.** Each record's three trials,
+the one with the fastest median model response against the slowest:
+
+| Side | Trial | Model response, median | Flagged turns | Turn-taking | EVA-X pass |
+|---|---|---|---|---|---|
+| original | fastest of 3 | 608 ms | 35.1% | 0.794 | 43.3% |
+| original | slowest of 3 | 926 ms | 15.8% | 0.897 | 78.3% |
+| harbor | fastest of 3 | 591 ms | 42.2% | 0.744 | 41.7% |
+| harbor | slowest of 3 | 918 ms | 18.5% | 0.870 | 73.3% |
