@@ -1,6 +1,6 @@
 [project]
 name = "harbor-voice-eva-adapter"
-version = "0.1.0"
+version = "0.1.1"
 description = "harbor-voice's adapter for EVA, ServiceNow's voice-agent benchmark."
 authors = [{ name = "amoh-ai" }]
 license = "Apache-2.0 AND MIT"

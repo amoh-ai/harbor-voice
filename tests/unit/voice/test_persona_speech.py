@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
+import numpy as np
 import pytest
 
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.capabilities import Layer
 from harbor_voice.ids import PartyId
+from harbor_voice.perturbation import dsp
 from harbor_voice.perturbation import PerturbationPipeline
 from harbor_voice.perturbation import SeedSet
 from harbor_voice.perturbation import get_profile
@@ -254,11 +256,9 @@ class TestSignalSideKeepsTheFrameLength:
         [
             Loudness(gain_db=-6.0),
             Loudness(gain_db=12.0),
-            SpeakingRate(factor=1.3),
-            SpeakingRate(factor=0.7),
             DynamicMuffling(probability=1.0),
         ],
-        ids=["quiet", "loud", "faster", "slower", "muffled"],
+        ids=["quiet", "loud", "muffled"],
     )
     def test_length_is_preserved(self, layer: object) -> None:
         pcm = _tone()
@@ -283,17 +283,6 @@ class TestSignalSideKeepsTheFrameLength:
         loud.apply(_tone(), _ctx())
         assert loud.achieved()["clipped_fraction"] > 0.0
 
-    def test_speaking_rate_admits_it_shifts_pitch(self) -> None:
-        """Shipping resampling as prosody control would be the plausible
-        wrong number this design exists to make unavailable."""
-        assert SpeakingRate(factor=1.3).params()["pitch_preserved"] is False
-
-    def test_a_rate_of_one_is_a_no_op(self) -> None:
-        pcm = _tone()
-        rate = SpeakingRate(factor=1.0)
-        rate.reset(SeedSet.derive(1))
-        assert rate.apply(pcm, _ctx()) == pcm
-
     def test_muffling_reports_how_much_of_the_call_it_touched(self) -> None:
         muffle = DynamicMuffling(probability=1.0, segment_s=10.0)
         muffle.reset(SeedSet.derive(1))
@@ -316,11 +305,145 @@ class TestSignalSideKeepsTheFrameLength:
             (DynamicMuffling, "cutoff_hz", 0.0),
             (DynamicMuffling, "segment_s", 0.0),
             (DynamicMuffling, "transition_s", -1.0),
+            (DynamicMuffling, "taps", 4),
         ],
     )
     def test_nonsense_is_refused(self, cls: type, field: str, value: float) -> None:
         with pytest.raises(SpeechError):
             cls(**{field: value})
+
+
+def _signal(seconds: float, *freqs: float) -> np.ndarray:
+    """A sum of tones, as float samples at the canonical rate."""
+    rate = CANONICAL.sample_rate_hz
+    t = np.arange(int(seconds * rate)) / rate
+    return sum(0.2 * np.sin(2 * np.pi * f * t) for f in freqs) * np.ones_like(t)
+
+
+def _framed(layer: DynamicMuffling, x: np.ndarray) -> np.ndarray:
+    """Run float samples through a frame layer one canonical frame at a time."""
+    size = CANONICAL.frame_bytes()
+    pcm = dsp.to_pcm(x)
+    out = b"".join(
+        layer.apply(pcm[i : i + size], _ctx()) for i in range(0, len(pcm), size)
+    )
+    return dsp.to_array(out)
+
+
+class TestSpeakingRateIsAppliedToTheUtterance:
+    """A faster caller finishes sooner, at the same pitch."""
+
+    def test_faster_is_shorter_and_keeps_its_pitch(self) -> None:
+        rate = CANONICAL.sample_rate_hz
+        x = _signal(2.0, 300.0)
+        y = dsp.to_array(SpeakingRate(factor=1.3).apply(dsp.to_pcm(x), CANONICAL))
+        assert y.size == pytest.approx(x.size / 1.3, abs=2)
+        peak = np.fft.rfftfreq(y.size, 1 / rate)[np.argmax(np.abs(np.fft.rfft(y)))]
+        assert peak == pytest.approx(300.0, abs=3.0)
+
+    def test_slower_is_longer(self) -> None:
+        x = _signal(1.0, 300.0)
+        y = dsp.to_array(SpeakingRate(factor=0.8).apply(dsp.to_pcm(x), CANONICAL))
+        assert y.size == pytest.approx(x.size / 0.8, abs=2)
+
+    def test_the_stretch_leaves_no_gaps(self) -> None:
+        """No silent gaps between frames."""
+        x = _signal(1.0, 220.0, 330.0)
+        y = dsp.to_array(SpeakingRate(factor=1.3).apply(dsp.to_pcm(x), CANONICAL))
+        edge = CANONICAL.sample_rate_hz // 20
+        quiet = np.abs(y[edge:-edge]) < 1e-4
+        longest = max(
+            (len(run) for run in "".join("1" if q else "0" for q in quiet).split("0")),
+            default=0,
+        )
+        assert longest < 20
+
+    def test_a_rate_of_one_is_a_no_op(self) -> None:
+        pcm = _tone()
+        assert SpeakingRate(factor=1.0).apply(pcm, CANONICAL) == pcm
+
+    def test_it_says_pitch_is_kept(self) -> None:
+        assert SpeakingRate(factor=1.3).params()["pitch_preserved"] is True
+
+    def test_it_is_refused_as_a_frame_layer(self) -> None:
+        with pytest.raises(SpeechError, match="SpeechPlan"):
+            PerturbationPipeline([SpeakingRate(factor=1.3)])  # type: ignore[list-item]
+
+    def test_the_plan_declares_and_records_it(self) -> None:
+        seeds = SeedSet.derive(1)
+        rate = SpeakingRate(factor=1.3)
+        pipeline = PerturbationPipeline(
+            seeds=seeds, speech=SpeechPlan(rate=rate, seeds=seeds)
+        )
+        rate.apply(dsp.to_pcm(_signal(1.0, 300.0)), CANONICAL)
+        assert {str(k) for k in pipeline.active_layers} == {"L2.speaking_rate"}
+        record = pipeline.as_record().as_dict()["layers"]["L2.speaking_rate"]
+        assert record["params"]["factor"] == 1.3
+        assert record["achieved"]["factor_mean"] == pytest.approx(1.3, abs=0.01)
+
+    def test_a_rate_of_one_is_not_an_active_layer(self) -> None:
+        assert SpeechPlan(rate=SpeakingRate(factor=1.0)).is_empty
+
+
+class TestMufflingIsOneFilterOverTheStream:
+    """Continuous across frames, and strong enough to hear."""
+
+    def test_frame_by_frame_equals_one_pass(self) -> None:
+        """No step at frame boundaries."""
+        x = _signal(1.0, 220.0, 2500.0)
+        muffle = DynamicMuffling(probability=1.0, segment_s=10.0, transition_s=0.0)
+        muffle.reset(SeedSet.derive(1))
+        framed = _framed(muffle, x)
+        kernel = dsp.low_pass_kernel(cutoff_hz=1500.0, rate_hz=CANONICAL.sample_rate_hz)
+        one_pass = np.convolve(
+            np.concatenate([np.zeros(kernel.size - 1), x]), kernel, mode="valid"
+        )
+        assert np.max(np.abs(framed - one_pass)) < 1e-3
+
+    def test_unmuffled_audio_is_only_delayed(self) -> None:
+        x = _signal(0.5, 220.0)
+        muffle = DynamicMuffling(probability=0.0)
+        muffle.reset(SeedSet.derive(1))
+        out = _framed(muffle, x)
+        delay = muffle.latency_samples
+        assert np.max(np.abs(out[delay:] - x[: x.size - delay])) < 1e-3
+
+    def test_the_band_above_the_corner_is_gone(self) -> None:
+        muffle = DynamicMuffling(probability=1.0, segment_s=10.0)
+        muffle.reset(SeedSet.derive(1))
+        high = _framed(muffle, _signal(1.0, 3000.0))[CANONICAL.sample_rate_hz // 2 :]
+        muffle.reset(SeedSet.derive(1))
+        low = _framed(muffle, _signal(1.0, 300.0))[CANONICAL.sample_rate_hz // 2 :]
+        assert dsp.db(dsp.rms(high) / dsp.rms(_signal(0.5, 3000.0))) < -40.0
+        assert dsp.db(dsp.rms(low) / dsp.rms(_signal(0.5, 300.0))) > -1.0
+
+    def test_the_fade_runs_across_frames(self) -> None:
+        """The fade-in completes once over transition_s, not once per frame."""
+        rate = CANONICAL.sample_rate_hz
+        muffle = DynamicMuffling(probability=1.0, segment_s=10.0, transition_s=0.1)
+        muffle.reset(SeedSet.derive(1))
+        out = _framed(muffle, _signal(0.3, 3000.0))
+        frame = CANONICAL.frame_bytes() // 2
+        level = [
+            dsp.rms(out[i : i + frame])
+            for i in range(muffle.latency_samples, int(0.12 * rate), frame)
+        ]
+        assert all(
+            b <= a + 1e-6 for a, b in zip(level, level[1:])
+        )  # falls, never jumps back
+        assert level[-1] < level[0] / 20
+
+    def test_attenuation_takes_level_away(self) -> None:
+        x = _signal(1.0, 300.0)
+        plain = DynamicMuffling(probability=1.0, segment_s=10.0)
+        quieter = DynamicMuffling(probability=1.0, segment_s=10.0, attenuation_db=-6.0)
+        plain.reset(SeedSet.derive(1))
+        quieter.reset(SeedSet.derive(1))
+        half = CANONICAL.sample_rate_hz // 2
+        drop = dsp.db(
+            dsp.rms(_framed(quieter, x)[half:]) / dsp.rms(_framed(plain, x)[half:])
+        )
+        assert drop == pytest.approx(-6.0, abs=0.2)
 
 
 # --------------------------------------------------------------- composition
@@ -386,6 +509,28 @@ class TestThroughTheSimulator:
         utterance = await sim.next_utterance()
         assert utterance is not None
         assert "um" in utterance.said.split()
+
+    async def test_a_faster_caller_finishes_sooner(self) -> None:
+        """The rate lands on the synthesised line, before the clean copy."""
+
+        async def spoken_bytes(rate: SpeakingRate | None) -> int:
+            seeds = SeedSet.derive(2)
+            pipeline = PerturbationPipeline(
+                seeds=seeds, speech=SpeechPlan(rate=rate, seeds=seeds)
+            )
+            sim = UniversalSimulator(
+                party=CALLER,
+                content=ScriptContent(turns=["I need to reschedule my appointment"]),
+                tts=ToneTTS(),
+                pipeline=pipeline,
+                seeds=seeds,
+            )
+            line = await sim.prepare("I need to reschedule my appointment")
+            return len(line.pcm)
+
+        normal = await spoken_bytes(None)
+        faster = await spoken_bytes(SpeakingRate(factor=1.3))
+        assert faster == pytest.approx(normal / 1.3, rel=0.02)
 
     async def test_the_simulator_declares_the_persona_layer(self) -> None:
         pipeline = PerturbationPipeline(

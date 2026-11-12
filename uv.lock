@@ -1213,7 +1213,7 @@ ec2 = [
 
 [[package]]
 name = "harbor-voice"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "audioop-lts", marker = "python_full_version >= '3.13'" },
@@ -1283,7 +1283,7 @@ dev = [
 
 [[package]]
 name = "harbor-voice-eva-adapter"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "adapters/eva" }
 dependencies = [
     { name = "audioop-lts", marker = "python_full_version >= '3.13'" },
@@ -1298,7 +1298,7 @@ requires-dist = [
 
 [[package]]
 name = "harbor-voice-tau-voice-adapter"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "adapters/tau-voice" }
 dependencies = [
     { name = "audioop-lts", marker = "python_full_version >= '3.13'" },
