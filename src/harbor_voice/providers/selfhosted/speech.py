@@ -316,20 +316,39 @@ def _error(response: httpx.Response, provider: str, model: str) -> ProviderError
 
 # -------------------------------------------------------------- registry
 
-CREDENTIALS = "selfhosted"
+LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "0.0.0.0", "::1"})
+
+
+def sandbox_env(env: dict[str, str]) -> dict[str, str]:
+    """Refuse a server address that a sandbox cannot reach.
+
+    ``localhost`` inside Docker, Modal or Daytona is the sandbox itself, so
+    every request would be refused and retried until it timed out.
+    """
+    for name, value in env.items():
+        if name.endswith("_BASE_URL") and httpx.URL(value).host in LOOPBACK_HOSTS:
+            raise ValueError(
+                f"{name}={value} points at this machine, which a sandbox cannot "
+                f"reach; use an address it can (host.docker.internal for local "
+                f"Docker, or the server's public URL)"
+            )
+    return env
+
 
 SELFHOSTED_STT_SPEC = ProviderSpec(
     name=STT_NAME,
     modality=Modality.STT,
     capabilities=ProviderCapabilities(modality=Modality.STT, streams=False),
-    credential_provider=CREDENTIALS,
+    credential_provider="selfhosted-stt",
+    sandbox_env=sandbox_env,
 )
 
 SELFHOSTED_TTS_SPEC = ProviderSpec(
     name=TTS_NAME,
     modality=Modality.TTS,
     capabilities=ProviderCapabilities(modality=Modality.TTS, streams=False),
-    credential_provider=CREDENTIALS,
+    credential_provider="selfhosted-tts",
+    sandbox_env=sandbox_env,
 )
 """No default models: the server decides what it serves."""
 

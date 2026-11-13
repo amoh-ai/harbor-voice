@@ -14,7 +14,7 @@ and checked, not probed.
 |---|---|
 | Speech to speech | `openai.realtime`, `openai.live`, `aws.nova-sonic`, `elevenlabs.agents`, `google.live`, `xai.realtime`, `deepgram.agent`, `selfhosted.realtime` |
 | Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral`, `deepgram.stt`, `cartesia.stt`, `sarvam.stt`, `fishaudio.stt`, `xai.stt`, `meta.stt`, `microsoft.stt`, `openrouter.stt`, `selfhosted.stt` |
-| LLM, for cascades | `openai.llm`, `aws.bedrock-llm`, `litellm.llm` |
+| LLM, for cascades | `openai.llm`, `aws.bedrock-llm`, `litellm.llm`, `selfhosted.llm` |
 | Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts`, `deepgram.tts`, `cartesia.tts`, `sarvam.tts`, `fishaudio.tts`, `xai.tts`, `openrouter.tts`, `selfhosted.tts` |
 | Offline, for tests | `offline.scripted-stt`, `offline.echo-llm`, `offline.scripted-llm`, `offline.tool-echo-llm`, `offline.tone-tts` |
 
@@ -32,6 +32,9 @@ and checked, not probed.
 - `selfhosted.stt` and `selfhosted.tts` call an OpenAI-compatible speech
   server (vLLM, vLLM-Omni, SGLang): `/v1/audio/transcriptions` and
   `/v1/audio/speech`, at `SELFHOSTED_STT_BASE_URL` / `SELFHOSTED_TTS_BASE_URL`.
+- `selfhosted.llm/<model>` calls a server's `/v1/chat/completions` directly
+  (vLLM, SGLang, Ollama), at `SELFHOSTED_LLM_BASE_URL`, with no litellm in
+  between.
 - `openrouter.stt/<model>` and `openrouter.tts/<model>` are OpenRouter's
   speech models (`OPENROUTER_API_KEY`), e.g. `openrouter.stt/deepgram/nova-3`
   or `openrouter.tts/elevenlabs/eleven-flash-v2.5` with `voice = "sarah"`.
@@ -39,8 +42,11 @@ and checked, not probed.
   `GET https://openrouter.ai/api/v1/models?output_modalities=speech`.
   Models OpenRouter serves only as MP3 (MiniMax) are not supported.
 - `selfhosted.realtime/<model>` is a speech-to-speech model behind vLLM-Omni's
-  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All three
-  send `SELFHOSTED_API_KEY` as a bearer token when it is set.
+  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All four
+  send `SELFHOSTED_API_KEY` as a bearer token when it is set. Inside a
+  trial's sandbox `localhost` is the sandbox itself, so a base URL pointing
+  there is refused before the call starts: use `host.docker.internal` for
+  local Docker, or the server's public URL.
 - Serving Qwen3-Omni-30B-A3B with vLLM-Omni takes two 80 GB GPUs: it puts the
   thinker on GPU 0 and the talker and code2wav on GPU 1. Install
   `vllm-omni[server-vad]`, or the server refuses server VAD and the model

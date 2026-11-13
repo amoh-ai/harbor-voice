@@ -93,15 +93,14 @@ VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "deepgram": CredentialAccess(("DEEPGRAM_API_KEY",)),
     "fishaudio": CredentialAccess(("FISH_API_KEY",)),
     "sarvam": CredentialAccess(("SARVAM_API_KEY",)),
-    "selfhosted": CredentialAccess(
-        (),
-        extra_envs=("SELFHOSTED_API_KEY",),
-        base_url_envs=(
-            "SELFHOSTED_STT_BASE_URL",
-            "SELFHOSTED_TTS_BASE_URL",
-            "SELFHOSTED_REALTIME_BASE_URL",
-        ),
-    ),
+    # One entry per slot, each needing its own server's address: a model
+    # server that is not configured is "missing", not "ready".
+    **{
+        f"selfhosted-{slot}": CredentialAccess(
+            (), extra_envs=(f"SELFHOSTED_{slot.upper()}_BASE_URL", "SELFHOSTED_API_KEY")
+        )
+        for slot in ("stt", "tts", "llm", "realtime")
+    },
 }
 """Voice-only providers, consulted before harbor's table."""
 

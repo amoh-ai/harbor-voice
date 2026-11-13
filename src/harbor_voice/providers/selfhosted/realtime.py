@@ -39,6 +39,7 @@ from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.openai.realtime import OpenAIRealtimeTransport
 from harbor_voice.providers.openai.realtime import RealtimeSettings
 from harbor_voice.providers.openai.realtime import wire_format
+from harbor_voice.providers.selfhosted.speech import sandbox_env
 from harbor_voice.transport.base import SessionConfig
 
 NAME = "selfhosted.realtime"
@@ -159,7 +160,8 @@ SPEC = ProviderSpec(
         word_timings=False,
         diarizes=False,
     ),
-    credential_provider="selfhosted",
+    credential_provider="selfhosted-realtime",
+    sandbox_env=sandbox_env,
 )
 
 

@@ -221,3 +221,27 @@ class TestRegistration:
         for name in ("selfhosted.stt/m", "selfhosted.tts/m"):
             caps = registry.capabilities(name)
             assert not caps.streams and not caps.emits_partials
+
+
+@pytest.mark.parametrize(
+    "url", ["http://localhost:8000", "http://127.0.0.1:8000/v1", "http://0.0.0.0:9000"]
+)
+def test_a_sandbox_is_never_sent_to_this_machines_localhost(url: str) -> None:
+    with pytest.raises(ValueError, match="host.docker.internal"):
+        sh.sandbox_env({"SELFHOSTED_STT_BASE_URL": url})
+
+
+def test_a_reachable_server_goes_into_the_sandbox_unchanged() -> None:
+    env = {"SELFHOSTED_STT_BASE_URL": "http://host.docker.internal:8000"}
+    assert sh.sandbox_env(env) == env
+
+
+def test_doctor_reports_a_slot_without_a_server_as_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from harbor_voice.providers.credentials import resolve
+
+    monkeypatch.setenv("SELFHOSTED_STT_BASE_URL", "http://asr:8000")
+    assert resolve("selfhosted-stt").ready
+    assert not resolve("selfhosted-tts").ready
+    assert "SELFHOSTED_TTS_BASE_URL" in resolve("selfhosted-tts").explain()

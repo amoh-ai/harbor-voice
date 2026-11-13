@@ -177,13 +177,17 @@ class TestAHalfDuplexRun:
         assert matrix.profile == "telephony"
         assert matrix.seed_root == 7
 
-    async def test_it_writes_the_three_documents(self, tmp_path: Path) -> None:
-        """The layering that keeps harbor's waist intact."""
+    async def test_it_writes_the_three_documents_and_the_call(
+        self, tmp_path: Path
+    ) -> None:
+        """The layering that keeps harbor's waist intact, plus the recording,
+        so whatever copies ``written`` takes the audio too."""
         result = await VoiceTrial(_config(), out_dir=tmp_path).run()
         assert {p.name for p in result.written} == {
             "measurement.json",
             "reward.json",
             "validity.json",
+            "call.wav",
         }
 
     async def test_it_keeps_the_call_as_a_recording(self, tmp_path: Path) -> None:

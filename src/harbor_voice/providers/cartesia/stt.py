@@ -119,13 +119,13 @@ class CartesiaSTT:
                 event = json.loads(raw)
                 kind = event.get("type")
                 if kind == "transcript":
-                    text = event.get("text", "").strip()
+                    # Deltas carry their own spacing ("Hi" then ", I need").
+                    text = event.get("text", "")
                     if event.get("is_final"):
-                        committed = f"{committed} {text}".strip()
+                        committed += text
                         yield Transcript(text=committed, is_final=False)
                     else:
-                        guess = f"{committed} {text}".strip()
-                        yield Transcript(text=guess, is_final=False)
+                        yield Transcript(text=committed + text, is_final=False)
                 elif kind == "error":
                     raise error(
                         int(event.get("status_code", 0)),

@@ -1,6 +1,6 @@
-"""Self-hosted speech models (vLLM, vLLM-Omni, SGLang): speech to text, text
-to speech and speech to speech. Imported lazily, like the other vendor
-packages. Self-hosted LLMs go through ``litellm.llm``."""
+"""Models on your own server (vLLM, vLLM-Omni, SGLang, Ollama): speech to
+text, an LLM, text to speech and speech to speech, each over its OpenAI
+route. Imported lazily, like the other vendor packages."""
 
 from __future__ import annotations
 
@@ -26,8 +26,13 @@ __all__ = [
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add every self-hosted provider to a registry. See ``aws.register_all``."""
+    from harbor_voice.providers.selfhosted import llm
     from harbor_voice.providers.selfhosted import realtime
     from harbor_voice.providers.selfhosted import speech
 
-    for spec, build in (*speech.REGISTRATIONS, *realtime.REGISTRATIONS):
+    for spec, build in (
+        *speech.REGISTRATIONS,
+        *llm.REGISTRATIONS,
+        *realtime.REGISTRATIONS,
+    ):
         registry.register(spec, build)

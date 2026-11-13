@@ -714,9 +714,11 @@ class VoiceTrial:
             ),
             comparable_on=trajectory.comparable_on,
         )
-        written = (
-            tuple(outputs.write(self._out_dir)) if self._out_dir is not None else ()
-        )
+        written: tuple[Path, ...] = ()
+        if self._out_dir is not None:
+            written = tuple(outputs.write(self._out_dir))
+            if trajectory.artifacts is not None:  # the recording was written
+                written += (self._out_dir / RECORDING,)
         return TrialOutcome(
             trajectory=trajectory,
             turns=tuple(turns),
