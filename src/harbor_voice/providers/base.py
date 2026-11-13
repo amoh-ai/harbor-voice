@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import override
 
+import httpx
+
 from harbor_voice.ids import Digest
 from harbor_voice.ids import sha256_digest
 from harbor_voice.providers.capabilities import Modality
@@ -412,3 +414,37 @@ def http_failure(
     if status >= 500:
         return ProviderFailure.STREAM_BROKEN
     return ProviderFailure.MALFORMED
+
+
+class HTTPSession:
+    """One HTTP client for a provider's whole life, not one per request.
+
+    A new client per turn is a new TCP and TLS handshake per turn, which
+    lands in the measured response time as harness overhead. The client is
+    made on first use; :meth:`aclose` closes it unless the caller passed
+    its own.
+    """
+
+    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
+        self._client = client
+        self._owned = client is None
+
+    def client(self, timeout_s: float) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=timeout_s)
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._owned and self._client is not None:
+            await self._client.aclose()
+        self._client = None
+
+
+class PooledHTTP:
+    """For a provider holding an :class:`HTTPSession` as ``_http``."""
+
+    _http: HTTPSession
+
+    async def aclose(self) -> None:
+        """Close the provider's connections. Safe to call more than once."""
+        await self._http.aclose()

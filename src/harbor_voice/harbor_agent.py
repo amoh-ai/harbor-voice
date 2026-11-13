@@ -54,6 +54,11 @@ from harbor_voice.driver import PROGRESS_PREFIX
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
 TRAJECTORY_IN_ENV = "/logs/agent/trajectory.json"
+KEYS_IN_ENV = "/task/.agent-keys"
+"""The agent's credentials, uploaded as a file the drive command reads and
+deletes before the call starts. Uploaded, not passed as ``exec`` env: harbor's
+Docker backend turns that into ``docker exec -e KEY=value``, which anyone on
+the host can read in the process list."""
 """Where harbor reads an agent's ATIF trajectory."""
 
 _SPEC = re.compile(r"```toml\n(.*?)\n```", re.DOTALL)
@@ -209,10 +214,19 @@ class VoiceCallAgent(BaseInstalledAgent):
             raise VoiceInfrastructureError(str(exc)) from exc
 
         await environment.exec(f"mkdir -p {TASK_IN_ENV} {CALL_OUT_IN_ENV}")
+        keys = self.agent_env()
         with tempfile.TemporaryDirectory() as scratch:
             local = Path(scratch) / "voice.toml"
             local.write_text(spec, encoding="utf-8", newline="\n")
             await environment.upload_file(local, f"{TASK_IN_ENV}/voice.toml")
+            if keys:
+                secret = Path(scratch) / "keys.env"
+                secret.touch(mode=0o600)
+                secret.write_text(
+                    "".join(f"{k}={shlex.quote(v)}\n" for k, v in keys.items()),
+                    encoding="utf-8",
+                )
+                await environment.upload_file(secret, KEYS_IN_ENV)
 
         options = self.options
         seed = options.seed if isinstance(options, VoiceCallOptions) else None
@@ -220,7 +234,12 @@ class VoiceCallAgent(BaseInstalledAgent):
             f"call: {config.task or 'task'} · seed {seed if seed is not None else config.seed}"
             f" · agent {self.model_name or 'agent_json'}"
         )
-        command = (
+        load_keys = (
+            f"set -a && . {KEYS_IN_ENV} && set +a && rm -f {KEYS_IN_ENV} && "
+            if keys
+            else ""
+        )
+        command = load_keys + (
             f"harbor-voice drive {TASK_IN_ENV} --out {CALL_OUT_IN_ENV} "
             f"--trajectory {TRAJECTORY_IN_ENV} "
             f"--agent-json {shlex.quote(agent)}"
@@ -229,7 +248,7 @@ class VoiceCallAgent(BaseInstalledAgent):
         started = time.monotonic()
         relay = _ProgressRelay(self.logger)
         with environment.scoped_output_callback(relay.feed):
-            result = await environment.exec(command, env=self.agent_env() or None)
+            result = await environment.exec(command)
         if not relay.relayed:
             # Backends that cannot stream (Daytona) return the output at the end.
             relay.lines(result.stdout or "")

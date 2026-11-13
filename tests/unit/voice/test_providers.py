@@ -884,3 +884,27 @@ def test_require_key_takes_the_first_variable_set(
     monkeypatch.delenv("B_KEY")
     with pytest.raises(ProviderError, match="A_KEY or B_KEY is not set"):
         require_key(None, "A_KEY", "B_KEY", provider="p", model=None)
+
+
+async def test_an_http_session_keeps_one_client_until_closed() -> None:
+    from harbor_voice.providers.base import HTTPSession
+
+    session = HTTPSession()
+    first = session.client(5.0)
+    assert session.client(5.0) is first  # one connection pool per provider
+    await session.aclose()
+    assert first.is_closed
+    assert session.client(5.0) is not first  # reopens if used again
+
+
+async def test_an_http_session_leaves_a_callers_client_open() -> None:
+    import httpx
+
+    from harbor_voice.providers.base import HTTPSession
+
+    given = httpx.AsyncClient()
+    session = HTTPSession(given)
+    assert session.client(5.0) is given
+    await session.aclose()
+    assert not given.is_closed
+    await given.aclose()

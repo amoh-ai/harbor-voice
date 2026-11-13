@@ -37,6 +37,8 @@ from harbor_voice.ids import PartyId
 from harbor_voice.perturbation import dsp
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.cache import BlobCache
@@ -85,7 +87,7 @@ class VoiceSettings:
 TAU2_VOICE_SETTINGS = VoiceSettings()
 
 
-class ElevenLabsTTS:
+class ElevenLabsTTS(PooledHTTP):
     """Whole-utterance ElevenLabs synthesis, cached, at tau2's settings.
 
     Args:
@@ -125,7 +127,7 @@ class ElevenLabsTTS:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.last_cache_hit: bool | None = None
         """Whether the last utterance came from the cache; for the trajectory."""
         self.characters_billed = 0
@@ -236,33 +238,29 @@ class ElevenLabsTTS:
         headers = {"xi-api-key": self._key_or_raise(), "accept": "audio/pcm"}
         params = {"output_format": "pcm_16000"}
 
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
-        try:
-            for attempt in range(1, RETRY_ATTEMPTS + 1):
-                try:
-                    response = await client.post(
-                        url, json=body, headers=headers, params=params
-                    )
-                except (httpx.TimeoutException, httpx.TransportError) as exc:
-                    if attempt == RETRY_ATTEMPTS:
-                        raise ProviderError(
-                            ProviderFailure.TIMEOUT,
-                            f"ElevenLabs request failed after {attempt} attempts: {exc}",
-                            provider=self.name,
-                            model=self.model,
-                        ) from exc
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                if response.status_code == 200 and response.content:
-                    self.characters_billed += len(text)
-                    return response.content
-                if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                raise _error(response, self.name, self.model)
-        finally:
-            if self._client is None:
-                await client.aclose()
+        client = self._http.client(self._timeout_s)
+        for attempt in range(1, RETRY_ATTEMPTS + 1):
+            try:
+                response = await client.post(
+                    url, json=body, headers=headers, params=params
+                )
+            except (httpx.TimeoutException, httpx.TransportError) as exc:
+                if attempt == RETRY_ATTEMPTS:
+                    raise ProviderError(
+                        ProviderFailure.TIMEOUT,
+                        f"ElevenLabs request failed after {attempt} attempts: {exc}",
+                        provider=self.name,
+                        model=self.model,
+                    ) from exc
+                await asyncio.sleep(_backoff(attempt))
+                continue
+            if response.status_code == 200 and response.content:
+                self.characters_billed += len(text)
+                return response.content
+            if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
+                await asyncio.sleep(_backoff(attempt))
+                continue
+            raise _error(response, self.name, self.model)
         # Every iteration returns, raises or continues; reaching here means
         # RETRY_ATTEMPTS was set below one.
         raise ValueError(  # pragma: no cover

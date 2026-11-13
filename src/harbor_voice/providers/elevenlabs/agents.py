@@ -89,6 +89,8 @@ from harbor_voice.capabilities import Pipeline
 from harbor_voice.capabilities import TurnControl
 from harbor_voice.ids import PartyId
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
@@ -227,7 +229,7 @@ AgentsEvent = (
 # ----------------------------------------------------------------------- REST
 
 
-class AgentsAPI:
+class AgentsAPI(PooledHTTP):
     """The REST half of ElevenLabs Agents: the requests SDK 2.53 makes.
 
     No retries, as the SDK makes none by default; errors come back as
@@ -246,7 +248,7 @@ class AgentsAPI:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
 
     @property
     def api_base(self) -> str:
@@ -273,7 +275,7 @@ class AgentsAPI:
         body: Mapping[str, Any] | None = None,
     ) -> httpx.Response:
         headers = self._headers()
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             response = await client.request(
                 method,
@@ -290,9 +292,6 @@ class AgentsAPI:
             raise ProviderError(
                 ProviderFailure.STREAM_BROKEN, f"{method} /{path}: {exc}", provider=NAME
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if not 200 <= response.status_code < 300:
             raise _error(response, f"{method} /{path}")
         return response

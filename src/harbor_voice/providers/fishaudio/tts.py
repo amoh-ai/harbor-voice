@@ -30,6 +30,8 @@ from harbor_voice.audio.format import FrameCutter
 from harbor_voice.ids import PartyId
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import require_key
@@ -48,7 +50,7 @@ SAMPLE_RATES = frozenset({8_000, 16_000, 24_000, 32_000, 44_100})
 """The WAV / PCM rates the API reference lists."""
 
 
-class FishAudioTTS:
+class FishAudioTTS(PooledHTTP):
     """Streaming Fish Audio synthesis.
 
     Args:
@@ -87,7 +89,7 @@ class FishAudioTTS:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.usage = Usage(characters=0)
         """The last utterance's UTF-8 bytes, the unit Fish Audio bills."""
 
@@ -125,7 +127,7 @@ class FishAudioTTS:
         }
         cutter = FrameCutter(self._format)
         received = 0
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             async with client.stream(
                 "POST", f"{self._api_base}/v1/tts", json=body, headers=headers
@@ -145,9 +147,6 @@ class FishAudioTTS:
             raise ProviderError(
                 ProviderFailure.STREAM_BROKEN, str(exc), provider=NAME, model=self.model
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if not received:
             raise ProviderError(
                 ProviderFailure.MALFORMED,

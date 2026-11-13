@@ -591,3 +591,18 @@ def test_register_all_adds_the_three_providers() -> None:
         "deepgram.tts": "aura-2-thalia-en",
         "deepgram.agent": "gpt-5.6-luna",
     }
+
+
+async def test_the_agent_sends_keepalives_while_open(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deepgram drops a session idle for about 10 s, e.g. during a tool call."""
+    from harbor_voice.providers.deepgram import agent as dg_agent
+
+    monkeypatch.setattr(dg_agent, "KEEPALIVE_S", 0.01)
+    socket = _session()
+    transport = _agent(socket)
+    await transport.open(CONFIG)
+    await asyncio.sleep(0.05)
+    await transport.close()
+    assert {"type": "KeepAlive"} in socket.sent

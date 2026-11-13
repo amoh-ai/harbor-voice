@@ -33,6 +33,8 @@ from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import ProviderSpec
@@ -52,7 +54,7 @@ STT_ENCODINGS = {"pcm16": "pcm", "mulaw": "mulaw", "alaw": "alaw"}
 """Our encodings as ``/v1/stt``'s raw ``audio_format`` names them."""
 
 
-class _XAIRest:
+class _XAIRest(PooledHTTP):
     """What both providers share: the key, the client, one POST."""
 
     name: str
@@ -68,7 +70,7 @@ class _XAIRest:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
 
     async def _post(self, path: str, model: str, **request: Any) -> httpx.Response:
         """One authenticated POST; any failure as a :class:`ProviderError`."""
@@ -80,7 +82,7 @@ class _XAIRest:
                 provider=self.name,
                 model=model,
             )
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             response = await client.post(
                 f"{self._api_base}{path}",
@@ -98,9 +100,6 @@ class _XAIRest:
                 provider=self.name,
                 model=model,
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if response.status_code != 200:
             raise _error(response, self.name, model)
         return response

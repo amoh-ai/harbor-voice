@@ -116,6 +116,10 @@ def _version(model: str) -> str:
     return "v2" if model.startswith("flux") else "v1"
 
 
+KEEPALIVE_S = 5.0
+"""Seconds between ``KeepAlive`` messages; Deepgram's idle limit is about 10."""
+
+
 class DeepgramAgentTransport(VoiceTransport):
     """One Deepgram Voice Agent session over a websocket."""
 
@@ -146,6 +150,7 @@ class DeepgramAgentTransport(VoiceTransport):
         self._ws: Any = None
         self._open = False
         self._pump: asyncio.Task[None] | None = None
+        self._keepalive: asyncio.Task[None] | None = None
         self._inbox: asyncio.Queue[StreamEvent | None] = asyncio.Queue()
         self._calls: dict[str, asyncio.Task[None]] = {}
         self._turns = 0
@@ -273,6 +278,7 @@ class DeepgramAgentTransport(VoiceTransport):
         self._open = True
         self._started = self._clock.now()
         self._pump = asyncio.create_task(self._receive())
+        self._keepalive = asyncio.create_task(self._keep_alive())
 
     @override
     async def tx(self, frame: AudioFrame) -> None:
@@ -322,11 +328,12 @@ class DeepgramAgentTransport(VoiceTransport):
         for task in pending:
             task.cancel()
         await asyncio.gather(*pending, return_exceptions=True)
+        for task in (self._keepalive, self._pump):
+            if task is not None:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
+                    await task
         await self._drop()
-        if self._pump is not None:
-            self._pump.cancel()
-            with contextlib.suppress(asyncio.CancelledError, Exception):
-                await self._pump
         await self._inbox.put(None)
 
     # ------------------------------------------------------------- internals
@@ -335,6 +342,21 @@ class DeepgramAgentTransport(VoiceTransport):
         return ProviderError(
             ProviderFailure.MALFORMED, message, provider=NAME, model=self._model
         )
+
+    async def _keep_alive(self) -> None:
+        """A ``KeepAlive`` every :data:`KEEPALIVE_S`.
+
+        Deepgram closes a session that receives nothing for about 10 s. The
+        caller's line normally streams, silence included, but a long agent
+        turn or tool call on a driver that pauses its audio would otherwise
+        end the call with no error.
+        """
+        while self._ws is not None:
+            await asyncio.sleep(KEEPALIVE_S)
+            with contextlib.suppress(
+                Exception
+            ):  # a dead socket ends the call elsewhere
+                await self._ws.send(json.dumps({"type": "KeepAlive"}))
 
     async def _drop(self) -> None:
         if self._ws is not None:

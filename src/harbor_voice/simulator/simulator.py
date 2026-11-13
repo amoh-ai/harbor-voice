@@ -190,6 +190,11 @@ class UniversalSimulator:
         self._utterances: list[Utterance] = []
         self._pipeline.persona.apply_to_tts(self._tts)
 
+    async def aclose(self) -> None:
+        """Close the caller's TTS connections, if it holds any."""
+        if (aclose := getattr(self._tts, "aclose", None)) is not None:
+            await aclose()
+
     # ------------------------------------------------------------- declared
 
     @property

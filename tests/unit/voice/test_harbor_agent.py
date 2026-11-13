@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import shlex
 import logging
 import types
 from pathlib import Path
@@ -53,7 +54,6 @@ DRIVE_OUTPUT = (
 class _Environment:
     def __init__(self, drive_code: int = 0, streams: bool = False) -> None:
         self.calls: list[tuple] = []
-        self.envs: dict[str, object] = {}
         self.uploaded: dict[str, str] = {}
         self._drive_code = drive_code
         self._streams = streams
@@ -69,7 +69,6 @@ class _Environment:
 
     async def exec(self, command: str, **kw: object) -> _Exec:
         self.calls.append(("exec", command))
-        self.envs[command] = kw.get("env")
         if command.startswith("harbor-voice drive"):
             if self._streams and self._callback is not None:
                 # Docker/EC2 stream output in chunks that split lines anywhere.
@@ -80,7 +79,7 @@ class _Environment:
 
     async def upload_file(self, source: Path, target: str) -> None:
         self.calls.append(("upload", target))
-        if target.endswith(".toml"):
+        if not target.endswith(".whl"):
             self.uploaded[target] = Path(source).read_text(encoding="utf-8")
 
 
@@ -93,6 +92,17 @@ def _no_wheel_builds(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(install, "package_for", package_for)
     monkeypatch.setattr(install, "distribution_of", lambda module: "harbor")
     monkeypatch.setattr(harbor_agent, "_packages", harbor_agent._Packages())
+
+
+def _keys(environment: _Environment) -> dict[str, str] | None:
+    """The credentials the call was given, from the uploaded key file."""
+    text = environment.uploaded.get(harbor_agent.KEYS_IN_ENV)
+    if text is None:
+        return None
+    return {
+        k: shlex.split(v)[0]
+        for k, _, v in (line.partition("=") for line in text.splitlines())
+    }
 
 
 def _agent(tmp_path: Path, **kwargs: object) -> VoiceCallAgent:
@@ -204,8 +214,7 @@ async def test_the_call_gets_the_agents_own_key(
     monkeypatch.setenv(key, "test-key")
     environment = _Environment()
     await _agent(tmp_path, model_name=model).run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    assert environment.envs[drive] == {key: "test-key"}
+    assert _keys(environment) == {key: "test-key"}
 
 
 async def test_gemini_uses_its_key_in_the_container_not_vertex(
@@ -217,8 +226,8 @@ async def test_gemini_uses_its_key_in_the_container_not_vertex(
     environment = _Environment()
     agent = _agent(tmp_path, model_name="google.live/gemini-live-2.5-flash")
     await agent.run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    env = environment.envs[drive]
+    env = _keys(environment)
+    assert env is not None
     assert env["GEMINI_API_KEY"] == "test-key"
     assert env["GOOGLE_GENAI_USE_VERTEXAI"] == "false"
 
@@ -238,8 +247,8 @@ async def test_a_cascade_gets_each_providers_key_including_litellms(
     environment = _Environment()
     agent = _agent(tmp_path, agent_json=spec.model_dump_json())
     await agent.run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    env = environment.envs[drive]
+    env = _keys(environment)
+    assert env is not None
     assert env["CARTESIA_API_KEY"] == "cartesia_api_key-test"
     assert env["OPENROUTER_API_KEY"] == "openrouter_api_key-test"
 
@@ -256,8 +265,8 @@ async def test_settings_naming_this_machine_stay_out_of_the_sandbox(
     await _agent(tmp_path, model_name="aws.nova-sonic").run(
         INSTRUCTION, environment, context=None
     )  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    env = environment.envs[drive]
+    env = _keys(environment)
+    assert env is not None
     assert env["AWS_ACCESS_KEY_ID"] == "id"
     assert "AWS_PROFILE" not in env
 
@@ -271,8 +280,22 @@ async def test_any_gemini_key_switches_a_vertex_machine_to_the_key(
     environment = _Environment()
     agent = _agent(tmp_path, model_name="google.live/gemini-live-2.5-flash")
     await agent.run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    assert environment.envs[drive]["GOOGLE_GENAI_USE_VERTEXAI"] == "false"
+    assert (_keys(environment) or {})["GOOGLE_GENAI_USE_VERTEXAI"] == "false"
+
+
+async def test_keys_reach_the_call_as_a_file_never_a_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``docker exec -e`` would show the key in the host's process list."""
+    monkeypatch.setenv("XAI_API_KEY", "secret-xai")
+    environment = _Environment()
+    agent = _agent(tmp_path, model_name="xai.realtime/grok-voice")
+    await agent.run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
+    commands = [c[1] for c in environment.calls if c[0] == "exec"]
+    assert not any("secret-xai" in c for c in commands)
+    drive = next(c for c in commands if "harbor-voice drive" in c)
+    assert f"rm -f {harbor_agent.KEYS_IN_ENV}" in drive
+    assert _keys(environment) == {"XAI_API_KEY": "secret-xai"}
 
 
 async def test_an_agent_needing_no_key_passes_no_env(tmp_path: Path) -> None:
@@ -280,8 +303,7 @@ async def test_an_agent_needing_no_key_passes_no_env(tmp_path: Path) -> None:
     await _agent(tmp_path, model_name="offline.echo-s2s").run(
         INSTRUCTION, environment, context=None
     )  # type: ignore[arg-type]
-    (drive,) = [c for c in environment.envs if c.startswith("harbor-voice drive")]
-    assert environment.envs[drive] is None
+    assert _keys(environment) is None
 
 
 async def test_a_call_that_did_not_run_is_retryable_infra(tmp_path: Path) -> None:

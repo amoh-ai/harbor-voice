@@ -26,6 +26,8 @@ from typing import Any
 import httpx
 
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.capabilities import Modality
@@ -87,7 +89,7 @@ def usage_record(
     )
 
 
-class OpenAILLM:
+class OpenAILLM(PooledHTTP):
     """Chat completions, sent as given.
 
     Args:
@@ -112,7 +114,7 @@ class OpenAILLM:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
 
     async def complete(self, body: dict[str, Any]) -> ChatReply:
         """Send ``body`` to ``/chat/completions`` unchanged and parse the reply."""
@@ -171,30 +173,26 @@ class OpenAILLM:
         url = f"{self._api_base}/chat/completions"
         headers = {"Authorization": f"Bearer {self._key_or_raise()}"}
         model = body.get("model")
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
-        try:
-            for attempt in range(1, RETRY_ATTEMPTS + 1):
-                try:
-                    response = await client.post(url, json=body, headers=headers)
-                except (httpx.TimeoutException, httpx.TransportError) as exc:
-                    if attempt == RETRY_ATTEMPTS:
-                        raise ProviderError(
-                            ProviderFailure.TIMEOUT,
-                            f"OpenAI request failed after {attempt} attempts: {exc}",
-                            provider=self.name,
-                            model=model,
-                        ) from exc
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                if response.status_code == 200:
-                    return response.json()
-                if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                raise _error(response, self.name, model)
-        finally:
-            if self._client is None:
-                await client.aclose()
+        client = self._http.client(self._timeout_s)
+        for attempt in range(1, RETRY_ATTEMPTS + 1):
+            try:
+                response = await client.post(url, json=body, headers=headers)
+            except (httpx.TimeoutException, httpx.TransportError) as exc:
+                if attempt == RETRY_ATTEMPTS:
+                    raise ProviderError(
+                        ProviderFailure.TIMEOUT,
+                        f"OpenAI request failed after {attempt} attempts: {exc}",
+                        provider=self.name,
+                        model=model,
+                    ) from exc
+                await asyncio.sleep(_backoff(attempt))
+                continue
+            if response.status_code == 200:
+                return response.json()
+            if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
+                await asyncio.sleep(_backoff(attempt))
+                continue
+            raise _error(response, self.name, model)
         raise ValueError(  # pragma: no cover
             f"RETRY_ATTEMPTS must be at least 1, got {RETRY_ATTEMPTS}"
         )

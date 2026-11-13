@@ -26,6 +26,8 @@ import httpx
 
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
@@ -42,7 +44,7 @@ DEFAULT_MODEL = "transcribe-1-pro"
 FIELDS = {"ignore_timestamps": "true", "diarize": "false", "tag_audio_events": "false"}
 
 
-class FishAudioSTT:
+class FishAudioSTT(PooledHTTP):
     """Whole-turn transcription.
 
     Args:
@@ -64,7 +66,7 @@ class FishAudioSTT:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.usage = Usage(audio_seconds=0.0)
         """The last turn's audio seconds, as Fish Audio reports them."""
 
@@ -83,7 +85,7 @@ class FishAudioSTT:
             "model": self.model,
         }
         files = {"audio": ("turn.wav", to_wav(pcm, fmt), "audio/wav")}
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             response = await client.post(
                 f"{self._api_base}/v1/asr", headers=headers, data=FIELDS, files=files
@@ -96,9 +98,6 @@ class FishAudioSTT:
             raise ProviderError(
                 ProviderFailure.STREAM_BROKEN, str(exc), provider=NAME, model=self.model
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if response.status_code != 200:
             raise error(response.status_code, response.text, NAME, self.model)
         try:

@@ -31,6 +31,8 @@ from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.format import FrameCutter
 from harbor_voice.ids import PartyId
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import ProviderSpec
@@ -51,7 +53,7 @@ SAMPLE_RATES = {
 """What ``/v1/speak`` produces per encoding."""
 
 
-class DeepgramTTS:
+class DeepgramTTS(PooledHTTP):
     """Aura synthesis, yielded in 20 ms chunks as the response streams in.
 
     Args:
@@ -88,7 +90,7 @@ class DeepgramTTS:
         self._api_key = api_key
         self._url = url
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.characters_billed = 0
         """Characters Deepgram counted (``dg-char-count``), summed."""
 
@@ -102,7 +104,7 @@ class DeepgramTTS:
             return
         headers = auth_header(self._api_key, provider=NAME, model=self.model)
         cutter = FrameCutter(self._format)
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             async with client.stream(
                 "POST",
@@ -147,9 +149,6 @@ class DeepgramTTS:
                 provider=NAME,
                 model=self.model,
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
 
 
 SPEC = ProviderSpec(

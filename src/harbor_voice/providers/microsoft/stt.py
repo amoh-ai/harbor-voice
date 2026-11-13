@@ -29,6 +29,8 @@ import httpx
 
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import ProviderSpec
@@ -45,7 +47,7 @@ KEY_ENV = "AZURE_SPEECH_KEY"
 ENDPOINT_ENV = "AZURE_SPEECH_ENDPOINT"
 
 
-class MicrosoftSTT:
+class MicrosoftSTT(PooledHTTP):
     """Whole-turn transcription with MAI-Transcribe.
 
     Args:
@@ -72,7 +74,7 @@ class MicrosoftSTT:
         self._api_key = api_key
         self._endpoint = endpoint
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.usage = Usage(audio_seconds=0.0)
         """The last turn's audio seconds, as Azure reports them."""
 
@@ -97,7 +99,7 @@ class MicrosoftSTT:
         )
         headers = {"Ocp-Apim-Subscription-Key": self._env(self._api_key, KEY_ENV)}
         files = {"audio": ("turn.wav", to_wav(pcm, fmt), "audio/wav")}
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             response = await client.post(
                 url,
@@ -113,9 +115,6 @@ class MicrosoftSTT:
             raise ProviderError(
                 ProviderFailure.STREAM_BROKEN, str(exc), provider=NAME, model=self.model
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if response.status_code != 200:
             raise _error(response.status_code, response.text, self.model)
         try:

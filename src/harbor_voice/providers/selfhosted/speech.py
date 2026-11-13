@@ -47,6 +47,7 @@ from harbor_voice.perturbation import dsp
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
+from harbor_voice.providers.base import HTTPSession
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
 from harbor_voice.providers.capabilities import Modality
@@ -83,6 +84,14 @@ class SelfHostedSTT:
     """The variable holding the bearer token, sent when it is set."""
     usage: Usage = field(default_factory=Usage)
     client: httpx.AsyncClient | None = None
+    _http: HTTPSession = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        self._http = HTTPSession(self.client)
+
+    async def aclose(self) -> None:
+        """Close this provider's connections. Safe to call more than once."""
+        await self._http.aclose()
 
     async def transcribe(
         self, frames: Sequence[AudioFrame]
@@ -149,6 +158,14 @@ class SelfHostedTTS:
     response_format: str = "wav"
     """``wav``, or ``pcm`` with the rate in the reply's ``Content-Type``."""
     client: httpx.AsyncClient | None = None
+    _http: HTTPSession = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        self._http = HTTPSession(self.client)
+
+    async def aclose(self) -> None:
+        """Close this provider's connections. Safe to call more than once."""
+        await self._http.aclose()
 
     async def synthesize_pcm(self, text: str) -> bytes:
         """The whole utterance, in :attr:`audio_format`."""
@@ -261,30 +278,26 @@ async def _post(
     """POST with retries on timeouts, 409, 429 and 5xx; 200 or a ProviderError."""
     key = os.environ.get(owner.api_key_env)
     headers = {"Authorization": f"Bearer {key}"} if key else {}
-    client = owner.client or httpx.AsyncClient(timeout=owner.timeout_s)
-    try:
-        for attempt in range(1, RETRY_ATTEMPTS + 1):
-            try:
-                response = await client.post(url, headers=headers, **request)
-            except (httpx.TimeoutException, httpx.TransportError) as exc:
-                if attempt == RETRY_ATTEMPTS:
-                    raise ProviderError(
-                        ProviderFailure.TIMEOUT,
-                        f"request to {url} failed after {attempt} attempts: {exc}",
-                        provider=owner.name,
-                        model=owner.model,
-                    ) from exc
-                await asyncio.sleep(_backoff(attempt))
-                continue
-            if response.status_code == 200 and response.content:
-                return response
-            if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-                await asyncio.sleep(_backoff(attempt))
-                continue
-            raise _error(response, owner.name, owner.model)
-    finally:
-        if owner.client is None:
-            await client.aclose()
+    client = owner._http.client(owner.timeout_s)
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            response = await client.post(url, headers=headers, **request)
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            if attempt == RETRY_ATTEMPTS:
+                raise ProviderError(
+                    ProviderFailure.TIMEOUT,
+                    f"request to {url} failed after {attempt} attempts: {exc}",
+                    provider=owner.name,
+                    model=owner.model,
+                ) from exc
+            await asyncio.sleep(_backoff(attempt))
+            continue
+        if response.status_code == 200 and response.content:
+            return response
+        if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
+            await asyncio.sleep(_backoff(attempt))
+            continue
+        raise _error(response, owner.name, owner.model)
     raise ValueError(  # pragma: no cover
         f"RETRY_ATTEMPTS must be at least 1, got {RETRY_ATTEMPTS}"
     )

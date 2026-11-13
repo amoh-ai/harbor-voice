@@ -160,6 +160,11 @@ class CascadeTransport(VoiceTransport):
                 await self._watcher
             self._watcher = None
         await self._outbound.put(None)
+        # Each slot keeps one connection for the call; this is where it ends.
+        for slot in (self._stt, self._llm, self._tts):
+            if (aclose := getattr(slot, "aclose", None)) is not None:
+                with contextlib.suppress(Exception):
+                    await aclose()
 
     @override
     async def tx(self, frame: AudioFrame) -> None:

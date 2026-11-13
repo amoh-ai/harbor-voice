@@ -431,7 +431,10 @@ class VoiceTrial:
         transport = self.transport()
         floor = self.floor()
 
-        turns, probes = await self._call(transport, simulator, floor)
+        try:
+            turns, probes = await self._call(transport, simulator, floor)
+        finally:
+            await simulator.aclose()
         trajectory = self._record(pipeline, simulator, transport, floor, turns, probes)
         return self._score(trajectory, turns)
 
