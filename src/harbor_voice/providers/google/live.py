@@ -23,7 +23,8 @@ same protocol on both:
   ``serverContent.modelTurn.parts[].inlineData``, 24 kHz PCM16;
 - the server runs VAD itself (reported in ``voiceActivity``, which the docs
   define but do not say when it is sent) and cuts its own
-  answer short on barge-in (``serverContent.interrupted``);
+  answer short on barge-in (``serverContent.interrupted``, passed on as a
+  cancelled :class:`~harbor_voice.transport.stream.ResponseDone`);
 - tools arrive as ``toolCall.functionCalls`` and are answered with one
   ``toolResponse`` per ``toolCall``, through the same
   :class:`~harbor_voice.providers.tools.ToolRouter` every transport uses;
@@ -81,6 +82,7 @@ from harbor_voice.transport.base import VoiceTransport
 from harbor_voice.transport.stream import InputSpeech
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
+from harbor_voice.transport.stream import ResponseDone
 from harbor_voice.transport.stream import StreamEvent
 
 NAME = "google.live"
@@ -501,6 +503,9 @@ class GeminiLiveTransport(VoiceTransport):
         said = (content.get("outputTranscription") or {}).get("text")
         if said:
             self._inbox.put_nowait(OutputTranscript(utterance, said, now))
+        if content.get("interrupted"):
+            # Gemini cuts itself off on barge-in; this is the only sign of it.
+            self._inbox.put_nowait(ResponseDone(utterance, "cancelled", False, "", now))
         if content.get("turnComplete") or content.get("interrupted"):
             self._turn += 1
 

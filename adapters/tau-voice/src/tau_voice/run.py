@@ -48,6 +48,7 @@ from harbor_voice.simulator import UniversalSimulator
 from tau_voice.voice import SimulatorVoice
 from harbor_voice.providers.cache import BlobCache
 from harbor_voice.providers.elevenlabs import ElevenLabsTTS
+from harbor_voice.providers.google.live import GeminiLiveTransport
 from harbor_voice.providers.openai.live import LIVE_AUDIO
 from harbor_voice.providers.openai.live import LiveSettings
 from harbor_voice.providers.openai.live import OpenAILiveTransport
@@ -60,6 +61,7 @@ from harbor_voice.providers.tools import ToolSpec
 from tau_voice.caller import ReactiveCaller
 from tau_voice.caller import ReactivePolicy
 from tau_voice.caller import tau2_backchannels
+from tau_voice.agent_steps import GeminiAgentStepper
 from tau_voice.agent_steps import LiveAgentStepper
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
@@ -190,6 +192,48 @@ def _specs(tools: Sequence[Mapping[str, Any]]) -> list[ToolSpec]:
     return specs
 
 
+def _stepping(
+    transport: VoiceTransport, live: bool, step_s: float
+) -> tuple[AudioFormat, AudioFormat, dict[str, Any]]:
+    """The session's audio formats and the tick to step the agent with.
+
+    tau2 has one tick per provider, and so does this: OpenAI Live's
+    (:class:`LiveAgentStepper`), Gemini Live's (:class:`GeminiAgentStepper`;
+    Gemini stops itself on barge-in, so nothing is truncated), and the
+    Realtime tick for every transport that can be truncated.
+    """
+    per_step = int(TELEPHONY.sample_rate_hz * step_s)
+    per_second = TELEPHONY.sample_rate_hz
+    if live:
+        stepper = LiveAgentStepper(bytes_per_step=per_step, bytes_per_second=per_second)
+        return (
+            LIVE_AUDIO,
+            LIVE_AUDIO,
+            {
+                "stepper": stepper,
+                "realtime_pacing": True,
+                "send_format": LIVE_AUDIO,
+            },
+        )
+    if isinstance(transport, GeminiLiveTransport):
+        caps = transport.capabilities
+        stepper = GeminiAgentStepper(
+            bytes_per_step=per_step,
+            bytes_per_second=per_second,
+            input_rate=caps.audio_in.sample_rate_hz,
+            output_rate=caps.audio_out.sample_rate_hz,
+        )
+        return (
+            caps.audio_in,
+            caps.audio_out,
+            {
+                "stepper": stepper,
+                "send_format": caps.audio_in,
+            },
+        )
+    return TELEPHONY, TELEPHONY, {}
+
+
 async def run_task(
     *,
     sidecar_url: str,
@@ -216,6 +260,8 @@ async def run_task(
     ``live_config`` (tau2's ``--live-config``) says the agent is OpenAI Live:
     tau2 renders its two prompts, and the call steps as tau2's Live adapter
     does (:class:`~tau_voice.agent_steps.LiveAgentStepper`, real-time pacing).
+    A Gemini Live agent steps as tau2's Gemini adapter does
+    (:class:`~tau_voice.agent_steps.GeminiAgentStepper`).
     """
     if speech_complexity not in PRESETS:
         raise ValueError(
@@ -323,12 +369,14 @@ async def run_task(
         ) -> tuple[CallerToolResult, ...]:
             return await content.run_tools(calls, step=step)
 
-        wire = LIVE_AUDIO if live is not None else TELEPHONY
+        step_s = turns["tick_duration_s"]
+        audio_in, audio_out, stepping = _stepping(transport, live is not None, step_s)
         await transport.open(
-            SessionConfig(party=PartyId("agent"), audio_in=wire, audio_out=wire)
+            SessionConfig(
+                party=PartyId("agent"), audio_in=audio_in, audio_out=audio_out
+            )
         )
         try:
-            step_s = turns["tick_duration_s"]
             call = SteppedCall(
                 caller=caller,
                 transport=transport,
@@ -336,18 +384,7 @@ async def run_task(
                 audio_format=TELEPHONY,
                 step_s=step_s,
                 max_steps=max_steps or int(turns["max_steps_seconds"] / step_s),
-                **(
-                    {
-                        "stepper": LiveAgentStepper(
-                            bytes_per_step=int(TELEPHONY.sample_rate_hz * step_s),
-                            bytes_per_second=TELEPHONY.sample_rate_hz,
-                        ),
-                        "realtime_pacing": True,
-                        "send_format": LIVE_AUDIO,
-                    }
-                    if live is not None
-                    else {}
-                ),
+                **stepping,
             )
             executor.call = call
             result = await call.run()

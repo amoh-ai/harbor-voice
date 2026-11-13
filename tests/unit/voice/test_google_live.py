@@ -28,6 +28,7 @@ from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.stream import InputSpeech
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
+from harbor_voice.transport.stream import ResponseDone
 
 pytestmark = pytest.mark.unit
 
@@ -309,7 +310,9 @@ async def test_input_is_sent_as_16k_pcm_and_resampled_from_canonical(
     await transport.close()
 
 
-async def test_events_carry_audio_transcript_and_vad_in_order(monkeypatch) -> None:
+async def test_events_carry_audio_transcript_vad_and_cutoffs_in_order(
+    monkeypatch,
+) -> None:
     monkeypatch.setenv("GEMINI_API_KEY", "k")
     socket = FakeSocket(
         {"voiceActivity": {"type": "ACTIVITY_START", "audioOffset": "1.250s"}},
@@ -330,8 +333,11 @@ async def test_events_carry_audio_transcript_and_vad_in_order(monkeypatch) -> No
         OutputTranscript,
         InputSpeech,
         OutputAudio,
+        ResponseDone,
         OutputAudio,
     ]
+    # Gemini stops itself on barge-in; the stream says which utterance.
+    assert (events[5].response_id, events[5].status) == ("turn-1", "cancelled")
     assert (events[0].started, events[0].audio_ms) == (True, 1250)
     assert (events[3].started, events[3].audio_ms) == (False, 2000)
     assert [e.utterance for e in events if isinstance(e, OutputAudio)] == [

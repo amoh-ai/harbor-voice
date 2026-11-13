@@ -13,7 +13,10 @@ A transport declaring ``EVENT_STREAM`` yields, in arrival order:
 - :class:`OutputTranscript` — the agent's own transcript of an utterance, as
   deltas. tau-voice's caller reads *this*, not a recognition of the audio;
 - :class:`InputSpeech` — the provider's VAD opening or closing on our audio,
-  with its position in the input audio buffer.
+  with its position in the input audio buffer;
+- a cancelled :class:`ResponseDone`, from a transport that stops itself when
+  the caller barges in and has no ``TRUNCATE`` (Gemini Live): the point
+  where it gave up the utterance.
 
 A transport may also yield the session events below, but only when its
 caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``).

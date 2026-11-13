@@ -68,7 +68,7 @@ start):
 
 | Part | What it is | Where |
 |---|---|---|
-| Agent under test | a speech-to-speech model: OpenAI Realtime (`openai.realtime/...`) or OpenAI Live (`openai.live/gpt-live-1` and a backend) | its provider; harbor-voice holds the connection |
+| Agent under test | a speech-to-speech model: OpenAI Realtime (`openai.realtime/...`), OpenAI Live (`openai.live/gpt-live-1` and a backend) or Gemini Live (`google.live/...`) | its provider; harbor-voice holds the connection |
 | Caller | tau2's turn policy (when to speak), an LLM (what to say, `--user-llm`), ElevenLabs TTS (`eleven_v3`, the persona's voice), tau2's phone line and effects | harbor-voice, in `main` |
 | Sidecar | tau2 as a service: the task, its database and tools, the caller's prompts, the listener's decisions, grading | the `tau2` container |
 
@@ -113,15 +113,15 @@ seeds a call's effects with `hash(task.id)`; the sidecar image pins
 
 ## Agents
 
-The adapter takes these two agents; more are on the way.
+The adapter takes these three agents; more are on the way.
 
-| | OpenAI Realtime (`openai.realtime`) | OpenAI Live (`openai.live`) |
-|---|---|---|
-| Model | one speech model, e.g. `gpt-realtime-1.5` | `gpt-live-1`, a speech frontend delegating to a backend (e.g. `gpt-6-luna`) that reasons and calls tools |
-| Wire | WebSocket, 8 kHz μ-law | WebRTC (harbor-voice's `live` extra) |
-| tau2's adapter reproduced | its discrete-time OpenAI adapter | `DiscreteTimeOpenAILiveAdapter` |
-| The caller barges in | the agent's utterance is truncated at what played | recorded only; the frontend decides whether to stop |
-| While the caller thinks | nothing is sent, so the pause does not exist for the agent | the WebRTC track keeps sending silence |
+| | OpenAI Realtime (`openai.realtime`) | OpenAI Live (`openai.live`) | Gemini Live (`google.live`) |
+|---|---|---|---|
+| Model | one speech model, e.g. `gpt-realtime-1.5` | `gpt-live-1`, a speech frontend delegating to a backend (e.g. `gpt-6-luna`) that reasons and calls tools | one speech model, e.g. `gemini-3.8-live` |
+| Wire | WebSocket, 8 kHz μ-law | WebRTC (harbor-voice's `live` extra) | WebSocket, 16 kHz PCM in and 24 kHz PCM out, converted from and to μ-law by tau2's converter |
+| tau2's adapter reproduced | its discrete-time OpenAI adapter | `DiscreteTimeOpenAILiveAdapter` | `DiscreteTimeGeminiAdapter` |
+| The caller barges in | the agent's utterance is truncated at what played | recorded only; the frontend decides whether to stop | Gemini stops by itself and says so; the rest of that utterance is dropped and the step marked truncated, with nothing sent back |
+| While the caller thinks | nothing is sent, so the pause does not exist for the agent | the WebRTC track keeps sending silence | nothing is sent, as for Realtime |
 
 OpenAI Live takes its backend as the agent's s2s settings:
 `job-config --model openai.live/gpt-live-1 --agent-config '{"backend_model":
@@ -165,8 +165,8 @@ In [`tests/adapters/tau-voice/`](https://github.com/amoh-ai/harbor-voice/tree/ma
 fixtures.
 
 - Goldens recorded from tau2's own code in the sidecar image
-  (`tau2_*_cases.py`): the agent's per-step handling for Realtime and
-  Live (`test_agent_steps.py`), the phone line (`test_telephony.py`), the
+  (`tau2_*_cases.py`): the agent's per-step handling for Realtime, Live
+  and Gemini (`test_agent_steps.py`), the phone line (`test_telephony.py`), the
   audio effects (`test_tau2_audio.py`), and the caller end to end, effects
   and behaviour (`test_tau2_caller_effects.py`,
   `test_tau2_caller_behavior.py`).

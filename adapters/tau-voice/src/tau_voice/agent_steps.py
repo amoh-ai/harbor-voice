@@ -35,6 +35,7 @@ from typing import override
 from harbor_voice.transport.stream import InputSpeech
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
+from harbor_voice.transport.stream import ResponseDone
 from harbor_voice.transport.stream import StreamEvent
 
 MULAW_SILENCE = b"\x7f"
@@ -135,6 +136,8 @@ class AgentStepper:
 
     truncates = True
     """Whether a barge-in cuts the agent off (and the provider is told)."""
+    sends_whole = False
+    """With ``convert_input``: send each step at once, not in paced packets."""
 
     def __init__(
         self,
@@ -169,7 +172,7 @@ class AgentStepper:
 
     def feed(self, event: StreamEvent) -> Truncation | None:
         """Apply one event. Returns a truncation to send to the provider now."""
-        step = self._current()
+        step = self._current_step()
         if isinstance(event, OutputAudio):
             if step.skip is not None:
                 if event.utterance == step.skip:
@@ -194,7 +197,7 @@ class AgentStepper:
 
     def end(self, *, user_bytes: int) -> AgentStep:
         """Close the step. ``user_bytes``: caller audio sent this step."""
-        step = self._current()
+        step = self._current_step()
         self._buffered = self._cap(step)
         transcript = self._transcript(step.chunks)
         self._skip = step.skip
@@ -218,7 +221,7 @@ class AgentStepper:
 
     # ------------------------------------------------------------- internals
 
-    def _current(self) -> _Step:
+    def _current_step(self) -> _Step:
         if self._step is None:
             raise RuntimeError("no step in progress; call begin() first")
         return self._step
@@ -351,6 +354,7 @@ class LiveAgentStepper(AgentStepper):
     """
 
     truncates = False
+    sends_whole = True
 
     def __init__(
         self,
@@ -382,7 +386,7 @@ class LiveAgentStepper(AgentStepper):
     def feed(self, event: StreamEvent) -> Truncation | None:
         if isinstance(event, InputSpeech):
             if event.started:
-                self._current().vad.append("speech_started")
+                self._current_step().vad.append("speech_started")
             return None
         if isinstance(event, OutputTranscript):
             if event.audio_position is not None:
@@ -411,3 +415,94 @@ class LiveAgentStepper(AgentStepper):
             transcript="".join(text),
             speech=bool(pcm) and audioop.max(pcm, 2) > 32,
         )
+
+
+class GeminiAgentStepper(AgentStepper):
+    """tau2's ``DiscreteTimeGeminiAdapter`` tick, for Gemini Live.
+
+    Gemini has no truncate call: it hears the caller start speaking, stops
+    by itself and says so (``serverContent.interrupted``, which the transport
+    passes on as a cancelled :class:`ResponseDone`). So, as in tau2:
+
+    - the caller's μ-law goes through tau2's streaming converter to 16 kHz
+      PCM16, and the agent's 24 kHz PCM16 back to μ-law;
+    - on the interruption, the rest of the cut-off utterance is dropped and
+      the step is marked truncated, with nothing sent to the provider;
+    - the caller's own speech events are not recorded (tau2 ignores them).
+
+    Audio is converted at the end of the step, after every event is applied,
+    because tau2 does it in that order: an interruption resets the converter
+    before that step's audio goes through it. Byte counts for the transcript
+    share and for dropped audio use tau2's estimate (the PCM length scaled
+    to μ-law), not the converter's exact output.
+    """
+
+    truncates = False
+
+    def __init__(
+        self,
+        *,
+        bytes_per_step: int,
+        bytes_per_second: int,
+        silence: bytes = MULAW_SILENCE,
+        input_rate: int = 16_000,
+        output_rate: int = 24_000,
+    ) -> None:
+        super().__init__(
+            bytes_per_step=bytes_per_step,
+            bytes_per_second=bytes_per_second,
+            silence=silence,
+        )
+        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
+
+        self.output_rate = output_rate
+        self._converter = StreamingTelephonyConverter(
+            input_sample_rate=input_rate, output_sample_rate=output_rate
+        )
+        self._current: str | None = None
+        self._pending: list[tuple[bytes, str | None]] = []
+
+    def convert_input(self, ulaw: bytes) -> bytes:
+        """The caller's step, as Gemini takes it (tau2's ``convert_input``)."""
+        return self._converter.convert_input(ulaw)
+
+    def _as_ulaw_bytes(self, pcm: bytes) -> int:
+        return int(len(pcm) * self.bytes_per_second / (self.output_rate * 2))
+
+    @override
+    def feed(self, event: StreamEvent) -> Truncation | None:
+        step = self._current_step()
+        if isinstance(event, OutputAudio):
+            if step.skip is not None and event.utterance == step.skip:
+                step.truncated_bytes += self._as_ulaw_bytes(event.pcm)
+                return None
+            self._pending.append((event.pcm, event.utterance))
+            if event.utterance:
+                self._current = event.utterance
+                self._utterance(event.utterance).audio_received += self._as_ulaw_bytes(
+                    event.pcm
+                )
+            return None
+        if isinstance(event, ResponseDone):
+            if event.status == "cancelled":
+                step.vad.append("interrupted")
+                if self._buffered:
+                    step.truncated_bytes += sum(len(d) for d, _ in self._buffered)
+                    self._buffered.clear()
+                step.was_truncated = True
+                step.skip = self._current
+                self._converter.reset()
+            return None
+        if isinstance(event, InputSpeech):
+            return None
+        if isinstance(event, OutputTranscript):
+            return super().feed(event)
+        raise TypeError(f"not a stream event: {event!r}")
+
+    @override
+    def end(self, *, user_bytes: int) -> AgentStep:
+        step = self._current_step()
+        for pcm, utterance in self._pending:
+            step.chunks.append((self._converter.convert_output(pcm), utterance))
+        self._pending.clear()
+        return super().end(user_bytes=user_bytes)

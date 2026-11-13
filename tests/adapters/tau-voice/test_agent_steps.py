@@ -91,3 +91,35 @@ def test_the_live_stepper_matches_tau2s_live_adapter() -> None:
     ours = run_ours()
     for n, (got, want) in enumerate(zip(ours, LIVE_GOLDEN["steps"], strict=True)):
         assert got == want, f"step {n}"
+
+
+GEMINI_GOLDEN = json.loads(
+    (Path(__file__).parent / "fixtures" / "tau2_gemini_steps.json").read_text(
+        encoding="utf-8"
+    )
+)
+
+
+def test_the_gemini_stepper_matches_tau2s_gemini_adapter() -> None:
+    """tau2's DiscreteTimeGeminiAdapter: converted audio both ways, and on
+    Gemini's own interruption the cut utterance is dropped, the step marked
+    truncated, and nothing sent back to the provider."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).parent))
+    from tau2_gemini_steps_cases import run_ours
+
+    ours = run_ours()
+    for n, (got, want) in enumerate(zip(ours, GEMINI_GOLDEN["steps"], strict=True)):
+        assert got == want, f"step {n}"
+    assert any(step["was_truncated"] for step in ours)
+
+
+def test_gemini_ignores_the_callers_speech_events() -> None:
+    from tau_voice.agent_steps import GeminiAgentStepper
+
+    stepper = GeminiAgentStepper(bytes_per_step=1600, bytes_per_second=8000)
+    stepper.begin()
+    assert stepper.feed(InputSpeech(True, 10, 0.0)) is None
+    step = stepper.end(user_bytes=1600)
+    assert step.vad == () and not step.was_truncated
