@@ -203,15 +203,7 @@ class CascadeTransport(VoiceTransport):
     async def _run_pipeline(self, audio: list[AudioFrame]) -> None:
         """STT -> LLM -> TTS, marking each seam as it is crossed."""
         self._mark(Stage.VAD_SPEECH_END, self._clock.now())
-
-        heard = ""
-        async for partial in self._stt.transcribe(audio):
-            if partial.is_final:
-                heard = partial.text
-                self._transcripts.append(partial)
-                self._mark(Stage.ASR_FINAL, self._clock.now(), text=partial.text)
-            elif self._emit_partials:
-                self._mark(Stage.ASR_PARTIAL, self._clock.now(), text=partial.text)
+        heard = await self._hear(audio)
 
         said_parts: list[str] = []
         first_token = True
@@ -229,9 +221,26 @@ class CascadeTransport(VoiceTransport):
         self._mark(Stage.LLM_DONE, self._clock.now(), text=said)
         self._history.extend((heard, said))
 
+        async for frame in self._synthesize(said):
+            await self._outbound.put(frame)
+
+    async def _hear(self, audio: list[AudioFrame]) -> str:
+        """The STT's final transcript of one utterance, marking ASR."""
+        heard = ""
+        async for partial in self._stt.transcribe(audio):
+            if partial.is_final:
+                heard = partial.text
+                self._transcripts.append(partial)
+                self._mark(Stage.ASR_FINAL, self._clock.now(), text=partial.text)
+            elif self._emit_partials:
+                self._mark(Stage.ASR_PARTIAL, self._clock.now(), text=partial.text)
+        return heard
+
+    async def _synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
+        """The TTS's audio for ``text`` as frames, marking TTS and the response."""
         first_byte = True
         emitted = 0
-        async for pcm in self._tts.synthesize(said, party=self._party):
+        async for pcm in self._tts.synthesize(text, party=self._party):
             now = self._clock.now()
             if first_byte:
                 self._mark(Stage.TTS_FIRST_BYTE, now)
@@ -246,7 +255,7 @@ class CascadeTransport(VoiceTransport):
             ).stamp(Clock.RX, now)
             self._seq += 1
             emitted += 1
-            await self._outbound.put(frame)
+            yield frame
 
         done_at = self._clock.now()
         self._mark(Stage.TTS_DONE, done_at)

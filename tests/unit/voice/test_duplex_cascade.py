@@ -1,0 +1,228 @@
+"""The duplex cascade: turns found on an open line, tau2's cascaded turn-taking."""
+
+from __future__ import annotations
+
+import asyncio
+
+import numpy as np
+import pytest
+
+from harbor_voice.audio.frame import AudioFrame
+from harbor_voice.capabilities import OptionalOp
+from harbor_voice.capabilities import Pipeline
+from harbor_voice.cascade import DuplexCascadeTransport
+from harbor_voice.cascade.duplex import LINE
+from harbor_voice.cascade.transport import CascadeError
+from harbor_voice.cascade.endpointing import DEFAULT_ENDPOINTING_MS
+from harbor_voice.ids import PartyId
+from harbor_voice.providers import EchoLLM
+from harbor_voice.providers import ScriptedLLM
+from harbor_voice.providers import ScriptedSTT
+from harbor_voice.providers import ToneTTS
+from harbor_voice.providers.offline import ToolCallingEchoLLM
+from harbor_voice.providers.tools import MappingExecutor
+from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.providers.tools import ToolSpec
+from harbor_voice.transport.base import SessionConfig
+from harbor_voice.transport.stream import InputSpeech
+from harbor_voice.transport.stream import InputTranscript
+from harbor_voice.transport.stream import OutputAudio
+from harbor_voice.transport.stream import OutputTranscript
+from harbor_voice.transport.stream import StreamEvent
+from harbor_voice.trial import AgentSpec
+from harbor_voice.trial import TrialConfigError
+from harbor_voice.trial import VoiceTaskConfig
+from harbor_voice.trial import VoiceTrial
+
+pytestmark = pytest.mark.unit
+
+AGENT = PartyId("agent")
+CALLER = PartyId("caller")
+STEP_MS = 200
+
+
+def _line(ms: int, *, speech: bool, noise: float, seed: int) -> bytes:
+    """16 kHz PCM16: a 220 Hz tone for speech, over optional white noise."""
+    n = LINE.sample_rate_hz * ms // 1000
+    t = np.arange(n) / LINE.sample_rate_hz
+    x = np.random.default_rng(seed).standard_normal(n) * noise
+    if speech:
+        x += 0.3 * np.sin(2 * np.pi * 220 * t)
+    return (np.clip(x, -1, 1) * 32767).astype("<i2").tobytes()
+
+
+class Line:
+    """A caller's line into an open cascade, 200 ms at a time, never without
+    frames; everything the cascade puts on its stream is collected."""
+
+    def __init__(self, cascade: DuplexCascadeTransport, *, noise: float) -> None:
+        self.cascade = cascade
+        self.noise = noise
+        self.events: list[StreamEvent] = []
+        self._seq = 0
+        self._reader = asyncio.create_task(self._read())
+
+    async def send(self, ms: int, *, speech: bool) -> None:
+        for _ in range(ms // STEP_MS):
+            pcm = _line(STEP_MS, speech=speech, noise=self.noise, seed=self._seq)
+            await self.cascade.tx(
+                AudioFrame(
+                    pcm=pcm, seq=self._seq, party=CALLER, t_produced=0.0, fmt=LINE
+                )
+            )
+            self._seq += 1
+            await asyncio.sleep(0.01)
+
+    async def close(self) -> None:
+        """Let the last reply finish, then hang up."""
+        await asyncio.sleep(0.05)
+        await self.cascade.close()
+        await self._reader
+
+    async def _read(self) -> None:
+        async for event in self.cascade.events():
+            self.events.append(event)
+
+    def kinds(self) -> list[str]:
+        """Event kinds in order, consecutive audio collapsed to one."""
+        kinds = [type(e).__name__ for e in self.events]
+        return [k for i, k in enumerate(kinds) if i == 0 or k != kinds[i - 1]]
+
+
+async def _open(cascade: DuplexCascadeTransport, *, noise: float = 0.0) -> Line:
+    await cascade.open(SessionConfig(party=AGENT, audio_in=LINE))
+    return Line(cascade, noise=noise)
+
+
+def _cascade(llm: object | None = None, **kw: object) -> DuplexCascadeTransport:
+    return DuplexCascadeTransport(
+        stt=ScriptedSTT(turns=["I need to change a flight", "it is H, K, L"]),
+        llm=llm or EchoLLM(prefix="you said "),  # type: ignore[arg-type]
+        tts=ToneTTS(),
+        party=AGENT,
+        system_prompt="You are an airline agent.",
+        **kw,  # type: ignore[arg-type]
+    )
+
+
+@pytest.mark.parametrize("noise", [0.0, 0.02], ids=["quiet-line", "noisy-line"])
+async def test_a_turn_ends_on_silence_while_the_line_keeps_streaming(
+    noise: float,
+) -> None:
+    line = await _open(_cascade(), noise=noise)
+    await line.send(1000, speech=False)
+    await line.send(800, speech=True)
+    # Under the endpointing time of silence: still the caller's turn.
+    await line.send(200, speech=False)
+    await asyncio.sleep(0.05)
+    assert [type(e) for e in line.events] == [InputSpeech]
+    assert line.events[0] == InputSpeech(True, 1000, line.events[0].t)
+
+    await line.send(1000, speech=False)
+    await line.close()
+
+    assert line.kinds() == [
+        "InputSpeech",
+        "InputTranscript",
+        "InputSpeech",
+        "OutputTranscript",
+        "OutputAudio",
+    ]
+    ended = line.events[2]
+    assert isinstance(ended, InputSpeech) and not ended.started
+    # Speech ended at 1800 ms; the end is reported once 350 ms of it is quiet.
+    assert 1800 + DEFAULT_ENDPOINTING_MS <= (ended.audio_ms or 0) <= 1800 + 400
+    reply = line.events[3]
+    assert reply == OutputTranscript(
+        "utt_0", "you said I need to change a flight", reply.t
+    )
+    assert {e.utterance for e in line.events if isinstance(e, OutputAudio)} == {"utt_0"}
+
+
+async def test_the_reply_is_not_cancelled_when_the_caller_speaks_again() -> None:
+    """tau2 never interrupts its provider: the consumer drops what is unplayed."""
+    line = await _open(_cascade())
+    await line.send(400, speech=False)
+    await line.send(600, speech=True)
+    await line.send(600, speech=False)
+    await line.send(600, speech=True)
+    await line.send(600, speech=False)
+    await line.close()
+
+    replies = [e for e in line.events if isinstance(e, OutputTranscript)]
+    assert [r.utterance for r in replies] == ["utt_0", "utt_1"]
+    heard = [e.text for e in line.events if isinstance(e, InputTranscript)]
+    assert heard == ["I need to change a flight", "it is H, K, L"]
+
+
+async def test_tool_calls_and_results_stay_in_the_conversation() -> None:
+    """tau2's ConversationContext keeps every tool exchange for later turns."""
+    executor = MappingExecutor(
+        specs=[ToolSpec("find_user", "Look a customer up.")],
+        handlers={"find_user": lambda user_id: {"text": f"{user_id}: Jane Doe"}},
+    )
+    llm = ToolCallingEchoLLM(tool="find_user", arguments={"user_id": "u1"})
+    line = await _open(_cascade(llm, tools=ToolRouter(executor)))
+    await line.send(400, speech=False)
+    for _ in range(2):
+        await line.send(600, speech=True)
+        await line.send(600, speech=False)
+    await line.close()
+
+    messages = line.cascade.messages
+    assert [m["role"] for m in messages] == [
+        "system",
+        *["user", "assistant", "tool", "assistant"] * 2,
+    ]
+    call = messages[2]["tool_calls"][0]
+    assert call["function"] == {"name": "find_user", "arguments": '{"user_id": "u1"}'}
+    assert messages[3] == {
+        "role": "tool",
+        "tool_call_id": call["id"],
+        "content": "u1: Jane Doe",
+    }
+    assert messages[4]["content"] == "the tool said: u1: Jane Doe"
+    # The round that only called a tool was not spoken.
+    replies = [e for e in line.events if isinstance(e, OutputTranscript)]
+    assert [r.delta for r in replies] == ["the tool said: u1: Jane Doe"] * 2
+
+
+def test_an_llm_that_cannot_hold_the_conversation_is_refused() -> None:
+    with pytest.raises(CascadeError, match="ChatLLM"):
+        _cascade(ScriptedLLM(replies=["hi"]))
+
+
+def test_it_declares_the_event_stream_on_a_full_duplex_line() -> None:
+    caps = _cascade().capabilities
+    assert caps.pipeline is Pipeline.CASCADE
+    assert caps.supports(OptionalOp.EVENT_STREAM)
+    assert not caps.supports(OptionalOp.TRUNCATE)
+    assert caps.audio_in == LINE
+
+
+class TestBuildAgent:
+    """A driver's build_agent: a cascade comes back ready for a full-duplex call."""
+
+    @staticmethod
+    def _trial() -> VoiceTrial:
+        spec = AgentSpec.model_validate(
+            {
+                "pipeline": "cascade",
+                "stt": "offline.scripted-stt",
+                "llm": "offline.echo-llm",
+                "tts": "offline.tone-tts",
+            }
+        )
+        config = VoiceTaskConfig.model_validate(
+            {"call": {"driver": "fake:drive"}, "agent": spec.model_dump()}
+        )
+        return VoiceTrial(config)
+
+    def test_a_cascade_gets_the_drivers_system_prompt(self) -> None:
+        agent = self._trial().build_agent(system_prompt="Follow the policy.")
+        assert isinstance(agent, DuplexCascadeTransport)
+        assert agent._system_prompt == "Follow the policy."
+
+    def test_speech_to_speech_settings_are_refused(self) -> None:
+        with pytest.raises(TrialConfigError, match="settings"):
+            self._trial().build_agent(system_prompt="p", settings={"voice": "x"})

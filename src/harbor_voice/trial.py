@@ -25,6 +25,7 @@ from __future__ import annotations
 import importlib
 import warnings
 from collections.abc import Callable
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -240,6 +241,19 @@ class VoiceTaskConfig(BaseModel):
             )
         return self.model_copy(update=update)
 
+    def with_call_config(self, overrides: Mapping[str, Any]) -> VoiceTaskConfig:
+        """This task with its driver's settings overridden for one run.
+
+        A job sets what the task leaves to the run, the same for every task
+        it runs (tau-voice: whether a cascade agent may take the call).
+        """
+        if self.call is None:
+            raise TrialConfigError("call settings given, but the task names no [call]")
+        call = self.call.model_copy(
+            update={"config": {**self.call.config, **overrides}}
+        )
+        return self.model_copy(update={"call": call})
+
     @classmethod
     def from_toml(cls, path: Path) -> VoiceTaskConfig:
         """Load ``voice.toml``."""
@@ -393,18 +407,23 @@ class VoiceTrial:
 
         return CascadeTransport(
             tools=self._router,
-            stt=self._registry.create(
-                str(spec.stt), modality=Modality.STT, **spec.config.get("stt", {})
-            ),
-            llm=self._registry.create(
-                str(spec.llm), modality=Modality.LLM, **spec.config.get("llm", {})
-            ),
-            tts=self._registry.create(
-                str(spec.tts), modality=Modality.TTS, **spec.config.get("tts", {})
-            ),
             party=self._agent,
             clock=self._clock,
+            **self._slots(spec),
         )
+
+    def _slots(self, spec: AgentSpec) -> dict[str, Any]:
+        """A cascade's three providers, each with its own settings."""
+        return {
+            slot: self._registry.create(
+                str(getattr(spec, slot)), modality=modality, **spec.config.get(slot, {})
+            )
+            for slot, modality in (
+                ("stt", Modality.STT),
+                ("llm", Modality.LLM),
+                ("tts", Modality.TTS),
+            )
+        }
 
     def floor(self) -> Any:
         """Half-duplex queues; full duplex measures who yielded.
@@ -573,12 +592,30 @@ class VoiceTrial:
 
         ``overrides`` win over the agent's configured settings: a benchmark
         supplies its own system prompt, and that is the benchmark's call.
+
+        A cascade is built for a full-duplex call
+        (:class:`~harbor_voice.cascade.DuplexCascadeTransport`) and takes only
+        a ``system_prompt``; any other override is a speech-to-speech
+        provider's setting, and a driver that passes one is refused rather
+        than given an agent that ignores it.
         """
         spec = self.agent_spec()
-        if spec.pipeline is not Pipeline.S2S:
-            raise TrialConfigError(
-                "drivers take an s2s agent for now; a cascade agent needs the "
-                "transport surface the driver uses (EVENT_STREAM, TRUNCATE)"
+        if spec.pipeline is Pipeline.CASCADE:
+            from harbor_voice.cascade import DuplexCascadeTransport
+
+            unknown = sorted(set(overrides) - {"system_prompt"})
+            if unknown:
+                raise TrialConfigError(
+                    f"a cascade agent takes only a system_prompt from a driver; "
+                    f"this driver also sets {unknown}, which only a "
+                    f"speech-to-speech provider reads"
+                )
+            return DuplexCascadeTransport(
+                tools=tools,
+                party=self._agent,
+                clock=self._clock,
+                system_prompt=overrides.get("system_prompt", ""),
+                **self._slots(spec),
             )
         return self._registry.create(
             str(spec.s2s),

@@ -28,6 +28,38 @@ async def _reply(chat: ll.LiteLLMChat, **kw: Any) -> list[str]:
     return [c async for c in chat.respond("Can you move it?", ["Hi", "Hello!"], **kw)]
 
 
+async def test_a_conversation_round_offers_the_tools_and_returns_the_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from harbor_voice.providers.tools import ToolSpec
+
+    seen: dict[str, Any] = {}
+    call = SimpleNamespace(
+        id="call_1",
+        function=SimpleNamespace(name="find_user", arguments='{"id": "u1"}'),
+    )
+
+    async def fake(**kwargs: Any) -> Any:
+        seen.update(kwargs)
+        message = SimpleNamespace(content=None, tool_calls=[call])
+        return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=None)
+
+    monkeypatch.setattr(litellm, "acompletion", fake)
+    chat = ll.LiteLLMChat(model="gemini/gemini-2.5-flash", system="unused")
+    messages = [
+        {"role": "system", "content": "Policy."},
+        {"role": "user", "content": "Hi"},
+    ]
+    spec = ToolSpec("find_user", "Look a customer up.")
+    round_ = await chat.chat(messages, [spec])
+
+    assert seen["messages"] == messages, "the conversation brings its own system"
+    assert seen["tools"] == [spec.as_chat()]
+    assert round_.text == ""
+    (invocation,) = round_.calls
+    assert (invocation.name, invocation.arguments) == ("find_user", {"id": "u1"})
+
+
 class TestStreaming:
     async def test_deltas_concatenate_to_the_reply_and_usage_is_tokens(self) -> None:
         chat = ll.LiteLLMChat(model="gemini/gemini-2.5-flash")

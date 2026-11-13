@@ -81,6 +81,17 @@ class ToolSpec:
                 f"present but effectively uncallable"
             )
 
+    def as_chat(self) -> dict[str, Any]:
+        """The ``tools[]`` entry for an OpenAI-style chat completion."""
+        return {
+            "type": "function",
+            "function": {
+                "name": self.name,
+                "description": self.description,
+                "parameters": self.input_schema or {"type": "object"},
+            },
+        }
+
     def as_bedrock(self) -> dict[str, Any]:
         """The `toolConfig.tools[]` entry for Converse / ConverseStream."""
         return {
@@ -444,4 +455,40 @@ class ToolCallingLLM(Protocol):
         Fragments concatenate, as in
         :meth:`~harbor_voice.providers.protocols.LLMProvider.respond`.
         """
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class ChatRound:
+    """One model call over a conversation: what it said, what it asked to run."""
+
+    text: str = ""
+    calls: tuple[ToolInvocation, ...] = ()
+
+
+@runtime_checkable
+class ChatLLM(Protocol):
+    """An LLM slot that answers a whole conversation, one model call at a time.
+
+    The other shape a cascade can hold its LLM by. :class:`ToolCallingLLM`
+    owns the tool loop and sees the past as plain strings, so a tool's result
+    is gone by the next turn. A cascade on an open line
+    (:class:`~harbor_voice.cascade.duplex.DuplexCascadeTransport`) keeps the
+    conversation itself, as tau2's cascaded agent does, so a customer record
+    looked up in one turn is still there when the agent acts on it three
+    turns later. It runs the loop too: the calls of a round go to the tools,
+    and the results come back as the next round's context.
+
+    ``messages`` are in OpenAI chat format (``system``, ``user``,
+    ``assistant`` with ``content`` and/or ``tool_calls``, ``tool``), which is
+    what tau2's agent keeps; a provider with another wire format converts.
+    """
+
+    @property
+    def name(self) -> str: ...
+
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """One model call: its text (possibly empty) and its tool calls."""
         ...

@@ -14,6 +14,8 @@ under test is this agent's model — the run's choice, never the task's::
 ``-m`` is an S2S spec; ``--ak agent_json=…`` takes any ``AgentSpec`` (a
 cascade). ``--ak seed=N`` overrides the task's seed: a job config listing
 this agent once per seed runs each task under each, as tau2's trials do.
+``--ak call_config='{…}'`` overrides settings of the task's driver
+(``[call].config``) for the run.
 
 The task reaches ``main`` through its instruction: harbor hands an agent the
 task's ``instruction.md`` and nothing else of the task folder, so a voice
@@ -87,6 +89,10 @@ class VoiceCallOptions(InstalledAgentOptions):
         description="Agent under test as AgentSpec JSON; overrides the model.",
     )
     seed: int | None = Field(default=None, description="Run the task under this seed.")
+    call_config: dict[str, Any] | None = Field(
+        default=None,
+        description="Overrides for the task's [call].config, its driver's settings.",
+    )
 
 
 def call_spec(instruction: str) -> str:
@@ -230,6 +236,9 @@ class VoiceCallAgent(BaseInstalledAgent):
 
         options = self.options
         seed = options.seed if isinstance(options, VoiceCallOptions) else None
+        call_config = (
+            options.call_config if isinstance(options, VoiceCallOptions) else None
+        )
         self.logger.info(
             f"call: {config.task or 'task'} · seed {seed if seed is not None else config.seed}"
             f" · agent {self.model_name or 'agent_json'}"
@@ -244,6 +253,11 @@ class VoiceCallAgent(BaseInstalledAgent):
             f"--trajectory {TRAJECTORY_IN_ENV} "
             f"--agent-json {shlex.quote(agent)}"
             + (f" --seed {seed}" if seed is not None else "")
+            + (
+                f" --call-config {shlex.quote(json.dumps(call_config))}"
+                if call_config
+                else ""
+            )
         )
         started = time.monotonic()
         relay = _ProgressRelay(self.logger)

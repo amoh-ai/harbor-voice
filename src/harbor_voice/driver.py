@@ -61,7 +61,10 @@ class DriverContext:
             under it; core writes ``reward.json`` and ``trial.json`` beside.
         build_agent: Builds the agent under test from the task's ``[agent]``.
             Keyword arguments override that slot's config (a benchmark's
-            system prompt, say); ``tools`` is the driver's router.
+            system prompt, say); ``tools`` is the driver's router. A cascade
+            comes back as a
+            :class:`~harbor_voice.cascade.DuplexCascadeTransport`, which
+            takes only ``system_prompt``.
         agent: The agent under test as configured, for a driver that sets up
             differently per provider (what to pass ``build_agent``, how to
             pace the call). ``None`` when the caller does not say.

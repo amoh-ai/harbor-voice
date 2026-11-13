@@ -16,7 +16,9 @@ A transport declaring ``EVENT_STREAM`` yields, in arrival order:
   with its position in the input audio buffer.
 
 A transport may also yield the session events below, but only when its
-caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``).
+caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``),
+or when its own turn-taking is made of them (a duplex cascade's
+``InputTranscript``: tau2's cascaded adapter treats one as a barge-in).
 A stepped consumer rejects a kind it does not know — deliberately, so nothing
 is dropped unseen — so these never reach one that did not opt in:
 

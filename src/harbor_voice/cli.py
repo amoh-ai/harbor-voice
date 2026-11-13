@@ -70,6 +70,10 @@ def drive(
         Path | None,
         typer.Option(help="Where the call's ATIF trajectory goes."),
     ] = None,
+    call_config: Annotated[
+        str | None,
+        typer.Option(help="JSON overriding the task's [call].config for this run."),
+    ] = None,
 ) -> None:
     """Run a task's call driver here — what ``main`` runs inside an environment.
 
@@ -88,6 +92,8 @@ def drive(
         config = config.model_copy(update={"trial_id": trial_id})
     if seed is not None:
         config = config.with_seed(seed)
+    if call_config is not None:
+        config = config.with_call_config(json.loads(call_config))
     trial = VoiceTrial(
         config,
         registry=_registry(),
