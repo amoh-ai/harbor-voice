@@ -66,11 +66,11 @@ from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import socket_failure
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.deepgram._common import auth_header
 from harbor_voice.providers.deepgram._common import encoding
-from harbor_voice.providers.deepgram._common import socket_error
 from harbor_voice.providers.tools import ToolInvocation
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.trajectory.model import UsageRecord
@@ -274,7 +274,7 @@ class DeepgramAgentTransport(VoiceTransport):
             raise
         except Exception as exc:
             await self._drop()
-            raise socket_error(exc, provider=NAME, model=self._model) from exc
+            raise socket_failure(exc, provider=NAME, model=self._model) from exc
         self._open = True
         self._started = self._clock.now()
         self._pump = asyncio.create_task(self._receive())
@@ -480,7 +480,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="deepgram",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 

@@ -3,7 +3,6 @@ No test calls the real API."""
 
 from __future__ import annotations
 
-import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -21,6 +20,9 @@ from harbor_voice.providers.cartesia import register_all
 from harbor_voice.providers.cartesia import stt as cstt
 from harbor_voice.providers.cartesia import tts as ctts
 from harbor_voice.providers.registry import default_registry
+from tests.unit.voice import fakes
+from tests.unit.voice.fakes import Rejected
+from tests.unit.voice.fakes import refusing
 
 pytestmark = pytest.mark.unit
 
@@ -156,38 +158,24 @@ class TestTTS:
 # ------------------------------------------------------------------- STT
 
 
-class FakeSTTSocket:
+class FakeSTTSocket(fakes.FakeSocket):
     """A Cartesia STT server: plays ``during`` once audio arrives, and
     ``after`` once the client sends ``close``."""
 
     def __init__(self, during: list[dict[str, Any]], after: list[dict[str, Any]]):
+        super().__init__()
         self.during = during
         self.after = after
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
-        self.sent: list[bytes | str] = []
-        self.closed = False
 
     async def send(self, data: bytes | str) -> None:
         if not self.sent:
             for event in self.during:
-                self.inbox.put_nowait(json.dumps(event))
+                self.push(event)
         self.sent.append(data)
         if data == "close":
             for event in self.after:
-                self.inbox.put_nowait(json.dumps(event))
-            self.inbox.put_nowait(None)
-
-    def __aiter__(self) -> FakeSTTSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
+                self.push(event)
+            self.push(None)
 
 
 def _stt(socket: FakeSTTSocket) -> tuple[cstt.CartesiaSTT, list[tuple[str, dict]]]:
@@ -292,17 +280,22 @@ class TestSTT:
             [t async for t in stt.transcribe(_frames(0.1))]
         assert info.value.kind is ProviderFailure.STREAM_BROKEN
 
-    async def test_a_rejected_handshake_maps_by_status(self) -> None:
-        class Rejected(Exception):
-            response = httpx.Response(401)
-
-        async def connect(url: str, *, additional_headers: dict[str, str]) -> Any:
-            raise Rejected("server rejected WebSocket connection: HTTP 401")
-
-        stt = cstt.CartesiaSTT(api_key="k", connect=connect)
+    @pytest.mark.parametrize(
+        ("exc", "kind"),
+        [
+            (Rejected(401), ProviderFailure.AUTH),
+            (Rejected(402), ProviderFailure.AUTH),
+            (ConnectionRefusedError(), ProviderFailure.STREAM_BROKEN),
+            (TimeoutError(), ProviderFailure.TIMEOUT),
+        ],
+    )
+    async def test_a_failed_connect_is_classified(
+        self, exc: Exception, kind: ProviderFailure
+    ) -> None:
+        stt = cstt.CartesiaSTT(api_key="k", connect=refusing(exc))
         with pytest.raises(ProviderError) as info:
             [t async for t in stt.transcribe(_frames(0.1))]
-        assert info.value.kind is ProviderFailure.AUTH
+        assert info.value.kind is kind
 
 
 def test_both_register_with_honest_capabilities() -> None:

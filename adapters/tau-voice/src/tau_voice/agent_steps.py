@@ -18,8 +18,8 @@ helpers in ``tick_result.py``), restated over provider-neutral
 template with that adapter's differences.
 
 Ported rather than reimplemented: tau-voice's numbers depend on these rules,
-including their quirks, and ``tests/unit/voice/fixtures/tau2_agent_steps.json``
-holds outputs recorded from tau2's own adapter that this module must match
+including their quirks, and ``tests/adapters/tau-voice/fixtures/tau2_*_steps.json``
+hold outputs recorded from tau2's own adapters that this module must match
 byte for byte. One quirk is kept on purpose: the truncation point reported to
 the provider is the length of the *padded* step, so it is always one full
 step (200 ms) — that is what tau2 tells OpenAI, and the agent's view of the

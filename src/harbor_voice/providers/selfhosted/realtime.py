@@ -6,7 +6,7 @@ documents it for Qwen3-Omni
 same ``input_audio_buffer`` and ``response`` events, server VAD and function
 calls. So this is
 :class:`~harbor_voice.providers.openai.realtime.OpenAIRealtimeTransport`
-with three differences, each an override here:
+with four differences, each an override here:
 
 - the URL: ``SELFHOSTED_REALTIME_BASE_URL`` (the server, without ``/v1``)
   or ``url=``; ``SELFHOSTED_API_KEY`` as the bearer token when the server

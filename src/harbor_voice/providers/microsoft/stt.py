@@ -20,7 +20,6 @@ response's ``durationMilliseconds``.
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Sequence
 from typing import Any
@@ -35,6 +34,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
@@ -93,11 +93,15 @@ class MicrosoftSTT(PooledHTTP):
         }
         if self.locale:
             definition["locales"] = [self.locale]
+        endpoint = require_key(
+            self._endpoint, ENDPOINT_ENV, provider=NAME, model=self.model
+        )
         url = (
-            f"{self._env(self._endpoint, ENDPOINT_ENV).rstrip('/')}"
+            f"{endpoint.rstrip('/')}"
             f"/speechtotext/transcriptions:transcribe?api-version={API_VERSION}"
         )
-        headers = {"Ocp-Apim-Subscription-Key": self._env(self._api_key, KEY_ENV)}
+        key = require_key(self._api_key, KEY_ENV, provider=NAME, model=self.model)
+        headers = {"Ocp-Apim-Subscription-Key": key}
         files = {"audio": ("turn.wav", to_wav(pcm, fmt), "audio/wav")}
         client = self._http.client(self._timeout_s)
         try:
@@ -132,18 +136,6 @@ class MicrosoftSTT(PooledHTTP):
             audio_seconds=billed / 1000 if isinstance(billed, int) else duration
         )
         yield Transcript(text=text.strip(), is_final=True, audio_duration_s=duration)
-
-    def _env(self, explicit: str | None, name: str) -> str:
-        """The argument, else the variable. Never logged."""
-        value = explicit or os.environ.get(name)
-        if not value:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                f"{name} is not set",
-                provider=NAME,
-                model=self.model,
-            )
-        return value
 
 
 def _error(status: int, detail: str, model: str) -> ProviderError:

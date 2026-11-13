@@ -43,12 +43,14 @@ from harbor_voice.perturbation import dsp
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import require_key
+from harbor_voice.providers.base import socket_failure
 from harbor_voice.providers.base import Usage
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
 from harbor_voice.providers.sarvam.tts import DEFAULT_LANGUAGE
-from harbor_voice.providers.sarvam.tts import api_key
+from harbor_voice.providers.sarvam.tts import API_KEY_ENV
 from harbor_voice.providers.sarvam.tts import error
 
 NAME = "sarvam.stt"
@@ -120,12 +122,13 @@ class SarvamSTT:
                 "sample_rate": fmt.sample_rate_hz,
             }
         )
-        headers = {"Api-Subscription-Key": api_key(self._api_key, NAME, self.model)}
+        key = require_key(self._api_key, API_KEY_ENV, provider=NAME, model=self.model)
+        headers = {"Api-Subscription-Key": key}
         connect = self._connect or _websockets().connect
         try:
             ws = await connect(f"{self._url}?{query}", additional_headers=headers)
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise _socket_failure(exc, self.model) from exc
 
         async def send() -> None:
             await ws.send(json.dumps({"event": "speech_start"}))
@@ -166,7 +169,7 @@ class SarvamSTT:
         except ProviderError:
             raise
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise _socket_failure(exc, self.model) from exc
         finally:
             sender.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
@@ -201,23 +204,8 @@ def _error_event(event: dict[str, Any], model: str) -> ProviderError:
     )
 
 
-def _classify(exc: Exception, model: str) -> ProviderError:
-    """A failed handshake by HTTP status, a closed socket by close code."""
-    status = getattr(getattr(exc, "response", None), "status_code", None)
-    if isinstance(status, int):
-        return error(status, str(exc), NAME, model)
-    code = getattr(getattr(exc, "rcvd", None), "code", None)
-    if code in _CLOSE_CODES:
-        kind = _CLOSE_CODES[code]
-    elif isinstance(exc, (TimeoutError, OSError)):
-        kind = ProviderFailure.TIMEOUT
-    elif isinstance(exc, json.JSONDecodeError):
-        kind = ProviderFailure.MALFORMED
-    else:
-        kind = ProviderFailure.STREAM_BROKEN
-    return ProviderError(
-        kind, f"{type(exc).__name__}: {str(exc)[:300]}", provider=NAME, model=model
-    )
+def _socket_failure(exc: Exception, model: str) -> ProviderError:
+    return socket_failure(exc, provider=NAME, model=model, close_codes=_CLOSE_CODES)
 
 
 SARVAM_STT_SPEC = ProviderSpec(
@@ -231,7 +219,6 @@ SARVAM_STT_SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="sarvam",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """Partials are ``transcript.partial`` events. The endpoint has no word

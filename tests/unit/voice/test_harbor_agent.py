@@ -129,20 +129,11 @@ def test_the_model_is_the_agent_under_test(tmp_path: Path) -> None:
         _agent(tmp_path).agent_spec_json()
 
 
-@pytest.mark.parametrize(
-    ("declared", "with_extra"),
-    [
-        (["voice"], True),  # voice dependencies in an extra
-        ([], False),  # voice dependencies in the core, no extra
-    ],
-)
 async def test_install_puts_harbor_voice_into_main(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    declared: list[str],
-    with_extra: bool,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    metadata = types.SimpleNamespace(get_all=lambda key: declared)
+    """An agent that needs no extra installs the bare wheel."""
+    metadata = types.SimpleNamespace(get_all=lambda key: ["live"])
     monkeypatch.setattr(install.importlib.metadata, "metadata", lambda dist: metadata)
     environment = _Environment()
     await _agent(tmp_path, model_name="offline.echo-s2s").install(environment)  # type: ignore[arg-type]
@@ -150,14 +141,13 @@ async def test_install_puts_harbor_voice_into_main(
         c[1] for c in environment.calls if c[0] == "exec" and "uv pip" in c[1]
     ]
     assert "harbor-0.0.whl" in command
-    assert ("harbor-0.0.whl[voice]" in command) is with_extra
+    assert "harbor-0.0.whl[" not in command
 
 
 @pytest.mark.parametrize(
     ("declared", "suffix"),
     [
-        (["live", "voice"], "[voice,live]"),
-        (["live"], "[live]"),  # voice dependencies in the core
+        (["live"], "[live]"),
         ([], ""),  # an older harbor-voice without the extra
     ],
 )

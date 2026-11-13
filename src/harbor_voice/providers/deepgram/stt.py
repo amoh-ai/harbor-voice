@@ -39,11 +39,11 @@ from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import socket_failure
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.deepgram._common import auth_header
 from harbor_voice.providers.deepgram._common import encoding
-from harbor_voice.providers.deepgram._common import socket_error
 from harbor_voice.providers.protocols import Transcript
 
 NAME = "deepgram.stt"
@@ -105,7 +105,7 @@ class DeepgramSTT:
         try:
             ws = await connect(f"{self._url}?{query}", additional_headers=headers)
         except Exception as exc:
-            raise socket_error(exc, provider=NAME, model=self.model) from exc
+            raise socket_failure(exc, provider=NAME, model=self.model) from exc
 
         async def send() -> None:
             for frame in frames:
@@ -148,7 +148,7 @@ class DeepgramSTT:
         except ProviderError:
             raise
         except Exception as exc:
-            raise socket_error(exc, provider=NAME, model=self.model) from exc
+            raise socket_failure(exc, provider=NAME, model=self.model) from exc
         finally:
             sender.cancel()
             with contextlib.suppress(BaseException):
@@ -174,7 +174,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="deepgram",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """``streams`` and ``emits_partials``: interim results are on. Billed per

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import json
 from typing import Any
 
 import pytest
@@ -29,6 +28,7 @@ from harbor_voice.transport.stream import InputSpeech
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import ResponseDone
+from tests.unit.voice import fakes
 
 pytestmark = pytest.mark.unit
 
@@ -52,42 +52,15 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
-class FakeSocket:
+class FakeSocket(fakes.FakeSocket):
     """A Live server: answers setup, hands out queued messages, records sends."""
 
     def __init__(self, *messages: dict[str, Any], first: Any = None) -> None:
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
-        self.push(first if first is not None else {"setupComplete": {}})
-        for message in messages:
-            self.push(message)
-        self.sent: list[dict[str, Any]] = []
+        super().__init__(
+            first if first is not None else {"setupComplete": {}}, *messages
+        )
         self.url: str | None = None
         self.headers: dict[str, str] = {}
-        self.closed = False
-
-    def push(self, message: dict[str, Any]) -> None:
-        self.inbox.put_nowait(json.dumps(message))
-
-    async def send(self, data: str) -> None:
-        self.sent.append(json.loads(data))
-
-    async def recv(self) -> str:
-        raw = await self.inbox.get()
-        assert raw is not None
-        return raw
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
-        self.inbox.put_nowait(None)
 
 
 def _router() -> ToolRouter:
@@ -160,6 +133,7 @@ async def test_no_key_is_an_auth_failure_before_connecting() -> None:
     with pytest.raises(ProviderError) as info:
         await _transport(socket).open(CONFIG)
     assert info.value.kind is ProviderFailure.AUTH
+    assert "GOOGLE_GENAI_USE_VERTEXAI=true" in str(info.value)
     assert socket.url is None
 
 

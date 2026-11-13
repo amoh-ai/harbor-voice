@@ -7,6 +7,7 @@ import httpx
 import pytest
 
 from harbor_voice.audio.format import CANONICAL
+from harbor_voice.providers import base as provider_base
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.openrouter import speech as orsp
@@ -22,7 +23,7 @@ def _env(monkeypatch: pytest.MonkeyPatch) -> None:
     async def instant(_: float) -> None:
         return None
 
-    monkeypatch.setattr(sh.asyncio, "sleep", instant)
+    monkeypatch.setattr(provider_base.asyncio, "sleep", instant)
     monkeypatch.setenv(orsp.KEY_ENV, "or-key")
     monkeypatch.delenv(orsp.BASE_URL_ENV, raising=False)
     monkeypatch.delenv(sh.API_KEY_ENV, raising=False)
@@ -80,3 +81,20 @@ async def test_the_base_url_can_be_moved(monkeypatch: pytest.MonkeyPatch) -> Non
     stt = orsp.build_stt(model="deepgram/nova-3", client=client)
     [_ async for _ in stt.transcribe(_frames(0.5))]
     assert str(seen[0].url) == "https://proxy.example/api/v1/audio/transcriptions"
+
+
+@pytest.mark.parametrize("build", [orsp.build_stt, orsp.build_tts])
+async def test_a_missing_key_fails_before_any_request(
+    monkeypatch: pytest.MonkeyPatch, build
+) -> None:
+    monkeypatch.delenv(orsp.KEY_ENV)
+    client, seen = _client(lambda _: httpx.Response(200, json={"text": "hi"}))
+    provider = build(model="openai/whisper-large-v3-turbo", client=client)
+    with pytest.raises(ProviderError) as info:
+        if isinstance(provider, sh.SelfHostedSTT):
+            [_ async for _ in provider.transcribe(_frames(0.5))]
+        else:
+            await provider.synthesize_pcm("Hello.")
+    assert info.value.kind is ProviderFailure.AUTH
+    assert orsp.KEY_ENV in str(info.value)
+    assert seen == []

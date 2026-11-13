@@ -113,8 +113,11 @@ seeds a call's effects with `hash(task.id)`; the sidecar image pins
 
 ## Agents
 
-The adapter takes these three speech-to-speech agents, and a cascade when the
-run asks for one ([below](#cascade-agents-off-by-default)); more are on the way.
+The three below each step as one of tau2's adapters does. Any other
+speech-to-speech provider that can be truncated, such as `xai.realtime` or
+`selfhosted.realtime`, steps as OpenAI Realtime does; one that cannot is
+refused. A cascade runs only when the run asks for one
+([below](#cascade-agents-off-by-default)).
 
 | | OpenAI Realtime (`openai.realtime`) | OpenAI Live (`openai.live`) | Gemini Live (`google.live`) |
 |---|---|---|---|
@@ -148,6 +151,10 @@ uv run harbor-voice jobs start -c cascade.yaml
 agent's kwargs, which the driver reads. Without job-config:
 `--ak agent_json='<a cascade AgentSpec>' --ak 'call_config={"allow_cascade": true}'`.
 `--agent-config` takes per-slot settings, e.g. `'{"llm": {"temperature": 0}}'`.
+OpenAI reasoning models (`gpt-6-luna`) refuse tools on chat completions at
+their default effort, so give them `'{"llm": {"reasoning_effort": "none"}}'`.
+A provider failure that cannot clear by itself (a rejected key, a refused
+request) ends the call as an error rather than a silent agent.
 Any registered STT and TTS work. The LLM slot has to keep the whole
 conversation, tool results included: `openai.llm`, `selfhosted.llm`,
 `litellm.llm` (which also reaches Bedrock, as `litellm.llm/bedrock/...`) and

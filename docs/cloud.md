@@ -6,8 +6,12 @@ per trial and deletes it afterwards. Choose the backend with `job-config --env
 your account go in your own copy of the job config, never in the tasks.
 
 The benchmark runs in a sidecar container next to the agent's, so a backend
-needs docker-compose support. Local Docker, Daytona and EC2 do; more backends
-are on the way.
+needs docker-compose support. tau-voice has run on local Docker, Daytona,
+EC2, Modal, Docker Sandboxes (`sbx`), GKE, Prime Intellect and Vercel.
+LangSmith's sandbox could not start the sidecar, so it is not supported yet.
+
+Each backend is harbor's; its extra installs its SDK (`uv sync` installs them
+all). Account settings go under `environment.kwargs` in the job config.
 
 ## Daytona
 
@@ -39,6 +43,16 @@ environment:
     ssh_key_path: ~/.ssh/<your key>.pem
     security_group_ids: [<sg allowing SSH from you>]
 ```
+
+## Modal, Docker Sandboxes, GKE, Prime, Vercel
+
+| Backend | `--env` | Sign-in | Job config `kwargs` |
+|---|---|---|---|
+| Modal | `modal` | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET` | none |
+| Docker Sandboxes | `sbx` | install the `sbx` CLI and run `sbx login` once | `target: local` |
+| GKE | `gke` | `gcloud` application default credentials | `cluster_name`, `region`, `namespace`, `registry_location`, `registry_name`, `project_id` |
+| Prime Intellect | `prime` | `PRIME_API_KEY` | `team_id` |
+| Vercel | `vercel` | `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_PROJECT_ID` | `sandbox_lifetime_seconds` longer than a call (2400 works) |
 
 ## Faster startup
 

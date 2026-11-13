@@ -121,8 +121,9 @@ class FishAudioTTS(PooledHTTP):
             "sample_rate": self._format.sample_rate_hz,
             "latency": LATENCY,
         }
+        key = require_key(self._api_key, API_KEY_ENV, provider=NAME, model=self.model)
         headers = {
-            "Authorization": f"Bearer {api_key(self._api_key, NAME, self.model)}",
+            "Authorization": f"Bearer {key}",
             "model": self.model,
         }
         cutter = FrameCutter(self._format)
@@ -159,10 +160,6 @@ class FishAudioTTS(PooledHTTP):
             yield tail
 
 
-def api_key(explicit: str | None, provider: str, model: str) -> str:
-    return require_key(explicit, API_KEY_ENV, provider=provider, model=model)
-
-
 def error(status: int, detail: str, provider: str, model: str) -> ProviderError:
     """An HTTP status (or a websocket error event's) as a ProviderError."""
     return ProviderError(
@@ -178,7 +175,6 @@ FISHAUDIO_TTS_SPEC = ProviderSpec(
     modality=Modality.TTS,
     capabilities=ProviderCapabilities(modality=Modality.TTS, streams=True),
     credential_provider="fishaudio",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """``streams=True``: chunks are yielded as the chunked response arrives."""

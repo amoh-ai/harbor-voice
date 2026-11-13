@@ -64,7 +64,6 @@ import asyncio
 import base64
 import contextlib
 import json
-import os
 import urllib.parse
 from collections import Counter
 from collections.abc import AsyncIterator
@@ -94,6 +93,8 @@ from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import http_failure
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -256,12 +257,9 @@ class AgentsAPI(PooledHTTP):
 
     def require_key(self) -> str:
         """The API key, or an ``auth`` failure naming the variable (never the value)."""
-        key = self._api_key or os.environ.get("ELEVENLABS_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH, "ELEVENLABS_API_KEY is not set", provider=NAME
-            )
-        return key
+        return require_key(
+            self._api_key, "ELEVENLABS_API_KEY", provider=NAME, model=None
+        )
 
     def _headers(self) -> dict[str, str]:
         return {**SDK_HEADERS, "xi-api-key": self.require_key()}
@@ -365,19 +363,13 @@ def _path(segment: str) -> str:
 
 
 def _error(response: httpx.Response, what: str) -> ProviderError:
+    """A 404 is an agent or conversation this account cannot see."""
     status = response.status_code
-    detail = response.text[:300]
-    if status in (401, 403):
-        kind = ProviderFailure.AUTH
-    elif status == 404:
-        kind = ProviderFailure.NOT_ENABLED
-    elif status == 429:
-        kind = ProviderFailure.THROTTLED
-    elif status >= 500:
-        kind = ProviderFailure.STREAM_BROKEN
-    else:
-        kind = ProviderFailure.MALFORMED
-    return ProviderError(kind, f"{what} → {status}: {detail}", provider=NAME)
+    return ProviderError(
+        http_failure(status, not_found=ProviderFailure.NOT_ENABLED),
+        f"{what} → {status}: {response.text[:300]}",
+        provider=NAME,
+    )
 
 
 def with_sdk_source(signed_url: str) -> str:
@@ -1121,7 +1113,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="elevenlabs",
-    requires_extra="voice",
     default_model=None,
 )
 """The spec string names the agent: ``elevenlabs.agents/<agent_id>``."""

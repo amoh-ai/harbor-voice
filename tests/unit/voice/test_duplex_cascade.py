@@ -16,6 +16,8 @@ from harbor_voice.cascade.transport import CascadeError
 from harbor_voice.cascade.endpointing import DEFAULT_ENDPOINTING_MS
 from harbor_voice.ids import PartyId
 from harbor_voice.providers import EchoLLM
+from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers import ScriptedLLM
 from harbor_voice.providers import ScriptedSTT
 from harbor_voice.providers import ToneTTS
@@ -185,6 +187,38 @@ async def test_tool_calls_and_results_stay_in_the_conversation() -> None:
     # The round that only called a tool was not spoken.
     replies = [e for e in line.events if isinstance(e, OutputTranscript)]
     assert [r.delta for r in replies] == ["the tool said: u1: Jane Doe"] * 2
+
+
+class _FailingLLM(EchoLLM):
+    """An LLM whose every call fails the same way."""
+
+    def __init__(self, kind: ProviderFailure) -> None:
+        super().__init__(prefix="")
+        self.kind = kind
+
+    async def chat(self, messages, tools):  # type: ignore[override]
+        raise ProviderError(self.kind, "refused", provider="test.llm")
+
+
+async def test_a_failure_that_cannot_clear_ends_the_call() -> None:
+    """A refused request fails every turn alike; the next audio raises it."""
+    line = await _open(_cascade(_FailingLLM(ProviderFailure.MALFORMED)))
+    await line.send(400, speech=False)
+    await line.send(600, speech=True)
+    with pytest.raises(ProviderError, match="refused"):
+        await line.send(1000, speech=False)
+    await line.close()
+    assert line.cascade.errors and line.cascade.failure is not None
+
+
+async def test_a_failure_that_can_clear_lets_the_call_go_on() -> None:
+    """A rate limit is recorded and the call carries on, as in tau2."""
+    line = await _open(_cascade(_FailingLLM(ProviderFailure.THROTTLED)))
+    await line.send(400, speech=False)
+    await line.send(600, speech=True)
+    await line.send(1000, speech=False)
+    await line.close()
+    assert line.cascade.errors and line.cascade.failure is None
 
 
 def test_an_llm_that_cannot_hold_the_conversation_is_refused() -> None:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import json
 import urllib.parse
@@ -22,6 +21,9 @@ from harbor_voice.providers.registry import ProviderRegistry
 from harbor_voice.providers.sarvam import stt as sarvam_stt
 from harbor_voice.providers.sarvam.stt import SarvamSTT
 from harbor_voice.providers.sarvam.tts import SarvamTTS
+from tests.unit.voice import fakes
+from tests.unit.voice.fakes import Closed
+from tests.unit.voice.fakes import refusing
 
 pytestmark = pytest.mark.unit
 
@@ -49,45 +51,19 @@ def _frames(seconds: float, rate: int = 24_000) -> list[AudioFrame]:
     ]
 
 
-class Closed(Exception):
-    """Stands in for ``websockets.ConnectionClosedError``."""
-
-    def __init__(self, code: int) -> None:
-        super().__init__(f"closed {code}")
-        self.rcvd = type("Close", (), {"code": code})()
-
-
-class FakeSocket:
+class FakeSocket(fakes.FakeSocket):
     """A Sarvam server: answers once the client sends ``end``."""
 
     def __init__(self, *events: dict[str, Any], close: Exception | None = None) -> None:
+        super().__init__(close_with=close)
         self.events = events
-        self.close_with = close
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
-        self.sent: list[dict[str, Any]] = []
-        self.closed = False
 
-    async def send(self, data: str) -> None:
-        message = json.loads(data)
-        self.sent.append(message)
-        if message["event"] == "end":
+    async def send(self, data: str | bytes) -> None:
+        await super().send(data)
+        if self.sent[-1]["event"] == "end":
             for event in self.events:
-                self.inbox.put_nowait(json.dumps(event))
-            self.inbox.put_nowait(None)
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            if self.close_with is not None:
-                raise self.close_with
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
+                self.push(event)
+            self.push(None)
 
 
 def _stt(socket: FakeSocket, **kw: Any) -> tuple[SarvamSTT, dict[str, Any]]:
@@ -188,6 +164,27 @@ class TestSTT:
 
     async def test_a_clean_close_without_a_final_is_a_broken_stream(self) -> None:
         stt, _ = _stt(FakeSocket({"event": "session.begin", "request_id": "r"}))
+        with pytest.raises(ProviderError) as info:
+            await _collect(stt, _frames(0.2))
+        assert info.value.kind is ProviderFailure.STREAM_BROKEN
+
+    @pytest.mark.parametrize(
+        ("close", "kind"),
+        [
+            (ConnectionResetError("reset by peer"), ProviderFailure.STREAM_BROKEN),
+            (TimeoutError(), ProviderFailure.TIMEOUT),
+        ],
+    )
+    async def test_a_dropped_socket_is_classified_by_type(
+        self, close: Exception, kind: ProviderFailure
+    ) -> None:
+        stt, _ = _stt(FakeSocket(close=close))
+        with pytest.raises(ProviderError) as info:
+            await _collect(stt, _frames(0.2))
+        assert info.value.kind is kind
+
+    async def test_a_refused_connection_is_not_a_timeout(self) -> None:
+        stt = SarvamSTT(api_key="k", connect=refusing(ConnectionRefusedError()))
         with pytest.raises(ProviderError) as info:
             await _collect(stt, _frames(0.2))
         assert info.value.kind is ProviderFailure.STREAM_BROKEN

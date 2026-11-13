@@ -190,7 +190,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="xai",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 

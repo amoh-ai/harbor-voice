@@ -34,6 +34,7 @@ from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import OutputTranscriptDone
 from harbor_voice.transport.stream import ResponseDone
 from harbor_voice.transport.stream import ToolCall
+from tests.unit.voice import fakes
 
 pytestmark = pytest.mark.unit
 
@@ -60,43 +61,15 @@ TAU2_WIRE = (
 TAU2_DIGEST = "sha256:ceca2da964f3942b4773b40a8fdaf38990aa2691bd5b167b6f032035cc841cdf"
 
 
-class FakeSocket:
+class FakeSocket(fakes.FakeSocket):
     """A Realtime server: hands out queued events, records what it is sent."""
 
     def __init__(self, *events: dict[str, Any]) -> None:
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
-        for event in (
+        super().__init__(
             {"type": "session.created", "session": {"id": "sess_1"}},
             {"type": "session.updated"},
             *events,
-        ):
-            self.push(event)
-        self.sent: list[dict[str, Any]] = []
-        self.closed = False
-
-    def push(self, event: dict[str, Any]) -> None:
-        self.inbox.put_nowait(json.dumps(event))
-
-    async def send(self, data: str) -> None:
-        self.sent.append(json.loads(data))
-
-    async def recv(self) -> str:
-        raw = await self.inbox.get()
-        assert raw is not None
-        return raw
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
-        self.inbox.put_nowait(None)
+        )
 
 
 def _router(handler=None) -> ToolRouter:

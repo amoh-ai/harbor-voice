@@ -29,6 +29,7 @@ from harbor_voice.providers.xai import register_all
 from harbor_voice.providers.xai import realtime as xr
 from harbor_voice.providers.xai import speech
 from harbor_voice.transport.base import SessionConfig
+from tests.unit.voice import fakes
 
 pytestmark = pytest.mark.unit
 
@@ -43,38 +44,15 @@ SESSION = SessionConfig(party=PartyId("agent"))
 # ------------------------------------------------------------------ realtime
 
 
-class FakeSocket:
+class FakeSocket(fakes.FakeSocket):
     """A realtime server: hands out queued events, records what it is sent."""
 
     def __init__(self, *events: dict[str, Any]) -> None:
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
-        for event in (
+        super().__init__(
             {"type": "session.created", "session": {"id": "sess_1"}},
             {"type": "session.updated"},
             *events,
-        ):
-            self.inbox.put_nowait(json.dumps(event))
-        self.sent: list[dict[str, Any]] = []
-
-    async def send(self, data: str) -> None:
-        self.sent.append(json.loads(data))
-
-    async def recv(self) -> str:
-        raw = await self.inbox.get()
-        assert raw is not None
-        return raw
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.inbox.put_nowait(None)
+        )
 
 
 class Connect:

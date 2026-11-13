@@ -12,9 +12,7 @@ depends on it.
 
 from __future__ import annotations
 
-import asyncio
 import json
-import os
 import time
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
@@ -31,6 +29,9 @@ from harbor_voice.providers.base import HTTPSession
 from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import http_failure
+from harbor_voice.providers.base import post_with_retries
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ChatRound
@@ -100,6 +101,10 @@ class OpenAILLM(PooledHTTP):
         model: Used by :meth:`respond`; :meth:`complete` takes the model from
             the request body it is handed.
         api_key: Defaults to ``OPENAI_API_KEY``.
+        reasoning_effort: Sent when set. Reasoning models refuse tools on
+            ``/chat/completions`` at their default effort; ``"none"`` lets a
+            cascade's LLM call tools (``--agent-config
+            '{"llm": {"reasoning_effort": "none"}}'``).
     """
 
     def __init__(
@@ -111,10 +116,12 @@ class OpenAILLM(PooledHTTP):
         api_base: str = API_BASE,
         timeout_s: float = 120.0,
         client: httpx.AsyncClient | None = None,
+        reasoning_effort: str | None = None,
     ) -> None:
         self.name = NAME
         self.model = model
         self.temperature = temperature
+        self.reasoning_effort = reasoning_effort
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
@@ -155,9 +162,7 @@ class OpenAILLM(PooledHTTP):
             for i, h in enumerate(history)
         ]
         messages.append({"role": "user", "content": prompt})
-        reply = await self.complete(
-            {"model": self.model, "messages": messages, "temperature": self.temperature}
-        )
+        reply = await self.complete(self._body(messages))
         if reply.text:
             yield reply.text
 
@@ -165,11 +170,7 @@ class OpenAILLM(PooledHTTP):
         self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
     ) -> ChatRound:
         """The :class:`~harbor_voice.providers.tools.ChatLLM` shape: one completion."""
-        body: dict[str, Any] = {
-            "model": self.model,
-            "messages": [dict(m) for m in messages],
-            "temperature": self.temperature,
-        }
+        body = self._body([dict(m) for m in messages])
         if tools:
             body["tools"] = [spec.as_chat() for spec in tools]
         reply = await self.complete(body)
@@ -183,43 +184,34 @@ class OpenAILLM(PooledHTTP):
 
     # ----------------------------------------------------------- internals
 
-    def _key_or_raise(self) -> str:
-        key = self._api_key or os.environ.get("OPENAI_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                "OPENAI_API_KEY is not set",
-                provider=self.name,
-            )
-        return key
+    def _body(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        if self.reasoning_effort is not None:
+            body["reasoning_effort"] = self.reasoning_effort
+        return body
 
     async def _post(self, body: dict[str, Any]) -> dict[str, Any]:
-        url = f"{self._api_base}/chat/completions"
-        headers = {"Authorization": f"Bearer {self._key_or_raise()}"}
-        model = body.get("model")
-        client = self._http.client(self._timeout_s)
-        for attempt in range(1, RETRY_ATTEMPTS + 1):
-            try:
-                response = await client.post(url, json=body, headers=headers)
-            except (httpx.TimeoutException, httpx.TransportError) as exc:
-                if attempt == RETRY_ATTEMPTS:
-                    raise ProviderError(
-                        ProviderFailure.TIMEOUT,
-                        f"OpenAI request failed after {attempt} attempts: {exc}",
-                        provider=self.name,
-                        model=model,
-                    ) from exc
-                await asyncio.sleep(_backoff(attempt))
-                continue
-            if response.status_code == 200:
-                return response.json()
-            if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-                await asyncio.sleep(_backoff(attempt))
-                continue
-            raise _error(response, self.name, model)
-        raise ValueError(  # pragma: no cover
-            f"RETRY_ATTEMPTS must be at least 1, got {RETRY_ATTEMPTS}"
+        key = require_key(
+            self._api_key, "OPENAI_API_KEY", provider=self.name, model=None
         )
+        model = body.get("model")
+        response = await post_with_retries(
+            self._http.client(self._timeout_s),
+            f"{self._api_base}/chat/completions",
+            attempts=RETRY_ATTEMPTS,
+            provider=self.name,
+            model=model,
+            retry_statuses=(408, 409, 429),
+            json=body,
+            headers={"Authorization": f"Bearer {key}"},
+        )
+        if response.status_code == 200:
+            return response.json()
+        raise _error(response, self.name, model)
 
 
 def _tool_call(raw: dict[str, Any]) -> ChatToolCall:
@@ -239,29 +231,14 @@ def _tool_call(raw: dict[str, Any]) -> ChatToolCall:
     )
 
 
-def _retryable(status: int) -> bool:
-    return status in (408, 409, 429) or status >= 500
-
-
-def _backoff(attempt: int) -> float:
-    return min(10.0, 2.0 ** (attempt - 1))
-
-
 def _error(response: httpx.Response, provider: str, model: str | None) -> ProviderError:
+    """A 404 is a model the account cannot use."""
     status = response.status_code
-    detail = response.text[:300]
-    if status in (401, 403):
-        kind, what = ProviderFailure.AUTH, "rejected the key"
-    elif status == 404:
-        kind, what = ProviderFailure.NOT_ENABLED, "does not know the model"
-    elif status == 429:
-        kind, what = ProviderFailure.THROTTLED, "rate limit or quota"
-    elif status >= 500:
-        kind, what = ProviderFailure.STREAM_BROKEN, "server error"
-    else:
-        kind, what = ProviderFailure.MALFORMED, "rejected the request"
     return ProviderError(
-        kind, f"OpenAI {what} ({status}): {detail}", provider=provider, model=model
+        http_failure(status, not_found=ProviderFailure.NOT_ENABLED),
+        f"OpenAI returned {status}: {response.text[:300]}",
+        provider=provider,
+        model=model,
     )
 
 

@@ -22,9 +22,6 @@
 
 from __future__ import annotations
 
-import importlib
-import warnings
-from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -52,7 +49,7 @@ from harbor_voice.providers.credentials import resolve as resolve_credentials
 from harbor_voice.providers.registry import ProviderRegistry
 from harbor_voice.providers.registry import Registration
 from harbor_voice.providers.registry import credential_slug
-from harbor_voice.providers.registry import default_registry
+from harbor_voice.providers.registry import provider_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
 from harbor.models.task.config import EnvironmentConfig
@@ -774,49 +771,6 @@ class VoiceTrial:
             measurement=outputs.measurement,
             reward=outputs.reward,
         )
-
-
-def provider_registry(
-    report: Callable[[str], None] | None = None,
-) -> ProviderRegistry:
-    """Offline providers, plus every vendor whose providers register.
-
-    A vendor that fails to register is skipped, not fatal: a task naming only
-    offline providers must run without the cloud SDKs. The failure is
-    reported, through ``report`` or else as a warning, so a provider's import
-    bug does not surface later as "unknown provider".
-    """
-    registry = default_registry()
-    for vendor in _VENDORS:
-        try:
-            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
-            module.register_all(registry)
-        except Exception as exc:  # noqa: BLE001 - optional extra; reported, not fatal
-            message = f"{vendor} providers unavailable ({exc})"
-            if report is None:
-                warnings.warn(message, RuntimeWarning, stacklevel=2)
-            else:
-                report(message)
-    return registry
-
-
-_VENDORS = (
-    "aws",
-    "cartesia",
-    "deepgram",
-    "elevenlabs",
-    "fishaudio",
-    "google",
-    "litellm",
-    "meta",
-    "microsoft",
-    "openai",
-    "openrouter",
-    "sarvam",
-    "selfhosted",
-    "xai",
-)
-"""Provider packages registered lazily; each has a ``register_all``."""
 
 
 def required_extras(

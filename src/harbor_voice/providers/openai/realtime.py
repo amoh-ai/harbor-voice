@@ -33,7 +33,6 @@ import asyncio
 import base64
 import contextlib
 import json
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -63,6 +62,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -398,14 +398,12 @@ class OpenAIRealtimeTransport(VoiceTransport):
     async def open(self, config: SessionConfig) -> None:
         if self._open:
             return
-        key = self._api_key or os.environ.get(self.api_key_env)
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                f"{self.api_key_env} is not set",
-                provider=self.provider_name,
-                model=self._model,
-            )
+        key = require_key(
+            self._api_key,
+            self.api_key_env,
+            provider=self.provider_name,
+            model=self._model,
+        )
         connect = self._connect or _websockets().connect
         try:
             self._ws = await connect(
@@ -798,7 +796,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="openai",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 

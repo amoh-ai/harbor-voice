@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any
 
@@ -18,6 +17,10 @@ from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.meta import stt as meta_stt
 from harbor_voice.providers.meta.stt import MetaSTT
 from harbor_voice.providers.registry import ProviderRegistry
+from tests.unit.voice import fakes
+from tests.unit.voice.fakes import Closed
+from tests.unit.voice.fakes import Rejected
+from tests.unit.voice.fakes import refusing
 
 pytestmark = pytest.mark.unit
 
@@ -39,15 +42,7 @@ def _frames(seconds: float, rate: int = 24_000) -> list[AudioFrame]:
     return [AudioFrame(pcm=pcm, seq=0, party=PARTY, t_produced=0.0, fmt=fmt)]
 
 
-class Closed(Exception):
-    """Stands in for ``websockets.ConnectionClosedError``."""
-
-    def __init__(self, code: int) -> None:
-        super().__init__(f"closed {code}")
-        self.rcvd = type("Close", (), {"code": code})()
-
-
-class FakeSocket:
+class FakeSocket(fakes.FakeSocket):
     """A Meta server: acknowledges the handshake, answers after ``endStream``."""
 
     def __init__(
@@ -56,13 +51,11 @@ class FakeSocket:
         ack: dict[str, Any] = ACK,
         close: Exception | None = None,
     ) -> None:
+        super().__init__(close_with=close)
         self.ack = ack
         self.events = events
-        self.close_with = close
-        self.inbox: asyncio.Queue[str | None] = asyncio.Queue()
         self.text: list[dict[str, Any]] = []
         self.audio = b""
-        self.closed = False
 
     async def send(self, data: str | bytes) -> None:
         if isinstance(data, bytes):
@@ -72,25 +65,11 @@ class FakeSocket:
         self.text.append(message)
         if message.get("type") == "endStream":
             for event in self.events:
-                self.inbox.put_nowait(json.dumps(event))
-            self.inbox.put_nowait(None)
+                self.push(event)
+            self.push(None)
 
     async def recv(self) -> str:
         return json.dumps(self.ack)
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str:
-        raw = await self.inbox.get()
-        if raw is None:
-            if self.close_with is not None:
-                raise self.close_with
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
 
 
 def _stt(socket: FakeSocket, **kw: Any) -> tuple[MetaSTT, list[str]]:
@@ -221,6 +200,40 @@ class TestFailures:
         with pytest.raises(ProviderError) as info:
             await _collect(stt, _frames(0.2))
         assert info.value.kind is ProviderFailure.THROTTLED
+
+    @pytest.mark.parametrize(
+        ("status", "kind"),
+        [
+            (401, ProviderFailure.AUTH),
+            (402, ProviderFailure.AUTH),
+            (429, ProviderFailure.THROTTLED),
+            (500, ProviderFailure.STREAM_BROKEN),
+            (504, ProviderFailure.TIMEOUT),
+        ],
+    )
+    async def test_a_refused_upgrade_maps_like_other_providers(
+        self, status: int, kind: ProviderFailure
+    ) -> None:
+        stt = MetaSTT(api_key="k", connect=refusing(Rejected(status)))
+        with pytest.raises(ProviderError) as info:
+            await _collect(stt, _frames(0.2))
+        assert info.value.kind is kind
+
+    @pytest.mark.parametrize(
+        ("close", "kind"),
+        [
+            (ConnectionResetError("reset by peer"), ProviderFailure.STREAM_BROKEN),
+            (TimeoutError(), ProviderFailure.TIMEOUT),
+            (Closed(1008), ProviderFailure.MALFORMED),
+        ],
+    )
+    async def test_a_dropped_socket_is_classified(
+        self, close: Exception, kind: ProviderFailure
+    ) -> None:
+        stt, _ = _stt(FakeSocket(close=close))
+        with pytest.raises(ProviderError) as info:
+            await _collect(stt, _frames(0.2))
+        assert info.value.kind is kind
 
     async def test_a_clean_close_without_a_final_is_a_broken_stream(self) -> None:
         stt, _ = _stt(FakeSocket(TURN[0]))

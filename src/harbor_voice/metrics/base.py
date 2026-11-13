@@ -363,12 +363,6 @@ class MetricRegistry:
     def names(self) -> list[str]:
         return sorted(self._defs)
 
-    def of_family(self, family: Family) -> list[MetricDef]:
-        return sorted(
-            (d for d in self._defs.values() if d.family is family),
-            key=lambda d: d.name,
-        )
-
     def evaluate(
         self, names: Sequence[str], context: MetricContext
     ) -> list[MetricResult]:

@@ -29,7 +29,6 @@ import asyncio
 import contextlib
 import json
 import math
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Sequence
 from typing import Any
@@ -44,6 +43,8 @@ from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
+from harbor_voice.providers.base import socket_failure
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
@@ -114,8 +115,9 @@ class MetaSTT:
         fmt = frames[0].fmt
         duration = fmt.duration_s(len(pcm))
         pcm, fmt = _sendable(pcm, fmt)
+        key = require_key(self._api_key, *API_KEY_ENVS, provider=NAME, model=self.model)
         handshake: dict[str, Any] = {
-            "authorization": {"accessToken": f"Bearer {self._key()}"},
+            "authorization": {"accessToken": f"Bearer {key}"},
             "audioEncoding": ENCODINGS[fmt.sample_rate_hz],
             "model": self.model,
             "mode": "PUSH_TO_TALK",
@@ -128,7 +130,7 @@ class MetaSTT:
         try:
             ws = await connect(self._url)
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise _socket_failure(exc, self.model) from exc
 
         async def send() -> None:
             step = fmt.frame_bytes(CHUNK_MS)
@@ -175,7 +177,7 @@ class MetaSTT:
         except ProviderError:
             raise
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise _socket_failure(exc, self.model) from exc
         finally:
             if sender is not None:
                 sender.cancel()
@@ -185,20 +187,6 @@ class MetaSTT:
                 await ws.close()
         self.usage = Usage(audio_seconds=float(math.floor(duration)))
         yield Transcript(text=final.strip(), is_final=True, audio_duration_s=duration)
-
-    def _key(self) -> str:
-        """The key, from the argument or the environment. Never logged."""
-        key = self._api_key or next(
-            (v for v in map(os.environ.get, API_KEY_ENVS) if v), None
-        )
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                f"{' or '.join(API_KEY_ENVS)} is not set",
-                provider=NAME,
-                model=self.model,
-            )
-        return key
 
 
 def _sendable(pcm: bytes, fmt: AudioFormat) -> tuple[bytes, AudioFormat]:
@@ -217,25 +205,8 @@ def _error_event(event: dict[str, Any], model: str) -> ProviderError:
     return ProviderError(kind, message[:300], provider=NAME, model=model)
 
 
-def _classify(exc: Exception, model: str) -> ProviderError:
-    """A failed upgrade by HTTP status, a closed socket by close code."""
-    status = getattr(getattr(exc, "response", None), "status_code", None)
-    code = getattr(getattr(exc, "rcvd", None), "code", None)
-    if status in (401, 403):
-        kind = ProviderFailure.AUTH
-    elif status == 429:
-        kind = ProviderFailure.THROTTLED
-    elif code in _CLOSE_CODES:
-        kind = _CLOSE_CODES[code]
-    elif isinstance(exc, (TimeoutError, OSError)):
-        kind = ProviderFailure.TIMEOUT
-    elif isinstance(exc, json.JSONDecodeError):
-        kind = ProviderFailure.MALFORMED
-    else:
-        kind = ProviderFailure.STREAM_BROKEN
-    return ProviderError(
-        kind, f"{type(exc).__name__}: {str(exc)[:300]}", provider=NAME, model=model
-    )
+def _socket_failure(exc: Exception, model: str) -> ProviderError:
+    return socket_failure(exc, provider=NAME, model=model, close_codes=_CLOSE_CODES)
 
 
 META_STT_SPEC = ProviderSpec(
@@ -249,7 +220,6 @@ META_STT_SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="meta",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """Partials are the non-final ``transcript`` events. Meta documents turn-level

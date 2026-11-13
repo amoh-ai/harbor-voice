@@ -72,6 +72,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -453,13 +454,13 @@ class GeminiLiveTransport(VoiceTransport):
     async def _endpoint(self) -> tuple[str, dict[str, str]]:
         """The URL and sign-in header for this mode. Never logged."""
         if not self._vertex:
-            key = next(filter(None, map(os.environ.get, API_KEY_ENVS)), None)
-            if not key:
-                raise self._error(
-                    ProviderFailure.AUTH,
-                    f"none of {', '.join(API_KEY_ENVS)} is set (or set "
-                    f"GOOGLE_GENAI_USE_VERTEXAI=true for Vertex AI)",
-                )
+            key = require_key(
+                None,
+                *API_KEY_ENVS,
+                provider=NAME,
+                model=self._model,
+                hint=f"or set {VERTEX_ENV}=true for Vertex AI",
+            )
             return STUDIO_URL, {"x-goog-api-key": key}
         if not (self._project or os.environ.get("GOOGLE_CLOUD_PROJECT")):
             raise self._error(

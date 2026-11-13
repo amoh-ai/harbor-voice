@@ -59,15 +59,20 @@ uv run ty check
 
 ## Adding a provider
 
-A provider implements the transport contract
+A speech-to-speech provider implements the transport contract
 (`src/harbor_voice/transport/base.py`): four methods, plus a capability
-declaration for everything optional.
+declaration for everything optional. A speech-to-text, LLM or text-to-speech
+provider implements its protocol in `src/harbor_voice/providers/protocols.py`.
+Read keys with `require_key` and map HTTP errors with `http_failure`
+(`providers/base.py`).
 
 1. Put it under `src/harbor_voice/providers/<vendor>/` and add it to that
    package's `register_all`. A new vendor also goes in `_VENDORS`
-   (`src/harbor_voice/trial.py`).
-2. Test it offline, against a fake socket; no test calls a real API.
-3. Verify what it declares with `harbor_voice.conformance.run_conformance`,
+   (`src/harbor_voice/providers/registry.py`), and a new key in the table in
+   `providers/credentials.py` if harbor's table lacks it.
+2. Add it to the provider table in `docs/library.md`.
+3. Test it offline, against a fake socket; no test calls a real API.
+4. Verify what it declares with `harbor_voice.conformance.run_conformance`,
    from a test against a live session (the module's docstring shows how).
 
 ## Adding a benchmark

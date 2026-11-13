@@ -27,11 +27,8 @@ harbor-voice to:
   [EVA](https://github.com/ServiceNow/eva). Enterprise calls in airline, IT
   service and medical HR.
 
-More voice benchmarks are on the way.
-
 Each adapter's README covers its tasks, agents, caller conditions and parity
-with the original harness. Support for more agents on both benchmarks is on
-the way; other agents run on the [library](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md)'s built-in call
+with the original harness. Other agents run on the [library](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md)'s built-in call
 loop.
 
 ## Install
@@ -122,8 +119,10 @@ per trial and deletes it afterwards. Choose it with `job-config --env <type>`:
 - **Daytona.** Set `DAYTONA_API_KEY` and pass `--env daytona`.
 - **EC2.** harbor launches a VM per trial and reaches it over SSH; your
   account's settings go in the job config.
+- **Modal, Docker Sandboxes, GKE, Prime Intellect, Vercel.** `--env modal`,
+  `sbx`, `gke`, `prime` or `vercel`, with that service's sign-in.
 
-Setup for both, and prebuilt images for faster startup:
+Setup for each, and prebuilt images for faster startup:
 [docs/cloud.md](https://github.com/amoh-ai/harbor-voice/blob/main/docs/cloud.md).
 
 ## What a run leaves behind

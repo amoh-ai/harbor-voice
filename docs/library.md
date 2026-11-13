@@ -57,8 +57,6 @@ and checked, not probed.
   `VLLM_USE_FLASHINFER_SAMPLER=0`, or vLLM tries to compile FlashInfer's
   sampler at startup and fails.
 
-More providers are on the way.
-
 A benchmark driver that runs a full-duplex call (tau-voice's) gets a cascade
 as `harbor_voice.cascade.DuplexCascadeTransport`: it finds the caller's turns
 on the open line, with tau2's cascaded turn-taking, and keeps the whole

@@ -26,7 +26,6 @@ each slot has its own base URL: ``SELFHOSTED_STT_BASE_URL`` and
 
 from __future__ import annotations
 
-import asyncio
 import io
 import os
 import wave
@@ -41,6 +40,7 @@ import httpx
 from harbor_voice._deps import numpy as _numpy
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
+from harbor_voice.audio.format import FrameCutter
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
 from harbor_voice.perturbation import dsp
@@ -50,6 +50,8 @@ from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import HTTPSession
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import post_with_retries
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
@@ -82,6 +84,8 @@ class SelfHostedSTT:
     name: str = STT_NAME
     api_key_env: str = API_KEY_ENV
     """The variable holding the bearer token, sent when it is set."""
+    key_required: bool = False
+    """Fail with AUTH when ``api_key_env`` is unset, as a hosted service would."""
     usage: Usage = field(default_factory=Usage)
     client: httpx.AsyncClient | None = None
     _http: HTTPSession = field(init=False, repr=False, compare=False)
@@ -155,6 +159,8 @@ class SelfHostedTTS:
     name: str = TTS_NAME
     api_key_env: str = API_KEY_ENV
     """The variable holding the bearer token, sent when it is set."""
+    key_required: bool = False
+    """Fail with AUTH when ``api_key_env`` is unset, as a hosted service would."""
     response_format: str = "wav"
     """``wav``, or ``pcm`` with the rate in the reply's ``Content-Type``."""
     client: httpx.AsyncClient | None = None
@@ -194,10 +200,11 @@ class SelfHostedTTS:
         del party
         if not text:
             return
-        pcm = await self.synthesize_pcm(text)
-        size = self.audio_format.frame_bytes()
-        for start in range(0, len(pcm), size):
-            yield pcm[start : start + size]
+        cutter = FrameCutter(self.audio_format)
+        for frame in cutter.feed(await self.synthesize_pcm(text)):
+            yield frame
+        if tail := cutter.tail():
+            yield tail
 
     def _convert(self, wav: bytes) -> bytes:
         try:
@@ -276,39 +283,24 @@ async def _post(
     owner: SelfHostedSTT | SelfHostedTTS, url: str, **request: Any
 ) -> httpx.Response:
     """POST with retries on timeouts, 409, 429 and 5xx; 200 or a ProviderError."""
-    key = os.environ.get(owner.api_key_env)
-    headers = {"Authorization": f"Bearer {key}"} if key else {}
-    client = owner._http.client(owner.timeout_s)
-    for attempt in range(1, RETRY_ATTEMPTS + 1):
-        try:
-            response = await client.post(url, headers=headers, **request)
-        except (httpx.TimeoutException, httpx.TransportError) as exc:
-            if attempt == RETRY_ATTEMPTS:
-                raise ProviderError(
-                    ProviderFailure.TIMEOUT,
-                    f"request to {url} failed after {attempt} attempts: {exc}",
-                    provider=owner.name,
-                    model=owner.model,
-                ) from exc
-            await asyncio.sleep(_backoff(attempt))
-            continue
-        if response.status_code == 200 and response.content:
-            return response
-        if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-            await asyncio.sleep(_backoff(attempt))
-            continue
-        raise _error(response, owner.name, owner.model)
-    raise ValueError(  # pragma: no cover
-        f"RETRY_ATTEMPTS must be at least 1, got {RETRY_ATTEMPTS}"
+    if owner.key_required:
+        key = require_key(
+            None, owner.api_key_env, provider=owner.name, model=owner.model
+        )
+    else:
+        key = os.environ.get(owner.api_key_env)
+    response = await post_with_retries(
+        owner._http.client(owner.timeout_s),
+        url,
+        attempts=RETRY_ATTEMPTS,
+        provider=owner.name,
+        model=owner.model,
+        headers={"Authorization": f"Bearer {key}"} if key else {},
+        **request,
     )
-
-
-def _retryable(status: int) -> bool:
-    return status in (409, 429) or status >= 500
-
-
-def _backoff(attempt: int) -> float:
-    return min(10.0, 2.0 ** (attempt - 1))
+    if response.status_code == 200 and response.content:
+        return response
+    raise _error(response, owner.name, owner.model)
 
 
 def _error(response: httpx.Response, provider: str, model: str) -> ProviderError:

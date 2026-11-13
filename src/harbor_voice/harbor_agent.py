@@ -60,12 +60,12 @@ if TYPE_CHECKING:
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
 TRAJECTORY_IN_ENV = "/logs/agent/trajectory.json"
+"""Where harbor reads an agent's ATIF trajectory."""
 KEYS_IN_ENV = "/task/.agent-keys"
 """The agent's credentials, uploaded as a file the drive command reads and
 deletes before the call starts. Uploaded, not passed as ``exec`` env: harbor's
 Docker backend turns that into ``docker exec -e KEY=value``, which anyone on
 the host can read in the process list."""
-"""Where harbor reads an agent's ATIF trajectory."""
 
 _SPEC = re.compile(r"```toml\n(.*?)\n```", re.DOTALL)
 
@@ -200,7 +200,7 @@ class VoiceCallAgent(BaseInstalledAgent):
     def _providers(self) -> ProviderRegistry:
         """The provider registry, built once per agent (it imports every
         vendor package) and shared by install and run."""
-        from harbor_voice.trial import provider_registry
+        from harbor_voice.providers.registry import provider_registry
 
         if self._registry is None:
             self._registry = provider_registry()

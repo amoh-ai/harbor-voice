@@ -1,4 +1,6 @@
-"""A cascade agent on tau-voice: refused unless the run opts in, then prompted as tau2 prompts one.
+"""A cascade agent on tau-voice: refused unless the run opts in.
+
+Once opted in, it is prompted as tau2 prompts one.
 
 tau-voice scores realtime speech-to-speech agents, as tau2's leaderboard
 does. tau2 can also run a cascade (STT -> LLM -> TTS, its ``livekit``

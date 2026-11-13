@@ -8,10 +8,9 @@ Harbor has moved and reshaped that table between releases
 (``harbor.agents.model_connection`` with ``api_key_envs`` tuples, then
 ``harbor.agents.agent_auth_resolution`` with ``api_key_candidate_names``
 lists). We read either into our own :class:`CredentialAccess`, so this module
-works across those versions and nothing else here depends on harbor's shape. The overlay rather than an in-place edit
-because harbor-voice is a fork that may take upstream merges: a table we have
-rewritten conflicts on every upstream change to it, and an overlay conflicts
-never.
+works across those versions and nothing else here depends on harbor's shape.
+Our own entries sit in an overlay consulted first, since harbor is a pinned
+dependency we do not edit.
 
 What this module does *not* do is resolve connections the way harbor's
 ``resolve_model_connection`` does. That function's job is rewriting env-var
@@ -77,11 +76,9 @@ _AWS_ACCESS = CredentialAccess(
     ("AWS_ACCESS_KEY_ID",),
     extra_envs=("AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_REGION"),
 )
-"""Transcribe, Polly and Nova Sonic all authenticate the same way.
-
-One entry rather than three, because three identical entries would invite them
-to drift apart for no reason.
-"""
+"""Every AWS provider (Nova Sonic, Nova STT and TTS, Voxtral, Bedrock)
+authenticates the same way, so they share one entry rather than drifting
+apart as several."""
 
 VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "aws": _AWS_ACCESS,

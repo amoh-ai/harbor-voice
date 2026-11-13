@@ -2,12 +2,14 @@
 
 OpenRouter serves both on OpenAI's audio routes, so these are the
 self-hosted classes pointed at ``https://openrouter.ai/api`` with
-``OPENROUTER_API_KEY``. Two things differ from a vLLM server:
+``OPENROUTER_API_KEY``. Three things differ from a vLLM server:
 
 - speech comes back as ``pcm`` (or ``mp3``), never WAV, with the rate in the
   ``Content-Type``;
 - most voices must be named. Each model's ``supported_voices`` are in
-  ``GET /api/v1/models?output_modalities=speech``.
+  ``GET /api/v1/models?output_modalities=speech``;
+- the key is required: without ``OPENROUTER_API_KEY`` the call fails with
+  AUTH before anything is sent.
 
 The model half of the spec is OpenRouter's id, e.g.
 ``openrouter.stt/openai/whisper-large-v3-turbo`` or
@@ -43,6 +45,7 @@ def build_stt(*, model: str, **config: Any) -> SelfHostedSTT:
         base_url=_base_url(config),
         name=STT_NAME,
         api_key_env=KEY_ENV,
+        key_required=True,
         **config,
     )
 
@@ -53,6 +56,7 @@ def build_tts(*, model: str, **config: Any) -> SelfHostedTTS:
         base_url=_base_url(config),
         name=TTS_NAME,
         api_key_env=KEY_ENV,
+        key_required=True,
         response_format="pcm",
         **config,
     )

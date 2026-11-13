@@ -379,17 +379,6 @@ class UniversalSimulator:
         self._utterances.append(utterance)
         return utterance
 
-    @property
-    def persona_brief(self) -> str:
-        """The caller's brief with L1's behaviour folded in.
-
-        The content source is given this rather than its own brief, so a task
-        persona and a behaviour variant compose instead of one replacing the
-        other.
-        """
-        base = getattr(self._content, "brief", "")
-        return self._pipeline.persona.brief_for(str(base))
-
     async def say(
         self,
         text: str,

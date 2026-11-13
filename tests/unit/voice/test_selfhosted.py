@@ -13,6 +13,7 @@ import pytest
 from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
+from harbor_voice.providers import base as provider_base
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.capabilities import Modality
@@ -55,7 +56,7 @@ def _env(monkeypatch: pytest.MonkeyPatch) -> None:
     async def instant(_: float) -> None:
         return None
 
-    monkeypatch.setattr(sh.asyncio, "sleep", instant)
+    monkeypatch.setattr(provider_base.asyncio, "sleep", instant)
     monkeypatch.delenv(sh.API_KEY_ENV, raising=False)
     monkeypatch.delenv(sh.STT_BASE_URL_ENV, raising=False)
     monkeypatch.delenv(sh.TTS_BASE_URL_ENV, raising=False)
@@ -147,6 +148,24 @@ class TestTTS:
         )
         assert len(await tts.synthesize_pcm("hi")) == 16_000
         assert "voice" not in json.loads(seen[0].content)
+
+    async def test_a_stray_byte_at_the_end_is_dropped(self) -> None:
+        client, _ = _client(
+            lambda _: httpx.Response(
+                200,
+                content=bytes(FMT_16K.frame_bytes() + 7),
+                headers={"content-type": "audio/pcm;rate=16000;channels=1"},
+            )
+        )
+        tts = sh.SelfHostedTTS(
+            model="m",
+            base_url="http://tts:8091",
+            audio_format=FMT_16K,
+            response_format="pcm",
+            client=client,
+        )
+        chunks = [c async for c in tts.synthesize("hi", party=CALLER)]
+        assert [len(c) for c in chunks] == [FMT_16K.frame_bytes(), 6]
 
     async def test_empty_text_sends_nothing(self) -> None:
         client, seen = _client(lambda _: httpx.Response(500))

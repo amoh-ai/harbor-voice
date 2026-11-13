@@ -290,11 +290,6 @@ class Bridge:
         """Assistant audio is currently active."""
         return self._assistant_audio_active
 
-    @property
-    def assistant_audio_ended_at(self) -> float | None:
-        """Event-loop time the assistant's audio last ended."""
-        return self._assistant_audio_ended_time
-
     def interrupt(self) -> None:
         """A no-op: the caller is a person, and keeps talking (``audio_bridge.py:323-330``)."""
 

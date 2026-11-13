@@ -32,50 +32,14 @@ from harbor_voice.transport.stream import InputTranscript
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import ToolCall
+from tests.unit.voice.fakes import FakeSocket
+from tests.unit.voice.fakes import Rejected
+from tests.unit.voice.fakes import refusing
 
 pytestmark = pytest.mark.unit
 
 AGENT = PartyId("agent")
 FRAME = bytes(960)  # 20 ms of canonical audio
-
-
-class FakeSocket:
-    """A Deepgram websocket: hands out queued messages, records what it is sent."""
-
-    def __init__(self, *messages: dict[str, Any] | bytes | None) -> None:
-        self.inbox: asyncio.Queue[str | bytes | None] = asyncio.Queue()
-        for message in messages:
-            self.push(message)
-        self.sent: list[Any] = []
-        self.closed = False
-
-    def push(self, message: dict[str, Any] | bytes | None) -> None:
-        self.inbox.put_nowait(
-            message
-            if message is None or isinstance(message, bytes)
-            else json.dumps(message)
-        )
-
-    async def send(self, data: str | bytes) -> None:
-        self.sent.append(data if isinstance(data, bytes) else json.loads(data))
-
-    async def recv(self) -> str | bytes:
-        raw = await self.inbox.get()
-        assert raw is not None
-        return raw
-
-    def __aiter__(self) -> FakeSocket:
-        return self
-
-    async def __anext__(self) -> str | bytes:
-        raw = await self.inbox.get()
-        if raw is None:
-            raise StopAsyncIteration
-        return raw
-
-    async def close(self) -> None:
-        self.closed = True
-        self.inbox.put_nowait(None)
 
 
 def _connect(socket: FakeSocket, seen: list[tuple[str, dict[str, str]]]) -> Any:
@@ -87,16 +51,7 @@ def _connect(socket: FakeSocket, seen: list[tuple[str, dict[str, str]]]) -> Any:
 
 
 def _refused(status: int) -> Any:
-    class Response:
-        status_code = status
-
-    class InvalidStatus(Exception):
-        response = Response()
-
-    async def connect(url: str, *, additional_headers: dict[str, str]) -> FakeSocket:
-        raise InvalidStatus(f"server rejected WebSocket connection: HTTP {status}")
-
-    return connect
+    return refusing(Rejected(status))
 
 
 def _frames(n: int, fmt: AudioFormat | None = None) -> list[AudioFrame]:
@@ -217,6 +172,19 @@ class TestSTT:
         with pytest.raises(ProviderError) as caught:
             [t async for t in stt.transcribe(_frames(1))]
         assert caught.value.kind is kind
+
+    async def test_a_frame_that_is_not_json_is_malformed(self) -> None:
+        stt = DeepgramSTT(api_key="k", connect=_connect(FakeSocket("not json"), []))
+        with pytest.raises(ProviderError) as caught:
+            [t async for t in stt.transcribe(_frames(1))]
+        assert caught.value.kind is ProviderFailure.MALFORMED
+
+    async def test_a_reset_connection_is_a_broken_stream(self) -> None:
+        socket = FakeSocket(None, close_with=ConnectionResetError("reset by peer"))
+        stt = DeepgramSTT(api_key="k", connect=_connect(socket, []))
+        with pytest.raises(ProviderError) as caught:
+            [t async for t in stt.transcribe(_frames(1))]
+        assert caught.value.kind is ProviderFailure.STREAM_BROKEN
 
     async def test_a_missing_key_is_an_auth_failure(
         self, monkeypatch: pytest.MonkeyPatch

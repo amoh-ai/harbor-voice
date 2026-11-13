@@ -20,7 +20,11 @@ the agent scoring zero.
 
 from __future__ import annotations
 
+import asyncio
+import json
 from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from enum import StrEnum
@@ -245,7 +249,7 @@ class ProviderSpec:
     """
 
     name: str
-    """Registry name, e.g. ``aws.polly``. The left side of a spec string."""
+    """Registry name, e.g. ``aws.nova-sonic``. The left side of a spec string."""
 
     modality: Modality
     capabilities: ProviderCapabilities
@@ -377,17 +381,23 @@ class ProviderCall:
 
 
 def require_key(
-    explicit: str | None, *env_names: str, provider: str, model: str | None
+    explicit: str | None,
+    *env_names: str,
+    provider: str,
+    model: str | None,
+    hint: str | None = None,
 ) -> str:
     """An API key from the argument or the first of ``env_names`` that is set.
 
-    Never logged. Missing, it is an AUTH failure naming the variables.
+    Never logged. Missing, it is an AUTH failure naming the variables, plus
+    ``hint`` when there is another way to sign in.
     """
     key = explicit or next(filter(None, map(os.environ.get, env_names)), None)
     if not key:
+        message = f"{' or '.join(env_names)} is not set"
         raise ProviderError(
             ProviderFailure.AUTH,
-            f"{' or '.join(env_names)} is not set",
+            f"{message} ({hint})" if hint else message,
             provider=provider,
             model=model,
         )
@@ -414,6 +424,99 @@ def http_failure(
     if status >= 500:
         return ProviderFailure.STREAM_BROKEN
     return ProviderFailure.MALFORMED
+
+
+def socket_failure(
+    exc: Exception,
+    *,
+    provider: str,
+    model: str | None,
+    close_codes: Mapping[int, ProviderFailure] | None = None,
+) -> ProviderError:
+    """A websocket exception as a :class:`ProviderError`.
+
+    Checked in this order:
+
+    - a refused handshake carries an HTTP status: :func:`http_failure`;
+    - a close frame whose code is in ``close_codes``, the vendor's documented
+      codes: that kind;
+    - ``TimeoutError``: TIMEOUT, so it is retried;
+    - JSON that does not parse: MALFORMED;
+    - anything else: STREAM_BROKEN.
+
+    ``OSError`` falls in the last group. A refused or reset connection is not
+    a timeout: the server said no, or dropped a call already under way, and
+    retrying the same call at once rarely helps. STREAM_BROKEN marks the trial
+    invalid (no measurement) without a retry. ``TimeoutError`` is an
+    ``OSError`` too, which is why it is checked first.
+    """
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    code = getattr(getattr(exc, "rcvd", None), "code", None)
+    if isinstance(status, int):
+        kind = http_failure(status)
+    elif close_codes and code in close_codes:
+        kind = close_codes[code]
+    elif isinstance(exc, TimeoutError):
+        kind = ProviderFailure.TIMEOUT
+    elif isinstance(exc, json.JSONDecodeError):
+        kind = ProviderFailure.MALFORMED
+    else:
+        kind = ProviderFailure.STREAM_BROKEN
+    return ProviderError(
+        kind,
+        f"{type(exc).__name__}: {str(exc)[:300]}",
+        provider=provider,
+        model=model,
+    )
+
+
+RETRY_MIN_WAIT_S = 1.0
+RETRY_MAX_WAIT_S = 10.0
+
+
+def retry_wait(attempt: int) -> float:
+    """Seconds to wait after failed ``attempt`` (from 1): 1, 2, 4, up to 10.
+
+    tenacity's ``wait_exponential(multiplier=1, min=1, max=10)``, as tau2
+    retries.
+    """
+    return min(RETRY_MAX_WAIT_S, max(RETRY_MIN_WAIT_S, 2.0 ** (attempt - 1)))
+
+
+async def post_with_retries(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    attempts: int,
+    provider: str,
+    model: str | None,
+    retry_statuses: Collection[int] = (409, 429),
+    **request: Any,
+) -> httpx.Response:
+    """POST, retrying failed connections, 5xx and ``retry_statuses``.
+
+    Returns the last response whatever its status; the caller judges it.
+    If no attempt gets a response, raises TIMEOUT.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            response = await client.post(url, **request)
+        except httpx.TransportError as exc:  # timeouts included
+            if attempt == attempts:
+                raise ProviderError(
+                    ProviderFailure.TIMEOUT,
+                    f"POST {url} failed after {attempt} attempts: {exc}",
+                    provider=provider,
+                    model=model,
+                ) from exc
+            await asyncio.sleep(retry_wait(attempt))
+            continue
+        status = response.status_code
+        if (status in retry_statuses or status >= 500) and attempt < attempts:
+            await asyncio.sleep(retry_wait(attempt))
+            continue
+        return response
+    raise ValueError(f"attempts must be at least 1, got {attempts}")
 
 
 class HTTPSession:

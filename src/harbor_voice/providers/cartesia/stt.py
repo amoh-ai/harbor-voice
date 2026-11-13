@@ -36,12 +36,14 @@ from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import require_key
+from harbor_voice.providers.base import socket_failure
 from harbor_voice.providers.base import Usage
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.cartesia.tts import API_VERSION
 from harbor_voice.providers.cartesia.tts import ENCODINGS
-from harbor_voice.providers.cartesia.tts import api_key
+from harbor_voice.providers.cartesia.tts import API_KEY_ENV
 from harbor_voice.providers.cartesia.tts import error
 from harbor_voice.providers.protocols import Transcript
 
@@ -97,12 +99,13 @@ class CartesiaSTT:
                 "cartesia_version": API_VERSION,
             }
         )
-        headers = {"X-API-Key": api_key(self._api_key, NAME, self.model)}
+        key = require_key(self._api_key, API_KEY_ENV, provider=NAME, model=self.model)
+        headers = {"X-API-Key": key}
         connect = self._connect or _websockets().connect
         try:
             ws = await connect(f"{self._url}?{query}", additional_headers=headers)
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise socket_failure(exc, provider=NAME, model=self.model) from exc
 
         async def send() -> None:
             step = fmt.frame_bytes(CHUNK_MS)
@@ -146,7 +149,7 @@ class CartesiaSTT:
         except ProviderError:
             raise
         except Exception as exc:
-            raise _classify(exc, self.model) from exc
+            raise socket_failure(exc, provider=NAME, model=self.model) from exc
         finally:
             sender.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
@@ -157,22 +160,6 @@ class CartesiaSTT:
         yield Transcript(
             text=committed.strip(), is_final=True, audio_duration_s=duration
         )
-
-
-def _classify(exc: Exception, model: str) -> ProviderError:
-    """A failed handshake by its HTTP status; anything else by its type."""
-    status = getattr(getattr(exc, "response", None), "status_code", None)
-    if isinstance(status, int):
-        return error(status, str(exc), NAME, model)
-    if isinstance(exc, (TimeoutError, OSError)):
-        kind = ProviderFailure.TIMEOUT
-    elif isinstance(exc, json.JSONDecodeError):
-        kind = ProviderFailure.MALFORMED
-    else:
-        kind = ProviderFailure.STREAM_BROKEN
-    return ProviderError(
-        kind, f"{type(exc).__name__}: {str(exc)[:300]}", provider=NAME, model=model
-    )
 
 
 CARTESIA_STT_SPEC = ProviderSpec(
@@ -186,7 +173,6 @@ CARTESIA_STT_SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="cartesia",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """Partials are what the API sends as audio arrives; Ink's word timestamps

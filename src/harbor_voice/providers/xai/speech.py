@@ -21,7 +21,6 @@ agent. Plain ``httpx``, which harbor already depends on.
 
 from __future__ import annotations
 
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Sequence
 from typing import Any
@@ -30,6 +29,7 @@ import httpx
 
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
+from harbor_voice.audio.format import FrameCutter
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
 from harbor_voice.providers.base import ProviderError
@@ -39,6 +39,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
@@ -74,14 +75,7 @@ class _XAIRest(PooledHTTP):
 
     async def _post(self, path: str, model: str, **request: Any) -> httpx.Response:
         """One authenticated POST; any failure as a :class:`ProviderError`."""
-        key = self._api_key or os.environ.get(KEY_ENV)
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                f"{KEY_ENV} is not set",
-                provider=self.name,
-                model=model,
-            )
+        key = require_key(self._api_key, KEY_ENV, provider=self.name, model=model)
         client = self._http.client(self._timeout_s)
         try:
             response = await client.post(
@@ -172,10 +166,11 @@ class XAITTS(_XAIRest):
                 model=self.voice,
             )
         self.characters_billed += len(text)
-        pcm = response.content[: len(response.content) // 2 * 2]
-        size = self._format.frame_bytes()
-        for start in range(0, len(pcm), size):
-            yield pcm[start : start + size]
+        cutter = FrameCutter(self._format)
+        for frame in cutter.feed(response.content):
+            yield frame
+        if tail := cutter.tail():
+            yield tail
 
 
 class XAISTT(_XAIRest):
@@ -264,7 +259,6 @@ TTS_SPEC = ProviderSpec(
     modality=Modality.TTS,
     capabilities=ProviderCapabilities(modality=Modality.TTS, streams=False),
     credential_provider="xai",
-    requires_extra="voice",
     default_model=DEFAULT_VOICE,
 )
 """The spec string names the voice: ``xai.tts/<voice_id>``."""
@@ -274,7 +268,6 @@ STT_SPEC = ProviderSpec(
     modality=Modality.STT,
     capabilities=ProviderCapabilities(modality=Modality.STT, streams=False),
     credential_provider="xai",
-    requires_extra="voice",
     default_model=DEFAULT_STT_MODEL,
 )
 """``word_timings`` and ``diarizes`` stay off: the API offers both, but a

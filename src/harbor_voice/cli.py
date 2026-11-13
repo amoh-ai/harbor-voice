@@ -31,14 +31,14 @@ voice_app = typer.Typer(
 
 
 def _registry():  # noqa: ANN202 - typer-facing helper
-    """A provider registry with the AWS providers if their SDK is present.
+    """A provider registry with every vendor whose providers register.
 
     Registration is attempted and failure is *reported*, not raised: ``caps``
     and ``profiles`` are useful on a laptop with no cloud SDK, and a CLI that
     refuses to start because an optional extra is missing is a CLI nobody
     runs during authoring.
     """
-    from harbor_voice.trial import provider_registry
+    from harbor_voice.providers.registry import provider_registry
 
     return provider_registry(
         lambda message: typer.secho(f"note: {message}", fg="yellow", err=True)
@@ -222,7 +222,9 @@ def caps(
             attested = claims.is_attested(ProviderCapability(field_name))
             mark = "attested" if attested else "UNATTESTED"
             typer.echo(f"{'':<22}   {field_name:<16} {mark}")
-        if spec.credential_provider:
+        if spec.credential_slug_for:
+            typer.echo(f"{'':<22}   credentials      depend on the model; see doctor")
+        elif spec.credential_provider:
             status = registry.credentials(f"{spec.name}/{spec.default_model or '_'}")
             typer.echo(f"{'':<22}   credentials      {status.explain()}")
 

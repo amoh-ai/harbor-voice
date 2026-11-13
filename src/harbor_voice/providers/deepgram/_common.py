@@ -1,5 +1,5 @@
-"""What the three Deepgram providers share: the key, the header, the
-encodings and how a failure is classified.
+"""What the three Deepgram providers share: the key, the header and the
+encodings.
 
 Every Deepgram API takes ``Authorization: Token <key>``
 (https://developers.deepgram.com/reference/authentication).
@@ -10,9 +10,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from harbor_voice.audio.format import AudioFormat
-from harbor_voice.providers.base import ProviderError
-from harbor_voice.providers.base import ProviderFailure
-from harbor_voice.providers.base import http_failure
 from harbor_voice.providers.base import require_key
 
 API_KEY_ENV = "DEEPGRAM_API_KEY"
@@ -32,24 +29,3 @@ def auth_header(api_key: str | None, *, provider: str, model: str) -> dict[str, 
     """The ``Authorization`` header, from ``api_key`` or ``DEEPGRAM_API_KEY``."""
     key = require_key(api_key, API_KEY_ENV, provider=provider, model=model)
     return {"Authorization": f"Token {key}"}
-
-
-def socket_error(exc: Exception, *, provider: str, model: str) -> ProviderError:
-    """A websocket exception as a :class:`ProviderError`.
-
-    A refused handshake (``websockets.exceptions.InvalidStatus``) carries the
-    HTTP status; anything else after connecting is a broken stream.
-    """
-    status = getattr(getattr(exc, "response", None), "status_code", None)
-    if isinstance(status, int):
-        kind = http_failure(status)
-    elif isinstance(exc, TimeoutError):
-        kind = ProviderFailure.TIMEOUT
-    else:
-        kind = ProviderFailure.STREAM_BROKEN
-    return ProviderError(
-        kind,
-        f"{type(exc).__name__}: {str(exc)[:300]}",
-        provider=provider,
-        model=model,
-    )

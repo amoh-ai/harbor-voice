@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -47,6 +48,8 @@ from harbor_voice.providers import UnknownProvider
 from harbor_voice.providers.credentials import access_for
 from harbor_voice.providers.credentials import resolve as resolve_credentials
 from harbor_voice.providers.credentials import VOICE_PROVIDER_ACCESS
+from tests.unit.voice.fakes import Closed
+from tests.unit.voice.fakes import Rejected
 
 pytestmark = pytest.mark.unit
 
@@ -884,6 +887,40 @@ def test_require_key_takes_the_first_variable_set(
     monkeypatch.delenv("B_KEY")
     with pytest.raises(ProviderError, match="A_KEY or B_KEY is not set"):
         require_key(None, "A_KEY", "B_KEY", provider="p", model=None)
+    with pytest.raises(ProviderError, match=r"A_KEY is not set \(or sign in\)"):
+        require_key(None, "A_KEY", provider="p", model=None, hint="or sign in")
+
+
+@pytest.mark.parametrize(
+    ("exc", "kind"),
+    [
+        (Rejected(403), "auth"),
+        (Rejected(503), "stream_broken"),
+        (Closed(1013), "throttled"),
+        (Closed(1000), "stream_broken"),
+        (TimeoutError(), "timeout"),
+        (ConnectionRefusedError(), "stream_broken"),
+        (ConnectionResetError(), "stream_broken"),
+        (json.JSONDecodeError("bad", "x", 0), "malformed"),
+        (RuntimeError("odd"), "stream_broken"),
+    ],
+)
+def test_socket_failure_maps_one_way_for_every_provider(
+    exc: Exception, kind: str
+) -> None:
+    """A refused or reset connection is a broken stream, not a timeout."""
+    from harbor_voice.providers.base import socket_failure
+
+    close_codes = {1013: ProviderFailure.THROTTLED}
+    error = socket_failure(exc, provider="p", model="m", close_codes=close_codes)
+    assert error.kind is ProviderFailure(kind)
+    assert (error.provider, error.model) == ("p", "m")
+
+
+def test_retry_waits_double_from_one_second_up_to_ten() -> None:
+    from harbor_voice.providers.base import retry_wait
+
+    assert [retry_wait(n) for n in range(1, 7)] == [1, 2, 4, 8, 10, 10]
 
 
 async def test_an_http_session_keeps_one_client_until_closed() -> None:

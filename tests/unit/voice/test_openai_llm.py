@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 import pytest
 
+from harbor_voice.providers import base as provider_base
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.openai import llm as oa
@@ -57,7 +58,7 @@ def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     async def instant(_: float) -> None:
         return None
 
-    monkeypatch.setattr(oa.asyncio, "sleep", instant)
+    monkeypatch.setattr(provider_base.asyncio, "sleep", instant)
 
 
 class TestOpenAILLM:
@@ -110,6 +111,16 @@ class TestOpenAILLM:
             {"id": "u1"},
         )
 
+    @pytest.mark.parametrize("effort", [None, "none"])
+    async def test_reasoning_effort_is_sent_only_when_set(self, effort) -> None:
+        """Reasoning models refuse tools at their default effort; "none" lets
+        a cascade's LLM call them."""
+        client, seen = _client(lambda _: httpx.Response(200, json=_completion("Hi")))
+        llm = oa.OpenAILLM(client=client, api_key="k", reasoning_effort=effort)
+        await llm.chat(BODY["messages"], [])
+        body = json.loads(seen[0].content)
+        assert body.get("reasoning_effort") == effort
+
     async def test_429_is_retried_and_401_is_not(self) -> None:
         replies = iter(
             [httpx.Response(429), httpx.Response(200, json=_completion("ok"))]
@@ -122,3 +133,41 @@ class TestOpenAILLM:
         with pytest.raises(ProviderError) as info:
             await oa.OpenAILLM(client=client, api_key="k").complete(BODY)
         assert info.value.kind is ProviderFailure.AUTH and len(seen) == 1
+
+    @pytest.mark.parametrize(
+        ("status", "kind", "attempts"),
+        [
+            (402, ProviderFailure.AUTH, 1),
+            (404, ProviderFailure.NOT_ENABLED, 1),
+            (408, ProviderFailure.TIMEOUT, oa.RETRY_ATTEMPTS),
+            (504, ProviderFailure.TIMEOUT, oa.RETRY_ATTEMPTS),
+        ],
+    )
+    async def test_statuses_map_like_every_other_provider(
+        self, status: int, kind: ProviderFailure, attempts: int
+    ) -> None:
+        client, seen = _client(lambda _: httpx.Response(status, text="no"))
+        with pytest.raises(ProviderError) as info:
+            await oa.OpenAILLM(client=client, api_key="k").complete(BODY)
+        assert info.value.kind is kind
+        assert len(seen) == attempts
+
+    async def test_a_dead_connection_is_retried_then_a_timeout(self) -> None:
+        def refuse(_: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("refused")
+
+        client, seen = _client(refuse)
+        with pytest.raises(ProviderError) as info:
+            await oa.OpenAILLM(client=client, api_key="k").complete(BODY)
+        assert info.value.kind is ProviderFailure.TIMEOUT
+        assert len(seen) == oa.RETRY_ATTEMPTS
+
+    async def test_no_key_is_auth_before_any_request(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        client, seen = _client(lambda _: httpx.Response(200, json=_completion("x")))
+        with pytest.raises(ProviderError) as info:
+            await oa.OpenAILLM(client=client).complete(BODY)
+        assert info.value.kind is ProviderFailure.AUTH
+        assert seen == []

@@ -6,6 +6,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from harbor_voice.providers.selfhosted import llm
+from harbor_voice.providers.selfhosted import realtime
+from harbor_voice.providers.selfhosted import speech
 from harbor_voice.providers.selfhosted.realtime import SelfHostedRealtimeTransport
 from harbor_voice.providers.selfhosted.speech import SELFHOSTED_STT_SPEC
 from harbor_voice.providers.selfhosted.speech import SELFHOSTED_TTS_SPEC
@@ -21,15 +24,12 @@ __all__ = [
     "SelfHostedRealtimeTransport",
     "SelfHostedSTT",
     "SelfHostedTTS",
+    "register_all",
 ]
 
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add every self-hosted provider to a registry. See ``aws.register_all``."""
-    from harbor_voice.providers.selfhosted import llm
-    from harbor_voice.providers.selfhosted import realtime
-    from harbor_voice.providers.selfhosted import speech
-
     for spec, build in (
         *speech.REGISTRATIONS,
         *llm.REGISTRATIONS,

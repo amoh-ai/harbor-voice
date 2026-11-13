@@ -156,7 +156,6 @@ SPEC = ProviderSpec(
     modality=Modality.TTS,
     capabilities=ProviderCapabilities(modality=Modality.TTS, streams=True),
     credential_provider="deepgram",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """``streams=True``: the first chunk is yielded as soon as 20 ms of audio has

@@ -31,10 +31,11 @@ from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.fishaudio.tts import API_BASE
-from harbor_voice.providers.fishaudio.tts import api_key
+from harbor_voice.providers.fishaudio.tts import API_KEY_ENV
 from harbor_voice.providers.fishaudio.tts import error
 from harbor_voice.providers.protocols import Transcript
 from harbor_voice.trajectory.render import to_wav
@@ -80,8 +81,9 @@ class FishAudioSTT(PooledHTTP):
             return
         fmt = frames[0].fmt
         duration = fmt.duration_s(len(pcm))
+        key = require_key(self._api_key, API_KEY_ENV, provider=NAME, model=self.model)
         headers = {
-            "Authorization": f"Bearer {api_key(self._api_key, NAME, self.model)}",
+            "Authorization": f"Bearer {key}",
             "model": self.model,
         }
         files = {"audio": ("turn.wav", to_wav(pcm, fmt), "audio/wav")}
@@ -125,7 +127,6 @@ FISHAUDIO_STT_SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="fishaudio",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 

@@ -48,7 +48,12 @@ Differences from tau2 that follow from our slots:
 - An assistant turn with tool calls is one message carrying its text and its
   calls, which is how LiveKit sends tau2's context to the model.
 - A slot that fails is recorded in :attr:`errors` and the call goes on, as
-  tau2 logs a failed stage and carries on.
+  tau2 logs a failed stage and carries on, when the failure can clear by
+  itself (a rate limit, a timeout). One that cannot (a rejected key, a
+  request the provider refuses) would fail every turn the same way, leaving
+  the caller talking to silence for the rest of the call. That ends the
+  call: the next audio sent raises it, so the trial errors rather than
+  scoring the silence.
 """
 
 from __future__ import annotations
@@ -72,6 +77,7 @@ from harbor_voice.cascade.endpointing import SpeechEdge
 from harbor_voice.cascade.transport import CascadeError
 from harbor_voice.cascade.transport import CascadeTransport
 from harbor_voice.ids import PartyId
+from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers import LLMProvider
 from harbor_voice.providers import STTProvider
 from harbor_voice.providers import TTSProvider
@@ -129,7 +135,7 @@ class DuplexCascadeTransport(CascadeTransport):
                 f"the llm slot {llm.name!r} cannot hold a conversation (it does "
                 f"not implement ChatLLM), so a duplex cascade would forget every "
                 f"tool result after the turn it came back in. openai.llm, "
-                f"selfhosted.llm and litellm.llm can"
+                f"selfhosted.llm, litellm.llm and the offline echo LLMs can"
             )
         super().__init__(
             stt=stt,
@@ -145,7 +151,7 @@ class DuplexCascadeTransport(CascadeTransport):
         self._min_chars = min_transcript_chars
         self._audio_in = audio_in
         self._endpointer = Endpointer(audio_in, endpointing_ms=endpointing_ms)
-        self._edges: asyncio.Queue[SpeechEdge | None] = asyncio.Queue()
+        self._edges: asyncio.Queue[SpeechEdge] = asyncio.Queue()
         self._inbox: asyncio.Queue[StreamEvent | None] = asyncio.Queue()
         self._listener: asyncio.Task[None] | None = None
         self._replies: set[asyncio.Task[None]] = set()
@@ -154,7 +160,9 @@ class DuplexCascadeTransport(CascadeTransport):
         self._utterance = 0
         self._caller = PartyId("caller")
         self.errors: list[str] = []
-        """Every slot failure, as ``"<slot>: <error>"``; the call went on."""
+        """Every slot failure, as ``"<slot>: <error>"``."""
+        self.failure: ProviderError | None = None
+        """The first failure that cannot clear by itself; it ends the call."""
 
     @property
     @override
@@ -210,6 +218,8 @@ class DuplexCascadeTransport(CascadeTransport):
     @override
     async def tx(self, frame: AudioFrame) -> None:
         self.require_open()
+        if self.failure is not None:
+            raise self.failure
         if frame.fmt != self._audio_in:
             raise ValueError(
                 f"this cascade listens to {self._audio_in}, got a {frame.fmt} frame"
@@ -246,7 +256,8 @@ class DuplexCascadeTransport(CascadeTransport):
         One edge at a time, so a start never overtakes the end before it
         while that utterance is still being transcribed.
         """
-        while (edge := await self._edges.get()) is not None:
+        while True:  # cancelled on close
+            edge = await self._edges.get()
             if edge.started:
                 self._mark(Stage.VAD_SPEECH_START, self._clock.now())
                 self._emit(InputSpeech(True, edge.at_ms, self._clock.now()))
@@ -273,7 +284,7 @@ class DuplexCascadeTransport(CascadeTransport):
         try:
             return (await self._hear([frame])).strip()
         except Exception as exc:  # noqa: BLE001 - recorded; tau2 carries on
-            self.errors.append(f"stt: {type(exc).__name__}: {exc}")
+            self._failed("stt", exc)
             return ""
 
     async def _respond(self, said: str) -> None:
@@ -326,11 +337,20 @@ class DuplexCascadeTransport(CascadeTransport):
             try:
                 await reply
             except Exception as exc:  # noqa: BLE001 - recorded; tau2 carries on
-                self.errors.append(f"reply: {type(exc).__name__}: {exc}")
+                self._failed("reply", exc)
 
         task = asyncio.create_task(run())
         self._replies.add(task)
         task.add_done_callback(self._replies.discard)
+
+    def _failed(self, slot: str, exc: Exception) -> None:
+        self.errors.append(f"{slot}: {type(exc).__name__}: {exc}")
+        if (
+            isinstance(exc, ProviderError)
+            and not exc.is_retryable
+            and self.failure is None
+        ):
+            self.failure = exc
 
     def _emit(self, event: StreamEvent) -> None:
         self._inbox.put_nowait(event)

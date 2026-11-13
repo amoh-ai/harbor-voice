@@ -115,11 +115,12 @@ class SteppedCall:
         audio_format: Of the wire, both ways; the transport's ``audio_in``.
         stepper: The provider's tick (:class:`AgentStepper`, tau2's Realtime
             adapter, by default; :class:`LiveAgentStepper` for OpenAI Live,
-            :class:`GeminiAgentStepper` for Gemini Live).
+            :class:`GeminiAgentStepper` for Gemini Live,
+            :class:`CascadeAgentStepper` for a duplex cascade).
             A stepper with ``convert_input`` turns each step of caller audio
             into the provider's format (``send_format``). It is sent whole
-            when the stepper ``sends_whole`` (tau2's Live adapter queues a
-            tick at once for WebRTC to clock), else in paced packets.
+            when the stepper ``sends_whole`` (Live and the cascade), else in
+            paced packets (Gemini, as tau2 sends it).
         realtime_pacing: tau2's ``realtime_pacing``: steps start on a fixed
             schedule rather than when the last one ended, so after a pause
             (the caller thinking) they run back to back until caught up.

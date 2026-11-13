@@ -13,8 +13,8 @@ the edges are found here, by level: a 20 ms window is speech when it stands
 floor is the quietest window of the last ``floor_ms``: speech has gaps
 between words, and in them the line falls back to its noise, so steady
 background noise (tau2's noisy presets mix it under the whole call) sets the
-floor instead of reading as one endless utterance. It is a level detector, not a speech model: a loud burst of noise
-opens it just as speech does. tau2's Deepgram VAD is fooled by bursts too,
+floor instead of reading as one endless utterance. It is a level detector,
+not a speech model: a loud burst of noise opens it just as speech does. tau2's Deepgram VAD is fooled by bursts too,
 less often.
 """
 

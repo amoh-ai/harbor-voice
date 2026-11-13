@@ -11,18 +11,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from harbor_voice.providers.meta import stt
 from harbor_voice.providers.meta.stt import META_STT_SPEC
 from harbor_voice.providers.meta.stt import MetaSTT
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from harbor_voice.providers.registry import ProviderRegistry
 
-__all__ = ["META_STT_SPEC", "MetaSTT"]
+__all__ = [
+    "META_STT_SPEC",
+    "MetaSTT",
+    "register_all",
+]
 
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add every Meta provider to a registry. See ``aws.register_all``."""
-    from harbor_voice.providers.meta import stt
-
     for spec, build in stt.REGISTRATIONS:
         registry.register(spec, build)
