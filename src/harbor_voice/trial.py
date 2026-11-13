@@ -31,6 +31,7 @@ from dataclasses import field
 from pathlib import Path
 from typing import Any
 from typing import Literal
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -46,8 +47,10 @@ from harbor_voice.perturbation.base import SeedSet
 from harbor_voice.perturbation.plan import PerturbationPipeline
 from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.providers.capabilities import Modality
+from harbor_voice.providers.credentials import resolve as resolve_credentials
 from harbor_voice.providers.registry import ProviderRegistry
 from harbor_voice.providers.registry import Registration
+from harbor_voice.providers.registry import credential_slug
 from harbor_voice.providers.registry import default_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
@@ -57,7 +60,9 @@ from harbor_voice.driver import VerifierResult
 from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.trajectory.model import VoiceTrajectory
-from harbor_voice.trajectory.render import RenderResult
+
+if TYPE_CHECKING:
+    from harbor_voice.trajectory.recorder import Recorder
 
 DEFAULT_CALLER = PartyId("caller")
 DEFAULT_AGENT = PartyId("agent")
@@ -666,10 +671,10 @@ class VoiceTrial:
         )
         if self._out_dir is None:
             return trajectory
-        return self._save_recording(recorder.render(), trajectory)
+        return self._save_recording(recorder, trajectory)
 
     def _save_recording(
-        self, mixed: RenderResult, trajectory: VoiceTrajectory
+        self, recorder: Recorder, trajectory: VoiceTrajectory
     ) -> VoiceTrajectory:
         """Write the call as heard, both parties on one timeline, beside the
         trajectory, and name it there by the file's hash, as the adapters name
@@ -678,13 +683,16 @@ class VoiceTrial:
         from harbor_voice.trajectory.render import to_wav
         from harbor_voice.trajectory.stepped import audio_ref
 
+        mixed = recorder.render()
         if not mixed.pcm:
             return trajectory
         assert self._out_dir is not None
         path = self._out_dir / RECORDING
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(to_wav(mixed.pcm, mixed.fmt))
-        artifacts = Artifacts(mixed_timeline=audio_ref(path), tier="T1")
+        artifacts = Artifacts(
+            mixed_timeline=audio_ref(path), segments=recorder.segments(), tier="T1"
+        )
         return trajectory.model_copy(update={"artifacts": artifacts})
 
     def _agent_name(self) -> str:
@@ -774,17 +782,21 @@ _VENDORS = (
 """Provider packages registered lazily; each has a ``register_all``."""
 
 
-def required_extras(spec: AgentSpec) -> list[str]:
+def required_extras(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> list[str]:
     """harbor-voice extras the agent's providers declare (``requires_extra``)."""
     extras = [
         entry.spec.requires_extra
-        for _, entry in _resolved(spec)
+        for entry, _ in _resolved(spec, registry)
         if entry.spec.requires_extra
     ]
     return list(dict.fromkeys(extras))
 
 
-def required_env(spec: AgentSpec) -> dict[str, str]:
+def required_env(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> dict[str, str]:
     """The credentials the agent's providers need, from this process's environment.
 
     A task's ``[environment] env`` names the keys its own caller and grader
@@ -795,10 +807,9 @@ def required_env(spec: AgentSpec) -> dict[str, str]:
     Variables that name something on this machine (:data:`HOST_ONLY_ENVS`)
     are left out too, and each provider's ``sandbox_env`` has the last word.
     """
-    registry = provider_registry()
     env: dict[str, str] = {}
-    for name, entry in _resolved(spec, registry):
-        found = registry.credentials(name).container_env()
+    for entry, model in _resolved(spec, registry):
+        found = resolve_credentials(credential_slug(entry.spec, model)).container_env()
         if entry.spec.sandbox_env:
             found = entry.spec.sandbox_env(found)
         env.update(found)
@@ -820,22 +831,21 @@ exported keys are present."""
 
 def _resolved(
     spec: AgentSpec, registry: ProviderRegistry | None = None
-) -> list[tuple[str, Registration]]:
-    """Each provider the agent names, with its registration.
+) -> list[tuple[Registration, str]]:
+    """Each provider the agent names: its registration and the model.
 
     A provider the registry cannot resolve here is skipped: it needs nothing
     named, and building it will say what is missing.
     """
     registry = registry or provider_registry()
-    found: list[tuple[str, Registration]] = []
+    found: list[tuple[Registration, str]] = []
     for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
         if not name:
             continue
         try:
-            entry, _ = registry.resolve(name)
+            found.append(registry.resolve(name))
         except Exception:  # noqa: BLE001 - see the docstring
             continue
-        found.append((name, entry))
     return found
 
 

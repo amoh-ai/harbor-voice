@@ -25,7 +25,10 @@ and checked, not probed.
   depends on: `litellm.llm/gemini/...`, `litellm.llm/vertex_ai/...`,
   `litellm.llm/xai/...`, `litellm.llm/bedrock/...`,
   `litellm.llm/openrouter/<model>` (`OPENROUTER_API_KEY`), and any vLLM, SGLang or
-  Ollama server as `litellm.llm/hosted_vllm/<model>` with `api_base`.
+  Ollama server as `litellm.llm/hosted_vllm/<model>` (`HOSTED_VLLM_API_BASE`).
+  Each model's variables are passed into the trial's sandbox. A litellm
+  provider harbor does not list follows litellm's naming:
+  `<PROVIDER>_API_KEY`, and `<PROVIDER>_API_BASE` if set.
 - `microsoft.stt` is MAI-Transcribe (default `MAI-Transcribe-2`) through an
   Azure Speech resource: `AZURE_SPEECH_KEY` and `AZURE_SPEECH_ENDPOINT`
   (`https://<resource>.cognitiveservices.azure.com`, in a region that offers it).

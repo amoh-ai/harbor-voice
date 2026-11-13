@@ -208,6 +208,10 @@ class TestAHalfDuplexRun:
                 wav.getnframes() / wav.getframerate()
             )
             assert ref.duration_s > 0
+        # Each party's audio, placed on that timeline, stays listed too.
+        segments = result.trajectory.artifacts.segments
+        assert {s["party"] for s in segments} == {"caller", "agent"}
+        assert all(s["t1"] > s["t0"] for s in segments)
 
     async def test_nothing_is_written_without_an_out_dir(self) -> None:
         """A trial that only wants the trajectory should not litter."""

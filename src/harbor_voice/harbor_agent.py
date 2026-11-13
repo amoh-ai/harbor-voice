@@ -37,6 +37,7 @@ import threading
 import time
 import tomllib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import override
 
@@ -50,6 +51,9 @@ from pydantic import Field
 from harbor_voice import install
 from harbor_voice.capabilities import Pipeline
 from harbor_voice.driver import PROGRESS_PREFIX
+
+if TYPE_CHECKING:
+    from harbor_voice.providers.registry import ProviderRegistry
 
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
@@ -146,6 +150,7 @@ _packages = _Packages()
 class VoiceCallAgent(BaseInstalledAgent):
     options_model = VoiceCallOptions
     capabilities = AgentCapabilities(atif=True)
+    _registry: ProviderRegistry | None = None
 
     @staticmethod
     @override
@@ -175,14 +180,25 @@ class VoiceCallAgent(BaseInstalledAgent):
         from harbor_voice.trial import AgentSpec
         from harbor_voice.trial import required_extras
 
-        return required_extras(AgentSpec.model_validate_json(self.agent_spec_json()))
+        spec = AgentSpec.model_validate_json(self.agent_spec_json())
+        return required_extras(spec, self._providers())
 
     def agent_env(self) -> dict[str, str]:
         """The agent under test's credentials, for the call's environment."""
         from harbor_voice.trial import AgentSpec
         from harbor_voice.trial import required_env
 
-        return required_env(AgentSpec.model_validate_json(self.agent_spec_json()))
+        spec = AgentSpec.model_validate_json(self.agent_spec_json())
+        return required_env(spec, self._providers())
+
+    def _providers(self) -> ProviderRegistry:
+        """The provider registry, built once per agent (it imports every
+        vendor package) and shared by install and run."""
+        from harbor_voice.trial import provider_registry
+
+        if self._registry is None:
+            self._registry = provider_registry()
+        return self._registry
 
     @override
     async def install(self, environment: BaseEnvironment) -> None:

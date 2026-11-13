@@ -181,8 +181,28 @@ class TestRegistration:
             ("bedrock/amazon.nova-pro-v1:0", "aws"),
             ("openai/gpt-4.1", "openai"),
             ("openrouter/anthropic/claude-sonnet-4.5", "openrouter"),
-            ("hosted_vllm/Qwen/Qwen3-8B", None),
+            ("hosted_vllm/Qwen/Qwen3-8B", "hosted_vllm"),
+            ("meta_llama/Llama-4-Maverick", "meta_llama"),
+            ("nscale/some-model", "litellm:nscale"),
         ],
     )
     def test_credentials_follow_the_model(self, model: str, slug: str | None) -> None:
         assert ll.credential_slug(model) == slug
+
+    def test_a_provider_no_table_lists_follows_litellms_naming(self) -> None:
+        """Its key reaches the sandbox, and a missing one is reported."""
+        from harbor_voice.providers.credentials import resolve
+
+        env = {"NSCALE_API_KEY": "k", "NSCALE_API_BASE": "https://x"}
+        status = resolve(ll.credential_slug("nscale/m"), getenv=env.get)
+        assert status.ready and status.container_env() == env
+        assert resolve("litellm:nscale", getenv={}.get).missing == ("NSCALE_API_KEY",)
+
+    def test_a_vllm_server_needs_its_address_not_a_key(self) -> None:
+        from harbor_voice.providers.credentials import resolve
+
+        env = {"HOSTED_VLLM_API_BASE": "http://host.docker.internal:8000/v1"}
+        assert resolve("hosted_vllm", getenv=env.get).ready
+        assert resolve("hosted_vllm", getenv={}.get).missing == (
+            "HOSTED_VLLM_API_BASE",
+        )

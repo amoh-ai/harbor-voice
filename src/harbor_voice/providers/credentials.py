@@ -93,6 +93,11 @@ VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "deepgram": CredentialAccess(("DEEPGRAM_API_KEY",)),
     "fishaudio": CredentialAccess(("FISH_API_KEY",)),
     "sarvam": CredentialAccess(("SARVAM_API_KEY",)),
+    # litellm providers harbor's table does not list.
+    "hosted_vllm": CredentialAccess(
+        (), extra_envs=("HOSTED_VLLM_API_BASE", "HOSTED_VLLM_API_KEY")
+    ),
+    "meta_llama": CredentialAccess(("LLAMA_API_KEY",)),
     # One entry per slot, each needing its own server's address: a model
     # server that is not configured is "missing", not "ready".
     **{
@@ -105,10 +110,21 @@ VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
 """Voice-only providers, consulted before harbor's table."""
 
 
+LITELLM_GUESS = "litellm:"
+"""Prefix of a slug for a litellm provider no table lists, e.g.
+``litellm:nscale``. Its variables follow litellm's own naming rule."""
+
+
 def access_for(slug: str | None) -> CredentialAccess | None:
-    """Find a provider's credential requirements. Overlay first, then harbor."""
+    """Find a provider's credential requirements. Overlay first, then harbor,
+    then litellm's naming rule for a ``litellm:<provider>`` slug."""
     if slug is None:
         return None
+    if slug.startswith(LITELLM_GUESS):
+        prefix = slug.removeprefix(LITELLM_GUESS).upper()
+        return CredentialAccess(
+            (f"{prefix}_API_KEY",), base_url_envs=(f"{prefix}_API_BASE",)
+        )
     return VOICE_PROVIDER_ACCESS.get(slug) or HARBOR_PROVIDERS.get(slug)
 
 
@@ -230,6 +246,7 @@ _OPTIONAL_ENVS: frozenset[str] = frozenset(
         "GOOGLE_APPLICATION_CREDENTIALS",
         "AZURE_API_VERSION",
         "SELFHOSTED_API_KEY",
+        "HOSTED_VLLM_API_KEY",
     }
 )
 """Variables whose absence is normal rather than a misconfiguration.

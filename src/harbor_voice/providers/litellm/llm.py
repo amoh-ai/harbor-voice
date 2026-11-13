@@ -20,7 +20,7 @@ The registry splits a spec on its first ``/``, so everything after
 litellm reads each vendor's credentials from that vendor's own environment
 variables (``GEMINI_API_KEY``, ``XAI_API_KEY``, ``AWS_*``,
 ``HOSTED_VLLM_API_BASE``...), so nothing here takes a key. Which variables a
-model needs is answered by :func:`credential_slug`, from harbor's table.
+model needs is answered by :func:`credential_slug`.
 
 litellm is imported on first use, not at import time: it takes seconds to
 load, and every CLI command builds the provider registry.
@@ -55,12 +55,16 @@ def credential_slug(model: str) -> str | None:
     """The credential table slug for a litellm model string.
 
     Uses harbor's own resolution: litellm names the provider, harbor's alias
-    table maps it to a ``PROVIDERS`` slug. ``None`` means nothing is needed
-    (a self-hosted ``hosted_vllm/...`` server) or nothing is known.
+    table maps it to a ``PROVIDERS`` slug, and our own table fills the gaps
+    (``hosted_vllm``, ``meta_llama``). A provider neither lists gets
+    litellm's naming rule, ``<PROVIDER>_API_KEY`` and ``<PROVIDER>_API_BASE``,
+    so its key still reaches the sandbox and a missing one is reported.
+    ``None`` means the model string names no provider.
     """
     from harbor.agents.agent_auth_resolution import parse_model_name
     from harbor.agents.agent_auth_resolution import provider_aliases
 
+    from harbor_voice.providers.credentials import LITELLM_GUESS
     from harbor_voice.providers.credentials import access_for
 
     provider, _ = parse_model_name(model)
@@ -71,7 +75,7 @@ def credential_slug(model: str) -> str | None:
         # variable; litellm signs with the usual key pair, which is ours.
         return "aws"
     slug = provider_aliases().get(provider, provider)
-    return slug if access_for(slug) is not None else None
+    return slug if access_for(slug) is not None else f"{LITELLM_GUESS}{provider}"
 
 
 @dataclass(slots=True)

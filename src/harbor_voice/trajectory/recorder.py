@@ -454,6 +454,18 @@ class Recorder:
         """Mix every placed source onto one timeline."""
         return render_timeline(self._placed, fmt=self._config.fmt)
 
+    def segments(self) -> tuple[dict[str, Any], ...]:
+        """Each party's placed audio: who, when, and its hash."""
+        return tuple(
+            {
+                "party": str(p.party),
+                "t0": p.start_s,
+                "t1": p.end_s,
+                "digest": str(sha256_digest(p.pcm)),
+            }
+            for p in self._placed
+        )
+
     def finish(
         self,
         *,
@@ -478,15 +490,7 @@ class Recorder:
                     duration_s=mixed.duration_s,
                     bytes=len(mixed.pcm),
                 ),
-                segments=tuple(
-                    {
-                        "party": str(p.party),
-                        "t0": p.start_s,
-                        "t1": p.end_s,
-                        "digest": str(sha256_digest(p.pcm)),
-                    }
-                    for p in self._placed
-                ),
+                segments=self.segments(),
                 tier="T1",
             )
 

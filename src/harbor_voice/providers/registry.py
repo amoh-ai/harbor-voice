@@ -172,13 +172,7 @@ class ProviderRegistry:
     def credentials(self, spec_string: str, **resolve_kwargs: Any) -> CredentialStatus:
         """Whether this provider's credentials are available. Never prints them."""
         entry, model = self.resolve(spec_string)
-        spec = entry.spec
-        slug = (
-            spec.credential_slug_for(model)
-            if spec.credential_slug_for
-            else spec.credential_provider
-        )
-        return resolve_credentials(slug, **resolve_kwargs)
+        return resolve_credentials(credential_slug(entry.spec, model), **resolve_kwargs)
 
     def create(self, spec_string: str, *, modality: Modality, **config: Any) -> Any:
         """Build a provider for one slot.
@@ -220,3 +214,10 @@ def default_registry() -> ProviderRegistry:
     for spec, build in offline.REGISTRATIONS:
         registry.register(spec, build)
     return registry
+
+
+def credential_slug(spec: ProviderSpec, model: str) -> str | None:
+    """Which credentials one provider needs for one model."""
+    if spec.credential_slug_for:
+        return spec.credential_slug_for(model)
+    return spec.credential_provider
