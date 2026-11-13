@@ -240,3 +240,15 @@ class TestStages:
         """Stage names land in the trajectory; renaming one is a format break."""
         assert Stage.LLM_FIRST_TOKEN.value == "llm_first_token"
         assert str(Stage.ASR_PARTIAL) == "asr_partial"
+
+
+def test_frame_cutter_cuts_frames_and_keeps_only_whole_samples() -> None:
+    from harbor_voice.audio.format import FrameCutter
+
+    fmt = AudioFormat()  # 960 bytes a frame, 2 a sample
+    cutter = FrameCutter(fmt)
+    assert cutter.feed(bytes(500)) == []
+    assert [len(f) for f in cutter.feed(bytes(1500))] == [960, 960]
+    assert cutter.feed(bytes(1)) == []
+    assert len(cutter.tail()) == 80  # 81 bytes left, the odd one dropped
+    assert cutter.tail() == b""

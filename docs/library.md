@@ -12,11 +12,41 @@ and checked, not probed.
 
 | Kind | Providers |
 |---|---|
-| Speech to speech | `openai.realtime`, `openai.live`, `aws.nova-sonic`, `elevenlabs.agents` |
-| Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral` |
-| LLM, for cascades | `openai.llm`, `aws.bedrock-llm` |
-| Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts` |
+| Speech to speech | `openai.realtime`, `openai.live`, `aws.nova-sonic`, `elevenlabs.agents`, `google.live`, `xai.realtime`, `deepgram.agent`, `selfhosted.realtime` |
+| Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral`, `deepgram.stt`, `cartesia.stt`, `sarvam.stt`, `fishaudio.stt`, `xai.stt`, `meta.stt`, `microsoft.stt`, `openrouter.stt`, `selfhosted.stt` |
+| LLM, for cascades | `openai.llm`, `aws.bedrock-llm`, `litellm.llm` |
+| Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts`, `deepgram.tts`, `cartesia.tts`, `sarvam.tts`, `fishaudio.tts`, `xai.tts`, `openrouter.tts`, `selfhosted.tts` |
 | Offline, for tests | `offline.scripted-stt`, `offline.echo-llm`, `offline.scripted-llm`, `offline.tool-echo-llm`, `offline.tone-tts` |
+
+- `google.live` signs in with an AI Studio key (`GEMINI_API_KEY`), or with
+  Vertex AI when `GOOGLE_GENAI_USE_VERTEXAI=true` (Application Default
+  Credentials, `GOOGLE_CLOUD_PROJECT`, the `google` extra).
+- `litellm.llm/<litellm model>` routes through litellm, which harbor already
+  depends on: `litellm.llm/gemini/...`, `litellm.llm/vertex_ai/...`,
+  `litellm.llm/xai/...`, `litellm.llm/bedrock/...`,
+  `litellm.llm/openrouter/<model>` (`OPENROUTER_API_KEY`), and any vLLM, SGLang or
+  Ollama server as `litellm.llm/hosted_vllm/<model>` with `api_base`.
+- `microsoft.stt` is MAI-Transcribe (default `MAI-Transcribe-2`) through an
+  Azure Speech resource: `AZURE_SPEECH_KEY` and `AZURE_SPEECH_ENDPOINT`
+  (`https://<resource>.cognitiveservices.azure.com`, in a region that offers it).
+- `selfhosted.stt` and `selfhosted.tts` call an OpenAI-compatible speech
+  server (vLLM, vLLM-Omni, SGLang): `/v1/audio/transcriptions` and
+  `/v1/audio/speech`, at `SELFHOSTED_STT_BASE_URL` / `SELFHOSTED_TTS_BASE_URL`.
+- `openrouter.stt/<model>` and `openrouter.tts/<model>` are OpenRouter's
+  speech models (`OPENROUTER_API_KEY`), e.g. `openrouter.stt/deepgram/nova-3`
+  or `openrouter.tts/elevenlabs/eleven-flash-v2.5` with `voice = "sarah"`.
+  Most speech models need a voice; each model's voices are in
+  `GET https://openrouter.ai/api/v1/models?output_modalities=speech`.
+  Models OpenRouter serves only as MP3 (MiniMax) are not supported.
+- `selfhosted.realtime/<model>` is a speech-to-speech model behind vLLM-Omni's
+  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All three
+  send `SELFHOSTED_API_KEY` as a bearer token when it is set.
+- Serving Qwen3-Omni-30B-A3B with vLLM-Omni takes two 80 GB GPUs: it puts the
+  thinker on GPU 0 and the talker and code2wav on GPU 1. Install
+  `vllm-omni[server-vad]`, or the server refuses server VAD and the model
+  never hears the caller finish. On an image without the CUDA toolkit, set
+  `VLLM_USE_FLASHINFER_SAMPLER=0`, or vLLM tries to compile FlashInfer's
+  sampler at startup and fails.
 
 More providers are on the way.
 
@@ -81,6 +111,9 @@ print(outcome.reward)  # the call's metrics, also in out/reward.json
 Path("out/trajectory.json").write_text(outcome.trajectory.to_atif_json(), encoding="utf-8")
 ```
 
+The call itself is `out/call.wav`, both parties on one timeline; the
+trajectory names it by hash, so `harbor-voice listen out/trajectory.json` finds it.
+
 `out/` also gets `measurement.json` and `validity.json`, and
 `harbor-voice show out/trajectory.json` summarises the call.
 
@@ -109,5 +142,5 @@ these are optional:
 |---|---|
 | `live` | OpenAI Live, over WebRTC |
 | `aws` | Amazon Nova Sonic and the Bedrock providers |
-| `daytona` | harbor's Daytona backend |
-| `ec2` | harbor's EC2 backend |
+| `google` | Gemini Live on Vertex AI |
+| `daytona`, `ec2`, `gke`, `langsmith`, `modal`, `prime`, `sbx`, `vercel` | harbor's cloud backend of that name |

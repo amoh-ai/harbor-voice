@@ -846,3 +846,41 @@ class TestReferenceStackApplicability:
         stack = ReferenceStack(reference_stt="deepgram.nova/en-US")
         verdict = stack.word_timing_applicability(registry_with_two_stts())
         assert verdict.verdict is Verdict.UNATTESTED
+
+
+@pytest.mark.parametrize(
+    ("status", "not_found", "kind"),
+    [
+        (401, None, "auth"),
+        (402, None, "auth"),
+        (404, None, "malformed"),
+        (404, "region", "region"),
+        (408, None, "timeout"),
+        (429, None, "throttled"),
+        (503, None, "stream_broken"),
+        (422, None, "malformed"),
+    ],
+)
+def test_http_failure_maps_statuses_alike_for_every_provider(
+    status: int, not_found: str | None, kind: str
+) -> None:
+    from harbor_voice.providers.base import ProviderFailure
+    from harbor_voice.providers.base import http_failure
+
+    extra = {"not_found": ProviderFailure(not_found)} if not_found else {}
+    assert http_failure(status, **extra) is ProviderFailure(kind)
+
+
+def test_require_key_takes_the_first_variable_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from harbor_voice.providers.base import ProviderError
+    from harbor_voice.providers.base import require_key
+
+    monkeypatch.delenv("A_KEY", raising=False)
+    monkeypatch.setenv("B_KEY", "b")
+    assert require_key(None, "A_KEY", "B_KEY", provider="p", model=None) == "b"
+    assert require_key("given", "A_KEY", provider="p", model=None) == "given"
+    monkeypatch.delenv("B_KEY")
+    with pytest.raises(ProviderError, match="A_KEY or B_KEY is not set"):
+        require_key(None, "A_KEY", "B_KEY", provider="p", model=None)

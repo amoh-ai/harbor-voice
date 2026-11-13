@@ -47,6 +47,7 @@ from harbor_voice.perturbation.plan import PerturbationPipeline
 from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.registry import ProviderRegistry
+from harbor_voice.providers.registry import Registration
 from harbor_voice.providers.registry import default_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
@@ -56,9 +57,12 @@ from harbor_voice.driver import VerifierResult
 from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.trajectory.model import VoiceTrajectory
+from harbor_voice.trajectory.render import RenderResult
 
 DEFAULT_CALLER = PartyId("caller")
 DEFAULT_AGENT = PartyId("agent")
+RECORDING = "call.wav"
+"""The built-in loop's recording, written beside the trajectory in ``out_dir``."""
 
 
 class TrialConfigError(ValueError):
@@ -649,7 +653,7 @@ class VoiceTrial:
             recorder.record_probes(probes, by=self._caller)
         recorder.session_close(self._clock.now())
 
-        return recorder.finish(
+        trajectory = recorder.finish(
             config_matrix=matrix_from(
                 floor=floor, pipeline=pipeline, profile=self._config.profile
             ),
@@ -657,6 +661,28 @@ class VoiceTrial:
             fidelity=simulator.fidelity(),
             render=False,
         )
+        if self._out_dir is None:
+            return trajectory
+        return self._save_recording(recorder.render(), trajectory)
+
+    def _save_recording(
+        self, mixed: RenderResult, trajectory: VoiceTrajectory
+    ) -> VoiceTrajectory:
+        """Write the call as heard, both parties on one timeline, beside the
+        trajectory, and name it there by the file's hash, as the adapters name
+        theirs. ``harbor-voice listen`` finds it by that hash."""
+        from harbor_voice.trajectory.model import Artifacts
+        from harbor_voice.trajectory.render import to_wav
+        from harbor_voice.trajectory.stepped import audio_ref
+
+        if not mixed.pcm:
+            return trajectory
+        assert self._out_dir is not None
+        path = self._out_dir / RECORDING
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(to_wav(mixed.pcm, mixed.fmt))
+        artifacts = Artifacts(mixed_timeline=audio_ref(path), tier="T1")
+        return trajectory.model_copy(update={"artifacts": artifacts})
 
     def _agent_name(self) -> str:
         spec = self.agent_spec()
@@ -724,28 +750,88 @@ def provider_registry(
     return registry
 
 
-_VENDORS = ("aws", "elevenlabs", "openai")
+_VENDORS = (
+    "aws",
+    "cartesia",
+    "deepgram",
+    "elevenlabs",
+    "fishaudio",
+    "google",
+    "litellm",
+    "meta",
+    "microsoft",
+    "openai",
+    "openrouter",
+    "sarvam",
+    "selfhosted",
+    "xai",
+)
 """Provider packages registered lazily; each has a ``register_all``."""
 
 
 def required_extras(spec: AgentSpec) -> list[str]:
-    """harbor-voice extras the agent's providers declare (``requires_extra``).
+    """harbor-voice extras the agent's providers declare (``requires_extra``)."""
+    extras = [
+        entry.spec.requires_extra
+        for _, entry in _resolved(spec)
+        if entry.spec.requires_extra
+    ]
+    return list(dict.fromkeys(extras))
 
-    A provider the registry cannot resolve here needs nothing named; building
-    it will say what is missing.
+
+def required_env(spec: AgentSpec) -> dict[str, str]:
+    """The credentials the agent's providers need, from this process's environment.
+
+    A task's ``[environment] env`` names the keys its own caller and grader
+    use (OpenAI, ElevenLabs, AWS). The agent under test can be any provider,
+    so its keys are passed into the call here: Gemini Live needs
+    ``GEMINI_API_KEY`` and Grok ``XAI_API_KEY``, which no task names. Unset
+    variables are left out; the provider says what is missing when it opens.
+    Variables that name something on this machine (:data:`HOST_ONLY_ENVS`)
+    are left out too, and each provider's ``sandbox_env`` has the last word.
     """
     registry = provider_registry()
-    extras: list[str] = []
+    env: dict[str, str] = {}
+    for name, entry in _resolved(spec, registry):
+        found = registry.credentials(name).container_env()
+        if entry.spec.sandbox_env:
+            found = entry.spec.sandbox_env(found)
+        env.update(found)
+    return {k: v for k, v in env.items() if k not in HOST_ONLY_ENVS}
+
+
+HOST_ONLY_ENVS = frozenset(
+    {
+        "AWS_PROFILE",
+        "AWS_CONFIG_FILE",
+        "AWS_SHARED_CREDENTIALS_FILE",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+)
+"""Variables naming a profile or a file on this machine, meaningless in a
+sandbox: an ``AWS_PROFILE`` there fails with ProfileNotFound even when the
+exported keys are present."""
+
+
+def _resolved(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> list[tuple[str, Registration]]:
+    """Each provider the agent names, with its registration.
+
+    A provider the registry cannot resolve here is skipped: it needs nothing
+    named, and building it will say what is missing.
+    """
+    registry = registry or provider_registry()
+    found: list[tuple[str, Registration]] = []
     for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
         if not name:
             continue
         try:
-            registration, _ = registry.resolve(name)
-        except Exception:  # noqa: BLE001 - see above
+            entry, _ = registry.resolve(name)
+        except Exception:  # noqa: BLE001 - see the docstring
             continue
-        if registration.spec.requires_extra:
-            extras.append(registration.spec.requires_extra)
-    return list(dict.fromkeys(extras))
+        found.append((name, entry))
+    return found
 
 
 def _heard(turns: Sequence[Turn]) -> list[str]:

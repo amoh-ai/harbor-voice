@@ -135,6 +135,8 @@ both harnesses call the same API.
 `main` is a slim Python with uv (harbor-voice is installed into it at trial
 start); the sidecar is tau2 at the commit plus `sidecar/server.py` and
 `sidecar/evaluate.py`. Tags carry a digest of what goes into each image.
+Both are built for `linux/amd64` and `linux/arm64`, so they run without
+emulation on x86 backends and on Apple silicon (Docker Sandboxes on a Mac).
 
 - **Default:** each task builds both images where it runs, as harbor tasks
   do; after the first trial the build is a cache hit.

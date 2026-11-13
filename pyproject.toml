@@ -42,6 +42,15 @@ live = ["aiortc==1.15.0"]
 # Cloud backends are harbor's; these pass its extras through.
 daytona = ["harbor[daytona]==0.25.0"]
 ec2 = ["harbor[ec2]==0.25.0"]
+gke = ["harbor[gke]==0.25.0"]
+langsmith = ["harbor[langsmith]==0.25.0"]
+modal = ["harbor[modal]==0.25.0"]
+prime = ["harbor[prime]==0.25.0"]
+sbx = ["harbor[sbx]==0.25.0"]
+vercel = ["harbor[vercel]==0.25.0"]
+# Gemini Live on Vertex AI: an access token from Application Default
+# Credentials. AI Studio needs nothing extra.
+google = ["google-auth[requests]>=2.0"]
 # The benchmark adapters, released with harbor-voice at the same version.
 tau-voice = ["harbor-voice-tau-voice-adapter==0.1.1"]
 eva = ["harbor-voice-eva-adapter==0.1.1"]
@@ -67,7 +76,7 @@ harbor-voice-eva-adapter = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "harbor-voice[aws,daytona,ec2,live]",
+    "harbor-voice[aws,daytona,ec2,gke,google,langsmith,live,modal,prime,sbx,vercel]",
     "harbor-voice-tau-voice-adapter",
     "harbor-voice-eva-adapter",
     "pytest>=8.4.2",

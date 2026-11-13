@@ -20,9 +20,11 @@ the agent scoring zero.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field
 from enum import StrEnum
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import override
@@ -255,6 +257,14 @@ class ProviderSpec:
 
     default_model: str | None = None
 
+    credential_slug_for: Callable[[str], str | None] | None = None
+    """For a provider whose credentials depend on the model (``litellm.llm``):
+    the slug for a model, in place of :attr:`credential_provider`."""
+
+    sandbox_env: Callable[[dict[str, str]], dict[str, str]] | None = None
+    """Adjusts this provider's variables before they go into a trial's
+    sandbox, for settings that only work on this machine."""
+
     def __post_init__(self) -> None:
         if self.capabilities.modality is not self.modality:
             raise ValueError(
@@ -362,3 +372,43 @@ class ProviderCall:
             out["failure"] = self.failure.value
             out["disposition"] = _DISPOSITIONS[self.failure].value
         return out
+
+
+def require_key(
+    explicit: str | None, *env_names: str, provider: str, model: str | None
+) -> str:
+    """An API key from the argument or the first of ``env_names`` that is set.
+
+    Never logged. Missing, it is an AUTH failure naming the variables.
+    """
+    key = explicit or next(filter(None, map(os.environ.get, env_names)), None)
+    if not key:
+        raise ProviderError(
+            ProviderFailure.AUTH,
+            f"{' or '.join(env_names)} is not set",
+            provider=provider,
+            model=model,
+        )
+    return key
+
+
+def http_failure(
+    status: int, *, not_found: ProviderFailure = ProviderFailure.MALFORMED
+) -> ProviderFailure:
+    """An HTTP status (or a websocket error event's) as a failure kind.
+
+    402 is no credit left: every call fails the same way, so it fails the job
+    like a bad key. What a 404 means differs by vendor (an unknown voice, a
+    region without the model), so the caller says.
+    """
+    if status in (401, 402, 403):
+        return ProviderFailure.AUTH
+    if status == 404:
+        return not_found
+    if status in (408, 504):
+        return ProviderFailure.TIMEOUT
+    if status == 429:
+        return ProviderFailure.THROTTLED
+    if status >= 500:
+        return ProviderFailure.STREAM_BROKEN
+    return ProviderFailure.MALFORMED

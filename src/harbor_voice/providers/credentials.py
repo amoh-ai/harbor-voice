@@ -85,7 +85,23 @@ to drift apart for no reason.
 
 VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "aws": _AWS_ACCESS,
+    "azure-speech": CredentialAccess(
+        ("AZURE_SPEECH_KEY",), extra_envs=("AZURE_SPEECH_ENDPOINT",)
+    ),
     "elevenlabs": CredentialAccess(("ELEVENLABS_API_KEY",)),
+    "cartesia": CredentialAccess(("CARTESIA_API_KEY",)),
+    "deepgram": CredentialAccess(("DEEPGRAM_API_KEY",)),
+    "fishaudio": CredentialAccess(("FISH_API_KEY",)),
+    "sarvam": CredentialAccess(("SARVAM_API_KEY",)),
+    "selfhosted": CredentialAccess(
+        (),
+        extra_envs=("SELFHOSTED_API_KEY",),
+        base_url_envs=(
+            "SELFHOSTED_STT_BASE_URL",
+            "SELFHOSTED_TTS_BASE_URL",
+            "SELFHOSTED_REALTIME_BASE_URL",
+        ),
+    ),
 }
 """Voice-only providers, consulted before harbor's table."""
 
@@ -214,6 +230,7 @@ _OPTIONAL_ENVS: frozenset[str] = frozenset(
         "AWS_PROFILE",
         "GOOGLE_APPLICATION_CREDENTIALS",
         "AZURE_API_VERSION",
+        "SELFHOSTED_API_KEY",
     }
 )
 """Variables whose absence is normal rather than a misconfiguration.

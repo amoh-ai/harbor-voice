@@ -172,6 +172,13 @@ class VoiceCallAgent(BaseInstalledAgent):
 
         return required_extras(AgentSpec.model_validate_json(self.agent_spec_json()))
 
+    def agent_env(self) -> dict[str, str]:
+        """The agent under test's credentials, for the call's environment."""
+        from harbor_voice.trial import AgentSpec
+        from harbor_voice.trial import required_env
+
+        return required_env(AgentSpec.model_validate_json(self.agent_spec_json()))
+
     @override
     async def install(self, environment: BaseEnvironment) -> None:
         started = time.monotonic()
@@ -222,7 +229,7 @@ class VoiceCallAgent(BaseInstalledAgent):
         started = time.monotonic()
         relay = _ProgressRelay(self.logger)
         with environment.scoped_output_callback(relay.feed):
-            result = await environment.exec(command)
+            result = await environment.exec(command, env=self.agent_env() or None)
         if not relay.relayed:
             # Backends that cannot stream (Daytona) return the output at the end.
             relay.lines(result.stdout or "")

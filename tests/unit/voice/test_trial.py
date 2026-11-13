@@ -186,6 +186,25 @@ class TestAHalfDuplexRun:
             "validity.json",
         }
 
+    async def test_it_keeps_the_call_as_a_recording(self, tmp_path: Path) -> None:
+        """The call as heard, named in the trajectory by the file's hash, so
+        ``harbor-voice listen`` can find and play it."""
+        import hashlib
+        import wave
+
+        result = await VoiceTrial(_config(), out_dir=tmp_path).run()
+        recording = tmp_path / "call.wav"
+        ref = result.trajectory.artifacts.mixed_timeline
+        assert ref is not None and result.trajectory.artifacts.tier == "T1"
+        data = recording.read_bytes()
+        assert ref.digest == "sha256:" + hashlib.sha256(data).hexdigest()
+        assert ref.bytes == len(data)
+        with wave.open(str(recording)) as wav:
+            assert ref.duration_s == pytest.approx(
+                wav.getnframes() / wav.getframerate()
+            )
+            assert ref.duration_s > 0
+
     async def test_nothing_is_written_without_an_out_dir(self) -> None:
         """A trial that only wants the trajectory should not litter."""
         result = await VoiceTrial(_config()).run()
