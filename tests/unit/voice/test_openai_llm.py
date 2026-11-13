@@ -88,6 +88,28 @@ class TestOpenAILLM:
         assert (first.name, first.arguments) == ("toggle_airplane_mode", {"on": False})
         assert second.arguments == {} and second.raw_arguments == "{not json"
 
+    async def test_a_conversation_round_offers_the_tools_and_returns_the_calls(
+        self,
+    ) -> None:
+        from harbor_voice.providers.tools import ToolSpec
+
+        payload = _completion("One moment.", [_tool("find_user", '{"id": "u1"}')])
+        client, seen = _client(lambda _: httpx.Response(200, json=payload))
+        llm = oa.OpenAILLM(client=client, api_key="k")
+        spec = ToolSpec("find_user", "Look a customer up.", {"type": "object"})
+        round_ = await llm.chat(BODY["messages"], [spec])
+
+        body = json.loads(seen[0].content)
+        assert body["messages"] == BODY["messages"]
+        assert body["tools"] == [spec.as_chat()]
+        assert round_.text == "One moment."
+        (call,) = round_.calls
+        assert (call.tool_use_id, call.name, call.arguments) == (
+            "call_1",
+            "find_user",
+            {"id": "u1"},
+        )
+
     async def test_429_is_retried_and_401_is_not(self) -> None:
         replies = iter(
             [httpx.Response(429), httpx.Response(200, json=_completion("ok"))]

@@ -15,10 +15,15 @@ its average::
 ``--hub-dataset tau-voice-control@0.1.0`` runs a published dataset instead of
 a local folder: harbor fetches its tasks at the commit ``registry.json``
 pins (:mod:`harbor_voice.datasets`).
+
+``--cascade STT LLM TTS --allow-cascade`` runs a cascade agent instead of a
+speech-to-speech model; without ``--allow-cascade`` it is refused
+(:mod:`tau_voice.cascade`).
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +32,7 @@ from harbor_voice.capabilities import Pipeline
 from harbor_voice.harbor_agent import harbor_parses_model_names
 from harbor_voice.trial import AgentSpec
 
+from tau_voice.cascade import ALLOW_CASCADE
 from tau_voice.main import TAU2_RUN_SEED
 from tau_voice.main import trial_seeds
 
@@ -58,7 +64,9 @@ def job_config(
     *,
     dataset: Path | None = None,
     hub: str | None = None,
-    model: str,
+    model: str | None = None,
+    cascade: Sequence[str] | None = None,
+    allow_cascade: bool = False,
     trials: int = 1,
     concurrent: int = 1,
     run_seed: int = TAU2_RUN_SEED,
@@ -73,8 +81,32 @@ def job_config(
     (an EC2 AMI, key pair, ...) are the user's and go in
     ``environment.kwargs`` of their copy.
 
-    ``agent_config`` is the agent's s2s settings (OpenAI Live's
-    ``backend_model``), sent as its ``agent_json``; ``model`` still names it."""
+    The agent is ``model``, a speech-to-speech provider, or ``cascade``, its
+    three slots (STT, LLM, TTS); a cascade needs ``allow_cascade``, which the
+    driver reads from the agent's ``call_config``. ``agent_config`` is the
+    agent's settings, sent as its ``agent_json``: s2s settings for ``model``
+    (OpenAI Live's ``backend_model``), per-slot settings for a cascade
+    (``{"llm": {...}}``). ``model`` (or ``stt+llm+tts``) still names it."""
+    if (model is None) == (cascade is None):
+        raise ValueError("name one agent: a model, or a cascade's three slots")
+    spec: AgentSpec | None = None
+    if cascade is not None:
+        if not allow_cascade:
+            raise ValueError(
+                "tau-voice runs speech-to-speech agents; a cascade is off by "
+                "default. Add --allow-cascade to run one"
+            )
+        stt, llm, tts = cascade
+        model = f"{stt}+{llm}+{tts}"
+        spec = AgentSpec(
+            pipeline=Pipeline.CASCADE,
+            stt=stt,
+            llm=llm,
+            tts=tts,
+            config=agent_config or {},
+        )
+    elif agent_config:
+        spec = AgentSpec(pipeline=Pipeline.S2S, s2s=model, config={"s2s": agent_config})
     dataset_entry: dict[str, Any]
     if hub is not None and dataset is None:
         dataset_entry = hub_dataset(hub)
@@ -83,10 +115,10 @@ def job_config(
     else:
         raise ValueError("name one of: a dataset folder, a hub dataset")
     extra: dict[str, Any] = {}
-    if agent_config:
-        extra["agent_json"] = AgentSpec(
-            pipeline=Pipeline.S2S, s2s=model, config={"s2s": agent_config}
-        ).model_dump_json()
+    if spec is not None:
+        extra["agent_json"] = spec.model_dump_json()
+    if allow_cascade:
+        extra["call_config"] = {ALLOW_CASCADE: True}
     if task_names:
         dataset_entry["task_names"] = task_names
     config: dict[str, Any] = {

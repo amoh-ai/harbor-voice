@@ -61,8 +61,12 @@ from harbor_voice.providers.tools import ToolSpec
 from tau_voice.caller import ReactiveCaller
 from tau_voice.caller import ReactivePolicy
 from tau_voice.caller import tau2_backchannels
+from tau_voice.agent_steps import AgentStepper
+from tau_voice.agent_steps import CascadeAgentStepper
 from tau_voice.agent_steps import GeminiAgentStepper
 from tau_voice.agent_steps import LiveAgentStepper
+from tau_voice.cascade import cascade_prompt
+from harbor_voice.capabilities import Pipeline
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
 from tau_voice.stepped_call import CallResult
@@ -192,48 +196,6 @@ def _specs(tools: Sequence[Mapping[str, Any]]) -> list[ToolSpec]:
     return specs
 
 
-def _stepping(
-    transport: VoiceTransport, live: bool, step_s: float
-) -> tuple[AudioFormat, AudioFormat, dict[str, Any]]:
-    """The session's audio formats and the tick to step the agent with.
-
-    tau2 has one tick per provider, and so does this: OpenAI Live's
-    (:class:`LiveAgentStepper`), Gemini Live's (:class:`GeminiAgentStepper`;
-    Gemini stops itself on barge-in, so nothing is truncated), and the
-    Realtime tick for every transport that can be truncated.
-    """
-    per_step = int(TELEPHONY.sample_rate_hz * step_s)
-    per_second = TELEPHONY.sample_rate_hz
-    if live:
-        stepper = LiveAgentStepper(bytes_per_step=per_step, bytes_per_second=per_second)
-        return (
-            LIVE_AUDIO,
-            LIVE_AUDIO,
-            {
-                "stepper": stepper,
-                "realtime_pacing": True,
-                "send_format": LIVE_AUDIO,
-            },
-        )
-    if isinstance(transport, GeminiLiveTransport):
-        caps = transport.capabilities
-        stepper = GeminiAgentStepper(
-            bytes_per_step=per_step,
-            bytes_per_second=per_second,
-            input_rate=caps.audio_in.sample_rate_hz,
-            output_rate=caps.audio_out.sample_rate_hz,
-        )
-        return (
-            caps.audio_in,
-            caps.audio_out,
-            {
-                "stepper": stepper,
-                "send_format": caps.audio_in,
-            },
-        )
-    return TELEPHONY, TELEPHONY, {}
-
-
 async def run_task(
     *,
     sidecar_url: str,
@@ -250,6 +212,7 @@ async def run_task(
     max_steps: int | None = None,
     attempt_index: int = 0,
     live_config: Mapping[str, Any] | None = None,
+    cascade: bool = False,
 ) -> dict[str, Any]:
     """Run one task end to end; returns the run summary written to ``out_dir``.
 
@@ -262,7 +225,14 @@ async def run_task(
     does (:class:`~tau_voice.agent_steps.LiveAgentStepper`, real-time pacing).
     A Gemini Live agent steps as tau2's Gemini adapter does
     (:class:`~tau_voice.agent_steps.GeminiAgentStepper`).
+
+    ``cascade`` says ``agent_factory`` builds a duplex cascade
+    (:class:`~harbor_voice.cascade.DuplexCascadeTransport`): it gets tau2's
+    cascade prompt, and the call steps as tau2's cascaded adapter does
+    (:class:`~tau_voice.agent_steps.CascadeAgentStepper`).
     """
+    if cascade and (agent_factory is None or live_config is not None):
+        raise ValueError("a cascade is built by agent_factory, and is not OpenAI Live")
     if speech_complexity not in PRESETS:
         raise ValueError(
             f"unknown speech complexity {speech_complexity!r}; tau2's: {', '.join(PRESETS)}"
@@ -305,6 +275,10 @@ async def run_task(
                     voice=live["voice"],
                     backend_instructions=live["backend_prompt"],
                 ),
+            )
+        elif cascade and agent_factory is not None:
+            transport = agent_factory(
+                router, cascade_prompt(agent_info["system_prompt"])
             )
         elif agent_factory is not None:
             transport = agent_factory(router, agent_info["system_prompt"])
@@ -370,12 +344,8 @@ async def run_task(
             return await content.run_tools(calls, step=step)
 
         step_s = turns["tick_duration_s"]
-        audio_in, audio_out, stepping = _stepping(transport, live is not None, step_s)
-        await transport.open(
-            SessionConfig(
-                party=PartyId("agent"), audio_in=audio_in, audio_out=audio_out
-            )
-        )
+        session, stepping = _stepping(transport, live=live is not None, step_s=step_s)
+        await transport.open(session)
         try:
             call = SteppedCall(
                 caller=caller,
@@ -453,6 +423,59 @@ async def run_task(
     finally:
         await sidecar.aclose()
         scratch.cleanup()
+
+
+def _stepping(
+    transport: VoiceTransport, *, live: bool, step_s: float
+) -> tuple[SessionConfig, dict[str, Any]]:
+    """The agent's session and how its call steps, per tau2 adapter.
+
+    OpenAI Realtime takes the phone line's μ-law both ways, steps with
+    SteppedCall's defaults. OpenAI Live, Gemini Live and a duplex cascade
+    speak PCM: their steppers convert the line as tau2's adapters do. Live
+    and a cascade get each step's caller audio whole, Gemini in paced
+    packets; Live is also paced as tau2 paces it.
+    """
+    agent = PartyId("agent")
+    gemini = isinstance(transport, GeminiLiveTransport)
+    pipeline = transport.capabilities.pipeline
+    if not live and not gemini and pipeline is not Pipeline.CASCADE:
+        return SessionConfig(party=agent, audio_in=TELEPHONY, audio_out=TELEPHONY), {}
+    ulaw_step = int(TELEPHONY.sample_rate_hz * step_s)
+    stepper: AgentStepper
+    if gemini:
+        audio_in = transport.capabilities.audio_in
+        audio_out = transport.capabilities.audio_out
+        stepper = GeminiAgentStepper(
+            bytes_per_step=ulaw_step,
+            bytes_per_second=TELEPHONY.sample_rate_hz,
+            input_rate=audio_in.sample_rate_hz,
+            output_rate=audio_out.sample_rate_hz,
+        )
+    elif live:
+        audio_in = audio_out = LIVE_AUDIO
+        stepper = LiveAgentStepper(
+            bytes_per_step=ulaw_step, bytes_per_second=TELEPHONY.sample_rate_hz
+        )
+    else:
+        audio_in = transport.capabilities.audio_in
+        audio_out = transport.capabilities.audio_out
+        if audio_out.encoding != "pcm16" or audio_out.channels != 1:
+            raise ValueError(
+                f"the cascade's TTS gives {audio_out}; tau2's line converter "
+                f"takes mono PCM16"
+            )
+        stepper = CascadeAgentStepper(
+            bytes_per_step=ulaw_step,
+            bytes_per_second=TELEPHONY.sample_rate_hz,
+            input_rate=audio_in.sample_rate_hz,
+            output_rate=audio_out.sample_rate_hz,
+        )
+    return SessionConfig(party=agent, audio_in=audio_in, audio_out=audio_out), {
+        "stepper": stepper,
+        "realtime_pacing": live,
+        "send_format": audio_in,
+    }
 
 
 def call_usage(

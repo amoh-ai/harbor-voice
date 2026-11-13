@@ -59,6 +59,15 @@ and checked, not probed.
 
 More providers are on the way.
 
+A benchmark driver that runs a full-duplex call (tau-voice's) gets a cascade
+as `harbor_voice.cascade.DuplexCascadeTransport`: it finds the caller's turns
+on the open line, with tau2's cascaded turn-taking, and keeps the whole
+conversation, tool calls and results included. Its LLM slot has to implement
+`ChatLLM` (`openai.llm`, `selfhosted.llm`, `litellm.llm`, `offline.echo-llm`,
+`offline.tool-echo-llm`). A job can set a driver's options for every task it
+runs with the call agent's `call_config` kwarg (`--ak 'call_config={...}'`),
+which overrides the task's `[call].config`.
+
 `harbor-voice caps` prints each provider's capabilities and which credentials
 are missing. The conformance suite checks a provider against what it
 declares: `harbor_voice.conformance.run_conformance`, run from a test against

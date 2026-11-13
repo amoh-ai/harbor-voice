@@ -13,9 +13,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from collections.abc import Callable
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
+from itertools import takewhile
+from typing import Any
 
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import CANONICAL_FRAME_MS
@@ -27,6 +30,9 @@ from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.capabilities import ProviderCapability
 from harbor_voice.providers.protocols import Transcript
+from harbor_voice.providers.tools import ChatRound
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolSpec
 
 
 @dataclass(slots=True)
@@ -86,6 +92,17 @@ class EchoLLM:
             # space-join bug survives a full test suite.
             yield piece if start == 0 else f" {piece}"
 
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """The conversation shape: echo the last thing the user said."""
+        del tools
+        heard = next(
+            (m.get("content") or "" for m in reversed(messages) if m["role"] == "user"),
+            "",
+        )
+        return ChatRound(text=f"{self.prefix}{heard}".strip())
+
 
 @dataclass(slots=True)
 class ScriptedLLM:
@@ -137,7 +154,6 @@ class ToolCallingEchoLLM:
         router: object,
     ) -> AsyncIterator[str]:
         del prompt, history
-        from harbor_voice.providers.tools import ToolInvocation
         from harbor_voice.providers.tools import ToolRouter
 
         if not isinstance(router, ToolRouter):  # pragma: no cover - typing guard
@@ -155,6 +171,28 @@ class ToolCallingEchoLLM:
             last = result.content
         for index, piece in enumerate(f"{self.prefix}{last}".split()):
             yield piece if index == 0 else f" {piece}"
+
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """The conversation shape: ``rounds`` calls since the user last spoke,
+        then what the last one returned."""
+        del tools
+        since_user = list(takewhile(lambda m: m["role"] != "user", reversed(messages)))
+        made = sum(1 for m in since_user if m.get("tool_calls"))
+        if made < self.rounds:
+            ran = sum(1 for m in messages if m["role"] == "tool")
+            return ChatRound(
+                calls=(
+                    ToolInvocation(
+                        tool_use_id=f"call-{ran}",
+                        name=self.tool,
+                        arguments=dict(self.arguments),
+                    ),
+                )
+            )
+        last = next((m["content"] for m in since_user if m["role"] == "tool"), None)
+        return ChatRound(text=f"{self.prefix}{last}")
 
 
 @dataclass(slots=True)

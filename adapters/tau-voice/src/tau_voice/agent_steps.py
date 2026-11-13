@@ -12,6 +12,11 @@ helpers in ``tick_result.py``), restated over provider-neutral
   the unplayed rest of that utterance is dropped and the provider is told
   where it was cut.
 
+:class:`LiveAgentStepper` is tau2's OpenAI Live tick,
+:class:`GeminiAgentStepper` its Gemini Live tick and
+:class:`CascadeAgentStepper` its cascaded (LiveKit) tick, each the same
+template with that adapter's differences.
+
 Ported rather than reimplemented: tau-voice's numbers depend on these rules,
 including their quirks, and ``tests/unit/voice/fixtures/tau2_agent_steps.json``
 holds outputs recorded from tau2's own adapter that this module must match
@@ -33,6 +38,7 @@ from typing import Any
 from typing import override
 
 from harbor_voice.transport.stream import InputSpeech
+from harbor_voice.transport.stream import InputTranscript
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import ResponseDone
@@ -172,7 +178,7 @@ class AgentStepper:
 
     def feed(self, event: StreamEvent) -> Truncation | None:
         """Apply one event. Returns a truncation to send to the provider now."""
-        step = self._current_step()
+        step = self._current()
         if isinstance(event, OutputAudio):
             if step.skip is not None:
                 if event.utterance == step.skip:
@@ -197,7 +203,7 @@ class AgentStepper:
 
     def end(self, *, user_bytes: int) -> AgentStep:
         """Close the step. ``user_bytes``: caller audio sent this step."""
-        step = self._current_step()
+        step = self._current()
         self._buffered = self._cap(step)
         transcript = self._transcript(step.chunks)
         self._skip = step.skip
@@ -221,7 +227,7 @@ class AgentStepper:
 
     # ------------------------------------------------------------- internals
 
-    def _current_step(self) -> _Step:
+    def _current(self) -> _Step:
         if self._step is None:
             raise RuntimeError("no step in progress; call begin() first")
         return self._step
@@ -336,7 +342,44 @@ class AgentStepper:
         return " ".join(parts)
 
 
-class LiveAgentStepper(AgentStepper):
+class _PCMStepper(AgentStepper):
+    """A tick for a provider that speaks PCM rather than the phone line's μ-law.
+
+    tau2's ``StreamingTelephonyConverter`` both ways, one instance for the
+    call: the caller's μ-law step into the provider's PCM
+    (:meth:`convert_input`), the provider's PCM into μ-law as it is fed.
+    Neither side cuts an utterance short in the provider, so there is
+    nothing to truncate.
+    """
+
+    truncates = False
+
+    def __init__(
+        self,
+        *,
+        bytes_per_step: int,
+        bytes_per_second: int,
+        silence: bytes = MULAW_SILENCE,
+        input_rate: int,
+        output_rate: int,
+    ) -> None:
+        super().__init__(
+            bytes_per_step=bytes_per_step,
+            bytes_per_second=bytes_per_second,
+            silence=silence,
+        )
+        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
+
+        self._converter = StreamingTelephonyConverter(
+            input_sample_rate=input_rate, output_sample_rate=output_rate
+        )
+
+    def convert_input(self, ulaw: bytes) -> bytes:
+        """The caller's step, as the provider takes it (tau2's ``convert_input``)."""
+        return self._converter.convert_input(ulaw)
+
+
+class LiveAgentStepper(_PCMStepper):
     """tau2's ``DiscreteTimeOpenAILiveAdapter`` tick, for OpenAI Live.
 
     The Realtime tick (:class:`AgentStepper`) with tau2's four Live changes:
@@ -353,7 +396,6 @@ class LiveAgentStepper(AgentStepper):
       tell the provider.
     """
 
-    truncates = False
     sends_whole = True
 
     def __init__(
@@ -368,25 +410,18 @@ class LiveAgentStepper(AgentStepper):
             bytes_per_step=bytes_per_step,
             bytes_per_second=bytes_per_second,
             silence=silence,
+            input_rate=provider_rate,
+            output_rate=provider_rate,
         )
-        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
-
         self.provider_rate = provider_rate
-        self._converter = StreamingTelephonyConverter(
-            input_sample_rate=provider_rate, output_sample_rate=provider_rate
-        )
         self._deltas: deque[tuple[int, str]] = deque()
         self._played_bytes = 0
-
-    def convert_input(self, ulaw: bytes) -> bytes:
-        """The caller's step, as the provider takes it (tau2's ``convert_input``)."""
-        return self._converter.convert_input(ulaw)
 
     @override
     def feed(self, event: StreamEvent) -> Truncation | None:
         if isinstance(event, InputSpeech):
             if event.started:
-                self._current_step().vad.append("speech_started")
+                self._current().vad.append("speech_started")
             return None
         if isinstance(event, OutputTranscript):
             if event.audio_position is not None:
@@ -417,7 +452,57 @@ class LiveAgentStepper(AgentStepper):
         )
 
 
-class GeminiAgentStepper(AgentStepper):
+class CascadeAgentStepper(_PCMStepper):
+    """tau2's ``LiveKitCascadedAdapter`` tick, for a duplex cascade.
+
+    The Realtime tick's capping, carry-over and proportional transcript, with
+    the cascaded adapter's own barge-in in place of truncation:
+
+    - a reply's whole text arrives when its LLM call returns, and is handed
+      out in proportion to the reply's audio as it plays;
+    - when the caller starts speaking, or the recogniser reports a transcript,
+      while agent audio is in this step or carried from the last, all of it is
+      dropped, including what would have played this step, and every
+      utterance's transcript is forgotten (``_check_barge_in``,
+      ``_clear_agent_audio``). Nothing is said to the cascade: tau2 never
+      cancels a reply;
+    - audio of a forgotten utterance that arrives later still plays, without
+      transcript: tau2 counts audio only for utterances it is tracking. Text
+      that arrives later for it (a tool round's continuation) is tracked again.
+    """
+
+    sends_whole = True
+
+    @override
+    def feed(self, event: StreamEvent) -> Truncation | None:
+        step = self._current()
+        if isinstance(event, OutputAudio):
+            ulaw = self._converter.convert_output(event.pcm)
+            step.chunks.append((ulaw, event.utterance))
+            tracked = self._utterances.get(event.utterance or "")
+            if tracked is not None:
+                tracked.audio_received += len(ulaw)
+            return None
+        if isinstance(event, OutputTranscript):
+            if event.utterance and event.delta:
+                self._utterance(event.utterance).transcript += event.delta
+            return None
+        if isinstance(event, InputSpeech):
+            if not event.started:
+                step.vad.append("speech_stopped")
+                return None
+            step.vad.append("speech_started")
+        elif not isinstance(event, InputTranscript):
+            raise TypeError(f"not a cascade stream event: {event!r}")
+        if step.chunks or self._buffered:
+            step.vad.append("interrupted")
+            step.chunks.clear()
+            self._buffered.clear()
+            self._utterances.clear()
+        return None
+
+
+class GeminiAgentStepper(_PCMStepper):
     """tau2's ``DiscreteTimeGeminiAdapter`` tick, for Gemini Live.
 
     Gemini has no truncate call: it hears the caller start speaking, stops
@@ -428,7 +513,8 @@ class GeminiAgentStepper(AgentStepper):
       PCM16, and the agent's 24 kHz PCM16 back to μ-law;
     - on the interruption, the rest of the cut-off utterance is dropped and
       the step is marked truncated, with nothing sent to the provider;
-    - the caller's own speech events are not recorded (tau2 ignores them).
+    - the caller's own speech events are not recorded (tau2 ignores them);
+    - each step goes out in paced 20 ms packets (tau2's default send).
 
     Audio is converted at the end of the step, after every event is applied,
     because tau2 does it in that order: an interruption resets the converter
@@ -436,8 +522,6 @@ class GeminiAgentStepper(AgentStepper):
     share and for dropped audio use tau2's estimate (the PCM length scaled
     to μ-law), not the converter's exact output.
     """
-
-    truncates = False
 
     def __init__(
         self,
@@ -452,33 +536,26 @@ class GeminiAgentStepper(AgentStepper):
             bytes_per_step=bytes_per_step,
             bytes_per_second=bytes_per_second,
             silence=silence,
+            input_rate=input_rate,
+            output_rate=output_rate,
         )
-        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
-
         self.output_rate = output_rate
-        self._converter = StreamingTelephonyConverter(
-            input_sample_rate=input_rate, output_sample_rate=output_rate
-        )
-        self._current: str | None = None
-        self._pending: list[tuple[bytes, str | None]] = []
-
-    def convert_input(self, ulaw: bytes) -> bytes:
-        """The caller's step, as Gemini takes it (tau2's ``convert_input``)."""
-        return self._converter.convert_input(ulaw)
+        self._speaking: str | None = None
+        self._pending: list[Chunk] = []
 
     def _as_ulaw_bytes(self, pcm: bytes) -> int:
         return int(len(pcm) * self.bytes_per_second / (self.output_rate * 2))
 
     @override
     def feed(self, event: StreamEvent) -> Truncation | None:
-        step = self._current_step()
+        step = self._current()
         if isinstance(event, OutputAudio):
             if step.skip is not None and event.utterance == step.skip:
                 step.truncated_bytes += self._as_ulaw_bytes(event.pcm)
                 return None
             self._pending.append((event.pcm, event.utterance))
             if event.utterance:
-                self._current = event.utterance
+                self._speaking = event.utterance
                 self._utterance(event.utterance).audio_received += self._as_ulaw_bytes(
                     event.pcm
                 )
@@ -490,18 +567,18 @@ class GeminiAgentStepper(AgentStepper):
                     step.truncated_bytes += sum(len(d) for d, _ in self._buffered)
                     self._buffered.clear()
                 step.was_truncated = True
-                step.skip = self._current
+                step.skip = self._speaking
                 self._converter.reset()
             return None
         if isinstance(event, InputSpeech):
             return None
         if isinstance(event, OutputTranscript):
             return super().feed(event)
-        raise TypeError(f"not a stream event: {event!r}")
+        raise TypeError(f"not a Gemini stream event: {event!r}")
 
     @override
     def end(self, *, user_bytes: int) -> AgentStep:
-        step = self._current_step()
+        step = self._current()
         for pcm, utterance in self._pending:
             step.chunks.append((self._converter.convert_output(pcm), utterance))
         self._pending.clear()

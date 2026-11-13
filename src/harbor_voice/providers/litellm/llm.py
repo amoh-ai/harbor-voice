@@ -29,6 +29,7 @@ load, and every CLI command builds the provider registry.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -40,6 +41,9 @@ from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
+from harbor_voice.providers.tools import ChatRound
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolSpec
 
 NAME = "litellm.llm"
 
@@ -148,6 +152,45 @@ class LiteLLMChat:
                     self.usage = self._usage(usage)
         except tuple(LITELLM_EXCEPTION_TYPES) as exc:
             raise _classify(exc, self.name, self.model, started=started) from exc
+
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """The :class:`~harbor_voice.providers.tools.ChatLLM` shape: one completion.
+
+        The conversation carries its own system message, so :attr:`system`
+        is not added to it.
+        """
+        import litellm
+        from litellm.exceptions import LITELLM_EXCEPTION_TYPES
+
+        try:
+            response: Any = await litellm.acompletion(
+                model=self.model,
+                messages=[dict(m) for m in messages],
+                tools=[spec.as_chat() for spec in tools] or None,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                api_base=self.api_base,
+                timeout=self.timeout_s,
+                num_retries=NUM_RETRIES,
+            )
+        except tuple(LITELLM_EXCEPTION_TYPES) as exc:
+            raise _classify(exc, self.name, self.model, started=False) from exc
+        if usage := getattr(response, "usage", None):
+            self.usage = self._usage(usage)
+        message = response.choices[0].message
+        return ChatRound(
+            text=message.content or "",
+            calls=tuple(
+                ToolInvocation.from_json(
+                    tool_use_id=call.id,
+                    name=call.function.name,
+                    raw=call.function.arguments or "",
+                )
+                for call in message.tool_calls or ()
+            ),
+        )
 
     def _usage(self, usage: Any) -> Usage:
         from harbor.models.metric import UsageInfo

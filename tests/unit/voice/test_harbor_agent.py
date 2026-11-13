@@ -322,6 +322,28 @@ def test_the_outcome_lands_in_the_trial_context(tmp_path: Path) -> None:
     assert context.metadata == {"call": {"reward": 1.0}}
 
 
+async def test_call_settings_reach_the_driver_through_the_drive_command(
+    tmp_path: Path,
+) -> None:
+    import tomllib
+
+    environment = _Environment()
+    agent = _agent(
+        tmp_path, model_name="offline.echo-s2s", call_config={"allow_cascade": True}
+    )
+    await agent.run(INSTRUCTION, environment, context=None)  # type: ignore[arg-type]
+
+    drive = next(
+        c[1] for c in environment.calls if c[1].startswith("harbor-voice drive")
+    )
+    argv = shlex.split(drive)
+    overrides = json.loads(argv[argv.index("--call-config") + 1])
+    config = VoiceTaskConfig.model_validate(tomllib.loads(SPEC))
+    applied = config.with_call_config(overrides)
+    assert applied.call is not None
+    assert applied.call.config == {"domain": "x", "seed": 7, "allow_cascade": True}
+
+
 def test_with_seed_moves_the_task_and_its_driver() -> None:
     import tomllib
 

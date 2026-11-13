@@ -18,6 +18,7 @@ import os
 import time
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -32,6 +33,9 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
+from harbor_voice.providers.tools import ChatRound
+from harbor_voice.providers.tools import ToolInvocation
+from harbor_voice.providers.tools import ToolSpec
 from harbor_voice.trajectory.model import UsageRecord
 
 NAME = "openai.llm"
@@ -156,6 +160,26 @@ class OpenAILLM(PooledHTTP):
         )
         if reply.text:
             yield reply.text
+
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """The :class:`~harbor_voice.providers.tools.ChatLLM` shape: one completion."""
+        body: dict[str, Any] = {
+            "model": self.model,
+            "messages": [dict(m) for m in messages],
+            "temperature": self.temperature,
+        }
+        if tools:
+            body["tools"] = [spec.as_chat() for spec in tools]
+        reply = await self.complete(body)
+        return ChatRound(
+            text=reply.text or "",
+            calls=tuple(
+                ToolInvocation(tool_use_id=c.id, name=c.name, arguments=c.arguments)
+                for c in reply.tool_calls
+            ),
+        )
 
     # ----------------------------------------------------------- internals
 
