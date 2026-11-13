@@ -394,7 +394,19 @@ def write_job_config(argv: list[str]) -> None:
         metavar="NAME[@VERSION]",
         help="a published dataset, as this checkout's registry.json pins it",
     )
-    parser.add_argument("--model", required=True, help="the S2S agent under test")
+    agent = parser.add_mutually_exclusive_group(required=True)
+    agent.add_argument("--model", help="the S2S agent under test")
+    agent.add_argument(
+        "--cascade",
+        nargs=3,
+        metavar=("STT", "LLM", "TTS"),
+        help="a cascade agent under test instead (needs --allow-cascade)",
+    )
+    parser.add_argument(
+        "--allow-cascade",
+        action="store_true",
+        help="let a cascade agent take the call; tau-voice refuses one by default",
+    )
     parser.add_argument("--trials", type=int, default=1, help="tau2's --num-trials")
     parser.add_argument("-n", "--concurrent", type=int, default=1)
     parser.add_argument("--run-seed", type=int, default=TAU2_RUN_SEED)
@@ -406,8 +418,9 @@ def write_job_config(argv: list[str]) -> None:
     parser.add_argument(
         "--agent-config",
         type=json.loads,
-        help='the agent\'s s2s settings as JSON, e.g. {"backend_model": "gpt-6-luna"}'
-        " for openai.live",
+        help="the agent's settings as JSON: s2s settings for --model, e.g. "
+        '{"backend_model": "gpt-6-luna"} for openai.live; per-slot settings for '
+        '--cascade, e.g. {"llm": {"temperature": 0}}',
     )
     parser.add_argument("-o", "--out", type=Path, required=True)
     args = parser.parse_args(argv)
@@ -416,6 +429,8 @@ def write_job_config(argv: list[str]) -> None:
             dataset=args.dataset,
             hub=args.hub_dataset,
             model=args.model,
+            cascade=args.cascade,
+            allow_cascade=args.allow_cascade,
             trials=args.trials,
             concurrent=args.concurrent,
             run_seed=args.run_seed,

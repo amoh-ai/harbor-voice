@@ -28,6 +28,7 @@ from harbor_voice.trajectory.model import VoiceTrajectory
 from harbor_voice.trial import AgentSpec
 from harbor_voice.transport.base import VoiceTransport
 
+from tau_voice.cascade import is_cascade
 from tau_voice.client import Sidecar
 from tau_voice.main import HALLUCINATION_RETRIES
 from tau_voice.run import run_trial
@@ -68,6 +69,7 @@ def synthesis_cache() -> Path:
 
 async def drive(ctx: DriverContext) -> DriverOutcome:
     config = ctx.driver_config
+    cascade = is_cascade(ctx.agent, config)
     url = str(config.get("sidecar_url", SIDECAR_URL))
 
     async def grade(attempt_dir: Path) -> Mapping[str, Any]:
@@ -104,6 +106,7 @@ async def drive(ctx: DriverContext) -> DriverOutcome:
         user_llm=config.get("user_llm"),
         agent_factory=agent,
         live_config=live,
+        cascade=cascade,
         # Live's frontend model, for tau2's own record of the session.
         agent_model=(ctx.agent.s2s or "").partition("/")[2] or None
         if live is not None and ctx.agent is not None

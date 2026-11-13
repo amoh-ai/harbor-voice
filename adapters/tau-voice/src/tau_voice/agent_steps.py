@@ -12,6 +12,10 @@ helpers in ``tick_result.py``), restated over provider-neutral
   the unplayed rest of that utterance is dropped and the provider is told
   where it was cut.
 
+:class:`LiveAgentStepper` is tau2's OpenAI Live tick and
+:class:`CascadeAgentStepper` its cascaded (LiveKit) tick, each the same
+template with that adapter's differences.
+
 Ported rather than reimplemented: tau-voice's numbers depend on these rules,
 including their quirks, and ``tests/unit/voice/fixtures/tau2_agent_steps.json``
 holds outputs recorded from tau2's own adapter that this module must match
@@ -33,6 +37,7 @@ from typing import Any
 from typing import override
 
 from harbor_voice.transport.stream import InputSpeech
+from harbor_voice.transport.stream import InputTranscript
 from harbor_voice.transport.stream import OutputAudio
 from harbor_voice.transport.stream import OutputTranscript
 from harbor_voice.transport.stream import StreamEvent
@@ -333,7 +338,44 @@ class AgentStepper:
         return " ".join(parts)
 
 
-class LiveAgentStepper(AgentStepper):
+class _PCMStepper(AgentStepper):
+    """A tick for a provider that speaks PCM rather than the phone line's μ-law.
+
+    tau2's ``StreamingTelephonyConverter`` both ways, one instance for the
+    call: the caller's μ-law step into the provider's PCM
+    (:meth:`convert_input`), the provider's PCM into μ-law as it is fed.
+    Neither side cuts an utterance short in the provider, so there is
+    nothing to truncate.
+    """
+
+    truncates = False
+
+    def __init__(
+        self,
+        *,
+        bytes_per_step: int,
+        bytes_per_second: int,
+        silence: bytes = MULAW_SILENCE,
+        input_rate: int,
+        output_rate: int,
+    ) -> None:
+        super().__init__(
+            bytes_per_step=bytes_per_step,
+            bytes_per_second=bytes_per_second,
+            silence=silence,
+        )
+        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
+
+        self._converter = StreamingTelephonyConverter(
+            input_sample_rate=input_rate, output_sample_rate=output_rate
+        )
+
+    def convert_input(self, ulaw: bytes) -> bytes:
+        """The caller's step, as the provider takes it (tau2's ``convert_input``)."""
+        return self._converter.convert_input(ulaw)
+
+
+class LiveAgentStepper(_PCMStepper):
     """tau2's ``DiscreteTimeOpenAILiveAdapter`` tick, for OpenAI Live.
 
     The Realtime tick (:class:`AgentStepper`) with tau2's four Live changes:
@@ -350,8 +392,6 @@ class LiveAgentStepper(AgentStepper):
       tell the provider.
     """
 
-    truncates = False
-
     def __init__(
         self,
         *,
@@ -364,19 +404,12 @@ class LiveAgentStepper(AgentStepper):
             bytes_per_step=bytes_per_step,
             bytes_per_second=bytes_per_second,
             silence=silence,
+            input_rate=provider_rate,
+            output_rate=provider_rate,
         )
-        from tau_voice.tau2_audio.audio_converter import StreamingTelephonyConverter
-
         self.provider_rate = provider_rate
-        self._converter = StreamingTelephonyConverter(
-            input_sample_rate=provider_rate, output_sample_rate=provider_rate
-        )
         self._deltas: deque[tuple[int, str]] = deque()
         self._played_bytes = 0
-
-    def convert_input(self, ulaw: bytes) -> bytes:
-        """The caller's step, as the provider takes it (tau2's ``convert_input``)."""
-        return self._converter.convert_input(ulaw)
 
     @override
     def feed(self, event: StreamEvent) -> Truncation | None:
@@ -411,3 +444,51 @@ class LiveAgentStepper(AgentStepper):
             transcript="".join(text),
             speech=bool(pcm) and audioop.max(pcm, 2) > 32,
         )
+
+
+class CascadeAgentStepper(_PCMStepper):
+    """tau2's ``LiveKitCascadedAdapter`` tick, for a duplex cascade.
+
+    The Realtime tick's capping, carry-over and proportional transcript, with
+    the cascaded adapter's own barge-in in place of truncation:
+
+    - a reply's whole text arrives when its LLM call returns, and is handed
+      out in proportion to the reply's audio as it plays;
+    - when the caller starts speaking, or the recogniser reports a transcript,
+      while agent audio is in this step or carried from the last, all of it is
+      dropped, including what would have played this step, and every
+      utterance's transcript is forgotten (``_check_barge_in``,
+      ``_clear_agent_audio``). Nothing is said to the cascade: tau2 never
+      cancels a reply;
+    - audio of a forgotten utterance that arrives later still plays, without
+      transcript: tau2 counts audio only for utterances it is tracking. Text
+      that arrives later for it (a tool round's continuation) is tracked again.
+    """
+
+    @override
+    def feed(self, event: StreamEvent) -> Truncation | None:
+        step = self._current()
+        if isinstance(event, OutputAudio):
+            ulaw = self._converter.convert_output(event.pcm)
+            step.chunks.append((ulaw, event.utterance))
+            tracked = self._utterances.get(event.utterance or "")
+            if tracked is not None:
+                tracked.audio_received += len(ulaw)
+            return None
+        if isinstance(event, OutputTranscript):
+            if event.utterance and event.delta:
+                self._utterance(event.utterance).transcript += event.delta
+            return None
+        if isinstance(event, InputSpeech):
+            if not event.started:
+                step.vad.append("speech_stopped")
+                return None
+            step.vad.append("speech_started")
+        elif not isinstance(event, InputTranscript):
+            raise TypeError(f"not a cascade stream event: {event!r}")
+        if step.chunks or self._buffered:
+            step.vad.append("interrupted")
+            step.chunks.clear()
+            self._buffered.clear()
+            self._utterances.clear()
+        return None

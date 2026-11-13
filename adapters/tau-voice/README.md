@@ -68,7 +68,7 @@ start):
 
 | Part | What it is | Where |
 |---|---|---|
-| Agent under test | a speech-to-speech model: OpenAI Realtime (`openai.realtime/...`) or OpenAI Live (`openai.live/gpt-live-1` and a backend) | its provider; harbor-voice holds the connection |
+| Agent under test | a speech-to-speech model: OpenAI Realtime (`openai.realtime/...`) or OpenAI Live (`openai.live/gpt-live-1` and a backend); a cascade only when the run opts in ([below](#cascade-agents-off-by-default)) | its provider; harbor-voice holds the connection |
 | Caller | tau2's turn policy (when to speak), an LLM (what to say, `--user-llm`), ElevenLabs TTS (`eleven_v3`, the persona's voice), tau2's phone line and effects | harbor-voice, in `main` |
 | Sidecar | tau2 as a service: the task, its database and tools, the caller's prompts, the listener's decisions, grading | the `tau2` container |
 
@@ -113,7 +113,8 @@ seeds a call's effects with `hash(task.id)`; the sidecar image pins
 
 ## Agents
 
-The adapter takes these two agents; more are on the way.
+The adapter takes these two speech-to-speech agents, and a cascade when the
+run asks for one ([below](#cascade-agents-off-by-default)); more are on the way.
 
 | | OpenAI Realtime (`openai.realtime`) | OpenAI Live (`openai.live`) |
 |---|---|---|
@@ -129,6 +130,64 @@ OpenAI Live takes its backend as the agent's s2s settings:
 tau2's own Live provider sends an `OpenAI-Alpha` preview header that the
 documented API does not take; the sidecar image removes that one line, so
 both harnesses call the same API.
+
+### Cascade agents (off by default)
+
+tau-voice scores realtime speech-to-speech agents, and refuses a cascade
+(STT -> LLM -> TTS) unless the run opts in, so a cascade's score never lands
+beside speech-to-speech scores by accident. The refusal says how to opt in.
+
+```bash
+uv run tau-voice job-config --dataset datasets/tau-voice --trials 1 -n 1 \
+    --cascade deepgram.stt/nova-3 openai.llm/gpt-4.1 deepgram.tts/aura-2-thalia-en \
+    --allow-cascade -o cascade.yaml
+uv run harbor-voice jobs start -c cascade.yaml
+```
+
+`--allow-cascade` puts `call_config: {allow_cascade: true}` in the call
+agent's kwargs, which the driver reads. Without job-config:
+`--ak agent_json='<a cascade AgentSpec>' --ak 'call_config={"allow_cascade": true}'`.
+`--agent-config` takes per-slot settings, e.g. `'{"llm": {"temperature": 0}}'`.
+Any registered STT and TTS work. The LLM slot has to keep the whole
+conversation, tool results included: `openai.llm`, `selfhosted.llm`,
+`litellm.llm` (which also reaches Bedrock, as `litellm.llm/bedrock/...`) and
+the offline LLMs do; `aws.bedrock-llm` does not, and is refused.
+
+The cascade follows tau2's own cascaded adapter (its `livekit` provider,
+`CascadedVoiceProvider` and `LiveKitCascadedAdapter`), with harbor-voice's
+providers in LiveKit's place:
+
+- **Prompt:** tau2's cascade instructions (it hears transcribed speech; no
+  markdown) over the same domain policy.
+- **Turn end:** the caller's speech followed by 350 ms of non-speech
+  (Deepgram's `endpointing_ms` in tau2's config). The utterance is
+  transcribed, and when at least one character was heard the LLM answers.
+- **Tools:** a round with tool calls is not spoken; the calls run through
+  tau2 at the step they arrived in, and the results start the next round a
+  step later, as tau2 orders them. Every call and result stays in the
+  agent's conversation.
+- **Barge-in:** when the caller starts speaking, or a transcript of the caller
+  arrives, while agent audio is playing or waiting, all of that audio is
+  dropped and its transcript forgotten. The reply is not cancelled and the
+  agent keeps its full text in context, as tau2's agent does; any of its
+  audio that arrives later plays without transcript, as in tau2.
+- **Audio:** the 8 kHz line goes to the recogniser as 16 kHz PCM, and the
+  TTS audio back to μ-law, through tau2's own converter.
+
+Differences that follow from our providers, not from choice:
+
+- tau2 gets speech start and end from Deepgram's streaming VAD. Here they come
+  from a level detector on the line (speech is 10 dB above the line's noise
+  floor), with no network delay. It splits utterances at the same 350 ms
+  pauses; under heavy noise it can split more often, and a loud noise burst
+  counts as speech, as it sometimes does for Deepgram.
+- Our recognisers transcribe a finished utterance, so there are no interim
+  transcripts, and tau2's `utterance_end_ms` fallback (a transcript waiting
+  for an end of speech that never came) cannot happen.
+- The LLM answers in one call instead of streaming tokens; tau2 waits for the
+  whole reply before speaking too, so what the caller hears is the same.
+- A failed provider call is recorded in the attempt's `summary.json`
+  (`agent.errors`) and the call goes on, as tau2 logs it and goes on.
 
 ## Images
 
@@ -170,6 +229,9 @@ fixtures.
   audio effects (`test_tau2_audio.py`), and the caller end to end, effects
   and behaviour (`test_tau2_caller_effects.py`,
   `test_tau2_caller_behavior.py`).
+- Cascade agents: the opt-in, tau2's cascade prompt, the cascaded tick's
+  barge-in, and a whole call with a tool on offline providers
+  (`test_cascade.py`).
 - The step loop (`test_stepped_call.py`), the caller's policy
   (`test_reactive_caller.py`), the trial and trajectory (`test_trial.py`,
   `test_tau_trajectory.py`), the converter and job (`test_converter.py`,
