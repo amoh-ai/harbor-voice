@@ -22,7 +22,9 @@ from harbor_voice.providers import ScriptedLLM
 from harbor_voice.providers import ScriptedSTT
 from harbor_voice.providers import ToneTTS
 from harbor_voice.providers.offline import ToolCallingEchoLLM
+from harbor_voice.providers.tools import ChatRound
 from harbor_voice.providers.tools import MappingExecutor
+from harbor_voice.providers.tools import ToolInvocation
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.providers.tools import ToolSpec
 from harbor_voice.transport.base import SessionConfig
@@ -219,6 +221,64 @@ async def test_a_failure_that_can_clear_lets_the_call_go_on() -> None:
     await line.send(1000, speech=False)
     await line.close()
     assert line.cascade.errors and line.cascade.failure is None
+
+
+class _StrictLLM(EchoLLM):
+    """Calls a tool on the first words, answers plainly after; refuses a
+    history where a tool call has no result, as OpenAI does."""
+
+    def __init__(self) -> None:
+        super().__init__(prefix="")
+        self.calls = 0
+
+    async def chat(self, messages, tools):  # type: ignore[override]
+        answered = {m["tool_call_id"] for m in messages if m["role"] == "tool"}
+        for m in messages:
+            for call in m.get("tool_calls") or ():
+                if call["id"] not in answered:
+                    raise ProviderError(
+                        ProviderFailure.MALFORMED, "call without result", provider="t"
+                    )
+        self.calls += 1
+        if self.calls == 1:
+            return ChatRound(calls=(ToolInvocation("call_1", "find_user", {}),))
+        return ChatRound(text="ok")
+
+
+class _SlowRouter(ToolRouter):
+    """Holds every tool call until released."""
+
+    def __init__(self, executor: MappingExecutor) -> None:
+        super().__init__(executor)
+        self.release = asyncio.Event()
+
+    async def invoke(self, invocation, *, at_s=0.0):  # type: ignore[override]
+        await self.release.wait()
+        return await super().invoke(invocation, at_s=at_s)
+
+
+async def test_a_reply_started_during_a_tool_call_never_sees_it_unanswered() -> None:
+    """The caller speaks again while a tool runs; the second reply's history
+    must not hold the first reply's call without its result."""
+    executor = MappingExecutor(
+        specs=[ToolSpec("find_user", "Look a customer up.")],
+        handlers={"find_user": lambda: {"text": "Jane Doe"}},
+    )
+    router = _SlowRouter(executor)
+    line = await _open(_cascade(_StrictLLM(), tools=router))
+    await line.send(400, speech=False)
+    await line.send(600, speech=True)
+    await line.send(600, speech=False)  # first reply: a tool call, held
+    await line.send(600, speech=True)
+    await line.send(600, speech=False)  # second reply starts meanwhile
+    router.release.set()
+    await line.send(400, speech=False)
+    await line.close()
+
+    assert line.cascade.errors == []
+    messages = line.cascade.messages
+    calls = [i for i, m in enumerate(messages) if m.get("tool_calls")]
+    assert calls and all(messages[i + 1]["role"] == "tool" for i in calls)
 
 
 def test_an_llm_that_cannot_hold_the_conversation_is_refused() -> None:

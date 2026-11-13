@@ -299,12 +299,16 @@ class DuplexCascadeTransport(CascadeTransport):
                 # tau2's adapter takes a reply's text on LLM_COMPLETED, even
                 # from a round that only calls tools and is never spoken.
                 self._emit(OutputTranscript(self._utterance_id(), round_.text, now))
-            if round_.text or round_.calls:
-                self._messages.append(_assistant(round_))
             if not round_.calls:
+                if round_.text:
+                    self._messages.append(_assistant(round_))
                 break
             # All of a round's calls at once: they share a step, as tau2's do.
             results = await asyncio.gather(*map(self._run_tool, round_.calls))
+            # The calls and their results join the conversation together: a
+            # reply to the caller's next words can start while these tools
+            # run, and a call without its result is a request OpenAI refuses.
+            self._messages.append(_assistant(round_))
             self._messages.extend(results)
         if round_.text:
             async for frame in self._synthesize(round_.text):
