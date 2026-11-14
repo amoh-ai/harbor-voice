@@ -119,6 +119,7 @@ SIDECAR_OPTIONAL_ENV = (
     "GOOGLE_APPLICATION_CREDENTIALS",
     "VERTEXAI_PROJECT",
     "VERTEXAI_LOCATION",
+    "VERTEXAI_CREDENTIALS",
     # Bedrock, for the faithfulness judge (Claude Opus).
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
@@ -840,13 +841,66 @@ def write_job_config(argv: Sequence[str]) -> int:
     return 0
 
 
+GEMINI_ROUTES = ("api-key", "vertex", "vertex-json")
+"""How the Gemini judge is reached. ``api-key``: the Gemini API with
+``GEMINI_API_KEY`` (EVA's default). ``vertex``: Vertex AI in
+``VERTEXAI_PROJECT`` with Application Default Credentials (``gcloud auth
+application-default login`` on this machine, ``GOOGLE_APPLICATION_CREDENTIALS``
+naming a file, or a GCP workload identity). ``vertex-json``: Vertex AI with the
+credentials JSON itself in ``VERTEXAI_CREDENTIALS`` (a service account key or
+an ADC file's contents), for a container that has no ADC of its own."""
+
+VERTEX_GEMINI_LOCATION = "global"
+"""Gemini 3 previews are served from Vertex's global endpoint only."""
+
+
+def judge_list(gemini: str = "api-key") -> list[dict[str, Any]]:
+    """EVA's judge deployments, with the Gemini judge on ``gemini``'s route.
+
+    The deployment keeps its name (``gemini-3-flash-preview``), so EVA's
+    metrics find it whichever route serves it.
+    """
+    if gemini not in GEMINI_ROUTES:
+        raise ValueError(f"gemini route must be one of {GEMINI_ROUTES}, not {gemini!r}")
+    deployments = json.loads(JUDGES.read_text(encoding="utf-8"))
+    if gemini == "api-key":
+        return deployments
+    for deployment in deployments:
+        params = deployment["litellm_params"]
+        if not params["model"].startswith("gemini/"):
+            continue
+        model = params["model"].removeprefix("gemini/")
+        params.clear()
+        params.update(
+            {
+                "model": f"vertex_ai/{model}",
+                "vertex_project": "os.environ/VERTEXAI_PROJECT",
+                "vertex_location": VERTEX_GEMINI_LOCATION,
+            }
+        )
+        if gemini == "vertex-json":
+            params["vertex_credentials"] = "os.environ/VERTEXAI_CREDENTIALS"
+    return deployments
+
+
 def print_judges(argv: Sequence[str]) -> int:
     """Print EVA's judge deployments, the value of ``EVA_MODEL_LIST``."""
     parser = argparse.ArgumentParser(
         prog="eva-adapter judges", description=_first_line(print_judges.__doc__)
     )
-    parser.parse_args(argv)
-    sys.stdout.write(JUDGES.read_text(encoding="utf-8"))
+    parser.add_argument(
+        "--gemini",
+        choices=GEMINI_ROUTES,
+        default="api-key",
+        help="how the Gemini audio judge is reached: the Gemini API key "
+        "(default), Vertex AI with Application Default Credentials, or Vertex "
+        "AI with a credentials JSON in VERTEXAI_CREDENTIALS",
+    )
+    args = parser.parse_args(argv)
+    if args.gemini == "api-key":
+        sys.stdout.write(JUDGES.read_text(encoding="utf-8"))
+    else:
+        sys.stdout.write(json.dumps(judge_list(args.gemini), indent=2) + "\n")
     return 0
 
 

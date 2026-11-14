@@ -57,6 +57,13 @@ RETRY_ATTEMPTS = 4
 API = Literal["chat", "responses"]
 APIS: tuple[str, ...] = ("chat", "responses")
 
+SystemRole = Literal["system", "developer", "instructions"]
+SYSTEM_ROLES: tuple[str, ...] = ("system", "developer", "instructions")
+"""How instructions reach the model. Both APIs take a ``system`` or a
+``developer`` message ("With o1 models and newer, ``developer`` messages
+replace the previous ``system`` messages"); the Responses API also takes a
+top-level ``instructions`` field, which outranks messages in ``input``."""
+
 
 @dataclass(frozen=True, slots=True)
 class ChatToolCall:
@@ -125,6 +132,15 @@ class OpenAILLM(PooledHTTP):
             :meth:`chat` and :meth:`respond` use. On ``"responses"``,
             ``temperature`` is left out when a reasoning effort other than
             ``"none"`` is set, as reasoning models refuse it.
+        system: The agent's instructions, e.g. "You are a phone agent;
+            answer in one or two plain sentences, no markdown". Sent by
+            :meth:`respond` (the built-in call loop) and by :meth:`chat`; when
+            the conversation has instructions of its own (a tau-voice
+            cascade's policy), these follow them as one more message.
+        system_role: How instructions are sent: ``"system"`` (default) or
+            ``"developer"`` as the first message, or ``"instructions"``, the
+            Responses API's top-level field (``api="responses"`` only). It
+            applies to a conversation's own system messages too.
     """
 
     def __init__(
@@ -138,9 +154,22 @@ class OpenAILLM(PooledHTTP):
         client: httpx.AsyncClient | None = None,
         reasoning_effort: str | None = None,
         api: API = "chat",
+        system: str | None = None,
+        system_role: SystemRole = "system",
     ) -> None:
         if api not in APIS:
             raise ValueError(f"{NAME}: api must be one of {APIS}, not {api!r}")
+        if system_role not in SYSTEM_ROLES:
+            raise ValueError(
+                f"{NAME}: system_role must be one of {SYSTEM_ROLES}, not {system_role!r}"
+            )
+        if system_role == "instructions" and api != "responses":
+            raise ValueError(
+                f"{NAME}: system_role 'instructions' is a Responses API field; "
+                f"set api='responses' or use 'system' or 'developer'"
+            )
+        self.system = system
+        self.system_role = system_role
         self.name = NAME
         self.api = api
         self.model = model
@@ -184,7 +213,7 @@ class OpenAILLM(PooledHTTP):
         ``BedrockLLM`` reads it. Yields the whole reply once — the spec says
         ``streams=False``, so nothing reads the first chunk as a first token.
         """
-        messages = [
+        messages: list[dict[str, Any]] = [
             {"role": "user" if i % 2 == 0 else "assistant", "content": h}
             for i, h in enumerate(history)
         ]
@@ -192,7 +221,7 @@ class OpenAILLM(PooledHTTP):
         if self.api == "responses":
             reply = await self._respond(messages, ())
         else:
-            reply = await self.complete(self._body(messages))
+            reply = await self.complete(self._body(self._instructed(messages)))
         if reply.text:
             yield reply.text
 
@@ -207,7 +236,7 @@ class OpenAILLM(PooledHTTP):
         if self.api == "responses":
             reply = await self._respond(messages, tools)
         else:
-            body = self._body([dict(m) for m in messages])
+            body = self._body(self._instructed(messages))
             if tools:
                 body["tools"] = [spec.as_chat() for spec in tools]
             reply = await self.complete(body)
@@ -221,6 +250,37 @@ class OpenAILLM(PooledHTTP):
         )
 
     # ----------------------------------------------------------- internals
+
+    def _instructed(
+        self, messages: Sequence[Mapping[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """``messages`` with the instructions in place, as messages.
+
+        :attr:`system` goes after the conversation's own instructions (first,
+        when it has none); a ``system`` or ``developer`` message is sent under
+        :attr:`system_role`. With ``"instructions"`` the caller lifts them
+        out instead (see :meth:`_split_instructions`).
+        """
+        out = [dict(m) for m in messages]
+        if self.system:
+            at = 0
+            while at < len(out) and _instruction(out[at]):
+                at += 1
+            out.insert(at, {"role": "system", "content": self.system})
+        if self.system_role == "developer":
+            for message in out:
+                if _instruction(message):
+                    message["role"] = "developer"
+        return out
+
+    def _split_instructions(
+        self, messages: Sequence[Mapping[str, Any]]
+    ) -> tuple[str | None, list[dict[str, Any]]]:
+        """For ``system_role="instructions"``: the instruction text, the rest."""
+        out = self._instructed(messages)
+        texts = [_plain(m.get("content")) for m in out if _instruction(m)]
+        rest = [m for m in out if not _instruction(m)]
+        return "\n\n".join(t for t in texts if t) or None, rest
 
     def _body(self, messages: list[dict[str, Any]]) -> dict[str, Any]:
         body: dict[str, Any] = {
@@ -236,14 +296,21 @@ class OpenAILLM(PooledHTTP):
         self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
     ) -> ChatReply:
         """One ``/responses`` call over a chat completions conversation."""
+        instructions = None
+        if self.system_role == "instructions":
+            instructions, kept = self._split_instructions(messages)
+        else:
+            kept = self._instructed(messages)
         body: dict[str, Any] = {
             "model": self.model,
-            "input": self._responses_input(messages),
+            "input": self._responses_input(kept),
             # Stateless: nothing kept on OpenAI's side, so no previous_response_id.
             # Reasoning items come back encrypted and go back in the next input.
             "store": False,
             "include": ["reasoning.encrypted_content"],
         }
+        if instructions:
+            body["instructions"] = instructions
         reasoning = self.reasoning_effort not in (None, "none")
         if not reasoning:
             body["temperature"] = self.temperature
@@ -350,6 +417,20 @@ class OpenAILLM(PooledHTTP):
         if response.status_code == 200:
             return response.json()
         raise _error(response, self.name, model)
+
+
+def _instruction(message: Mapping[str, Any]) -> bool:
+    return message.get("role") in ("system", "developer")
+
+
+def _plain(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            part.get("text", "") for part in content if isinstance(part, Mapping)
+        )
+    return ""
 
 
 def _tool_call(raw: dict[str, Any]) -> ChatToolCall:

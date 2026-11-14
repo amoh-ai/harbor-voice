@@ -178,7 +178,8 @@ class DuplexCascadeTransport(CascadeTransport):
                 f"the llm slot {llm.name!r} cannot hold a conversation (it does "
                 f"not implement ChatLLM), so a duplex cascade would forget every "
                 f"tool result after the turn it came back in. openai.llm, "
-                f"selfhosted.llm, litellm.llm and the offline echo LLMs can"
+                f"selfhosted.llm, litellm.llm, aws.bedrock-llm and the offline echo "
+                f"LLMs can"
             )
         super().__init__(
             stt=stt,

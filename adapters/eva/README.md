@@ -52,7 +52,7 @@ Environment (names only; nothing is written into a task):
 | `ELEVENLABS_API_KEY` | main | the caller (ElevenLabs Agents) |
 | `EVA_EN_USER_F`, `EVA_EN_USER_M` | main | EVA's two English caller agents (`eva-adapter agents`) |
 | `EVA_MODEL_LIST` | eva | EVA's LiteLLM deployments for its judges, as EVA reads it |
-| `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `VERTEXAI_*`, `GOOGLE_APPLICATION_CREDENTIALS` | eva, optional | Gemini, the audio judges (whichever the model list uses) |
+| `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `VERTEXAI_PROJECT`, `VERTEXAI_CREDENTIALS`, `GOOGLE_APPLICATION_CREDENTIALS` | eva, optional | Gemini, the audio judges (whichever route `eva-adapter judges --gemini` chose) |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `AWS_REGION` | eva, optional | Bedrock, the faithfulness judge |
 | `JUDGE_MODEL` | eva, optional | EVA's own judge override |
 | `EVA_SIDECAR_METRIC_CONFIGS` | eva, optional | EVA's `metric_configs` as JSON (`EVA_METRIC_CONFIGS`' format), handed to EVA by the sidecar; empty is EVA's judges |
@@ -76,6 +76,22 @@ holds only `os.environ/…` references, never a key:
 | `gpt-5.2-medium` | user behavioural fidelity (validation) | OpenAI, `OPENAI_API_KEY`, `reasoning_effort: medium` |
 | `gemini-3-flash-preview` | agent and user speech fidelity (audio), EVA's default | the Gemini API, `GEMINI_API_KEY` |
 | `us.anthropic.claude-opus-4-6-v1` | faithfulness | Bedrock, `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, region from `AWS_REGION` |
+
+**The Gemini judge through Vertex AI.** `eva-adapter judges --gemini <route>`
+picks how the audio judges reach Gemini. The deployment keeps its name, so
+EVA's metrics find it on any route:
+
+| `--gemini` | Through | Needs |
+|---|---|---|
+| `api-key` (default) | the Gemini API | `GEMINI_API_KEY` |
+| `vertex` | Vertex AI, Application Default Credentials | `VERTEXAI_PROJECT`, and ADC where the sidecar runs: a GCP workload identity, or `GOOGLE_APPLICATION_CREDENTIALS` naming a file. A local `gcloud auth application-default login` serves a sidecar run outside a container |
+| `vertex-json` | Vertex AI, credentials passed in | `VERTEXAI_PROJECT` and `VERTEXAI_CREDENTIALS`: the credentials JSON itself (a service account key, or an ADC file's contents) |
+
+Gemini 3 previews are served from Vertex's `global` location only, so the
+list sets it. LiteLLM has no API-key route for Vertex, so Vertex means ADC or
+a credentials JSON. `vertex-json` puts that credential in the sidecar's
+environment: on a cloud sandbox, prefer a service account key scoped to
+Vertex AI over your own ADC file.
 
 - EVA names `gpt-5.2-medium` but never defines it. This file reads the name
   as gpt-5.2 at medium reasoning effort.

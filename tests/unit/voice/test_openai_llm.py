@@ -434,3 +434,64 @@ class TestResponsesAPI:
     def test_an_unknown_api_is_refused(self) -> None:
         with pytest.raises(ValueError, match="api must be one of"):
             oa.OpenAILLM(api="completions")  # type: ignore[arg-type]
+
+
+class TestInstructions:
+    """The agent's instructions, sent the ways OpenAI accepts them."""
+
+    async def _sent(self, **config: Any) -> dict:
+        api = config.get("api", "chat")
+        reply = (
+            _response(_message_item("Sure."))
+            if api == "responses"
+            else _completion("Sure.")
+        )
+        client, seen = _client(lambda _: httpx.Response(200, json=reply))
+        llm = oa.OpenAILLM(client=client, api_key="k", **config)
+        _ = [t async for t in llm.respond("Change my flight.", [])]
+        return json.loads(seen[0].content)
+
+    async def test_no_system_prompt_sends_none(self) -> None:
+        body = await self._sent()
+        assert [m["role"] for m in body["messages"]] == ["user"]
+
+    async def test_a_system_prompt_goes_first_as_system(self) -> None:
+        body = await self._sent(system="No markdown.")
+        assert body["messages"][0] == {"role": "system", "content": "No markdown."}
+
+    async def test_it_can_go_as_a_developer_message(self) -> None:
+        body = await self._sent(system="No markdown.", system_role="developer")
+        assert body["messages"][0] == {
+            "role": "developer",
+            "content": "No markdown.",
+        }
+
+    async def test_the_responses_api_can_take_it_as_instructions(self) -> None:
+        body = await self._sent(
+            system="No markdown.", system_role="instructions", api="responses"
+        )
+        assert body["instructions"] == "No markdown."
+        assert [i.get("role") for i in body["input"]] == ["user"]
+
+    def test_instructions_need_the_responses_api(self) -> None:
+        with pytest.raises(ValueError, match="Responses API"):
+            oa.OpenAILLM(api_key="k", system="x", system_role="instructions")
+
+    async def test_it_follows_a_conversations_own_instructions(self) -> None:
+        client, seen = _client(lambda _: httpx.Response(200, json=_completion("Ok.")))
+        llm = oa.OpenAILLM(
+            client=client, api_key="k", system="No markdown.", system_role="developer"
+        )
+        await llm.chat(
+            [
+                {"role": "system", "content": "tau2 policy"},
+                {"role": "user", "content": "Hi"},
+            ],
+            [],
+        )
+        body = json.loads(seen[0].content)
+        assert body["messages"] == [
+            {"role": "developer", "content": "tau2 policy"},
+            {"role": "developer", "content": "No markdown."},
+            {"role": "user", "content": "Hi"},
+        ]

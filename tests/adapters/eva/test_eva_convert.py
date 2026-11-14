@@ -454,21 +454,22 @@ CLEAN_BYTES = {
     # sha256 of airline 1.1.2's files as convert wrote them before EVA's
     # perturbations existed: a clean task must not change by one byte. Since
     # then the eva service's optional env names grew by
-    # EVA_SIDECAR_METRIC_CONFIGS, and [environment] lost its storage_mb (the
+    # EVA_SIDECAR_METRIC_CONFIGS and VERTEXAI_CREDENTIALS, and [environment]
+    # lost its storage_mb (the
     # backend's default; a job sets one with --override-storage-mb). With a
     # registry the image tags also change when the images do (now built for
     # x86 and ARM). Each time the earlier digests were checked to be what the
     # old text gives.
     "": {
-        "voice.toml": "7f5778d3e485597c11635a43f7c196d0123198d350fde3fe8252d2227c738ca4",
-        "task.toml": "9bd31900e434ea5636739fdb1c021f79066db7d28292fc697ddaf3b3713ccf87",
-        "instruction.md": "eb9ba595162b736ffe3f2d9a78153dbd2c622b23236eb5895ee01e7a5f01f66c",
+        "voice.toml": "d60c652fb3dfab3ff4613cb8ee0192a5c2c49ee4a1ba1fff3d87dc23a5527aa7",
+        "task.toml": "66ef3843e0fae68c2592cbdc59c51ea2de9368def5b61d5739e16ddbacb0795b",
+        "instruction.md": "988c543f19766b47fcbce916e465d5aa67a9a062adb6bb2b1f017ce3a54a0538",
         "environment/Dockerfile": "645b00ea31f2abf86fcb42f8a1aab1a9e07b2a3dbe2330359dd5baac4b8ff0ae",
     },
     "ghcr.io/x": {
-        "voice.toml": "4b2dfb45164bc30793415e60da872654591585fc75dde0a9be1639cd11717caa",
-        "task.toml": "644be3c9d2690a3bf76fa7ea86be6a94e2e3c7e6a2db795ddb0aa9ac9dad2a73",
-        "instruction.md": "6959b62b72aa6e7fe409ae3df2396e50720a86de712029971a494d59af0fa856",
+        "voice.toml": "bb018d7524cd2f8ea38bda68fe7adcdd342561fef36b69007ec29250a1c027c9",
+        "task.toml": "5ffaa76408ca46288956b2426f39eaf701ae74453a83c28471279b30ca593aeb",
+        "instruction.md": "aa9b7dedc31f5bfdb825197c1fd5e6453975831b25ba5b9eee2f691a9c3a01e4",
         "environment/Dockerfile": "645b00ea31f2abf86fcb42f8a1aab1a9e07b2a3dbe2330359dd5baac4b8ff0ae",
     },
 }
@@ -707,3 +708,46 @@ def test_the_packaged_files_are_inside_the_package() -> None:
     package = Path(eva_adapter.__file__).resolve().parent
     for path in (METRIC, JUDGES, agents.SPEC_PATH):
         assert path.is_file() and package in path.parents, path
+
+
+class TestTheGeminiJudgeHasAVertexRoute:
+    """The audio judge can be reached through Vertex AI as well as an API key."""
+
+    def test_the_default_is_evas_own_list(self) -> None:
+        from eva_adapter.main import judge_list
+
+        assert judge_list() == json.loads(JUDGES.read_text(encoding="utf-8"))
+
+    @pytest.mark.parametrize("route", ["vertex", "vertex-json"])
+    def test_vertex_keeps_the_deployment_name_and_never_a_key(self, route: str) -> None:
+        from eva_adapter.main import judge_list
+
+        deployments = judge_list(route)
+        assert sorted(d["model_name"] for d in deployments) == sorted(JUDGE_MODELS)
+        (gemini,) = [d for d in deployments if d["model_name"].startswith("gemini")]
+        params = gemini["litellm_params"]
+        assert params["model"] == "vertex_ai/gemini-3-flash-preview"
+        assert params["vertex_project"] == "os.environ/VERTEXAI_PROJECT"
+        assert params["vertex_location"] == "global"
+        assert "api_key" not in params
+        assert ("vertex_credentials" in params) is (route == "vertex-json")
+        # Only the Gemini deployment moves.
+        others = [d for d in deployments if d is not gemini]
+        assert all(
+            not d["litellm_params"]["model"].startswith("vertex_ai/") for d in others
+        )
+
+    def test_the_credentials_reach_the_sidecar(self) -> None:
+        assert "VERTEXAI_CREDENTIALS" in SIDECAR_OPTIONAL_ENV
+
+    def test_the_cli_prints_the_vertex_list(self) -> None:
+        out = subprocess.run(
+            [sys.executable, "-m", "eva_adapter.main", "judges", "--gemini", "vertex"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if out.returncode != 0 and "No module named" in out.stderr:
+            pytest.skip("eva_adapter.main is not runnable as a module here")
+        assert out.returncode == 0, out.stderr
+        assert "vertex_ai/gemini-3-flash-preview" in out.stdout
