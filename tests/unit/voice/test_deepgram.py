@@ -234,6 +234,50 @@ class TestTTS:
         assert [len(c) for c in chunks] == [960, 960, 100]
         assert tts.characters_billed == 5
 
+    async def test_a_dropped_connection_before_any_audio_is_retried_once(
+        self,
+    ) -> None:
+        calls = 0
+
+        def flaky(request: httpx.Request) -> httpx.Response:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise httpx.RemoteProtocolError(
+                    "Server disconnected without sending a response.",
+                    request=request,
+                )
+            return httpx.Response(200, content=bytes(960))
+
+        tts, seen = _tts(flaky)
+        assert [len(c) async for c in tts.synthesize("Hi", party=AGENT)] == [960]
+        assert len(seen) == 2
+
+    async def test_a_second_drop_is_raised(self) -> None:
+        def down(request: httpx.Request) -> httpx.Response:
+            raise httpx.RemoteProtocolError("gone", request=request)
+
+        tts, seen = _tts(down)
+        with pytest.raises(ProviderError) as info:
+            _ = [c async for c in tts.synthesize("Hi", party=AGENT)]
+        assert info.value.kind is ProviderFailure.STREAM_BROKEN
+        assert len(seen) == 2
+
+    async def test_a_break_after_audio_started_is_not_retried(self) -> None:
+        class Breaks(httpx.AsyncByteStream):
+            async def __aiter__(self):  # type: ignore[override]
+                yield bytes(960)
+                raise httpx.ReadError("reset")
+
+        tts, seen = _tts(lambda _: httpx.Response(200, stream=Breaks()))
+        got: list[int] = []
+        with pytest.raises(ProviderError) as info:
+            async for c in tts.synthesize("Hi", party=AGENT):
+                got.append(len(c))
+        assert info.value.kind is ProviderFailure.STREAM_BROKEN
+        assert got == [960]
+        assert len(seen) == 1
+
     async def test_telephony_mulaw_is_requested_natively(self) -> None:
         fmt = AudioFormat(sample_rate_hz=8_000, encoding="mulaw")
         tts, seen = _tts(

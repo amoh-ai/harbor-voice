@@ -103,7 +103,29 @@ class DeepgramTTS(PooledHTTP):
         if not text:
             return
         headers = auth_header(self._api_key, provider=NAME, model=self.model)
-        cutter = FrameCutter(self._format)
+        # A pooled connection Deepgram has closed fails before any audio
+        # ("Server disconnected without sending a response"). Nothing has been
+        # spoken yet, so one fresh attempt is safe; once audio has started, a
+        # break is an error.
+        for attempt in (1, 2):
+            cutter = FrameCutter(self._format)
+            started = False
+            try:
+                async for frame in self._attempt(text, headers, cutter):
+                    started = True
+                    yield frame
+                return
+            except ProviderError as exc:
+                if (
+                    started
+                    or attempt == 2
+                    or exc.kind is not ProviderFailure.STREAM_BROKEN
+                ):
+                    raise
+
+    async def _attempt(
+        self, text: str, headers: dict[str, str], cutter: FrameCutter
+    ) -> AsyncIterator[bytes]:
         client = self._http.client(self._timeout_s)
         try:
             async with client.stream(
