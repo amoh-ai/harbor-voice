@@ -464,6 +464,10 @@ class ChatRound:
 
     text: str = ""
     calls: tuple[ToolInvocation, ...] = ()
+    usage: Mapping[str, Any] = field(default_factory=dict)
+    """The call's tokens, under chat completions' keys: ``prompt_tokens``,
+    ``completion_tokens``, ``prompt_tokens_details.cached_tokens``. Empty
+    when the provider reported none."""
 
 
 @runtime_checkable

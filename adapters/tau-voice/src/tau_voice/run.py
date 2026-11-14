@@ -378,13 +378,7 @@ async def run_task(
             "speech_complexity": speech_complexity,
             "seed": seed,
             "persona": user_info["persona_name"],
-            "agent": {
-                # ``ref`` is a provider transport's, not every transport's.
-                "provider": getattr(getattr(transport, "ref", None), "provider", None),
-                "model": getattr(getattr(transport, "ref", None), "model", None),
-                "session_id": getattr(transport, "session_id", None),
-                "errors": list(getattr(transport, "errors", [])),
-            },
+            "agent": agent_summary(transport),
             "termination": result.termination.value,
             "steps": len(result.steps),
             "call_s": round(len(result.steps) * turns["tick_duration_s"], 1),
@@ -478,6 +472,21 @@ def _stepping(
     }
 
 
+def agent_summary(transport: Any) -> dict[str, Any]:
+    """Who the agent was and what went wrong, for the run summary.
+
+    ``ref`` is a provider transport's, and a cascade's (provider
+    ``cascade``, its three slots as the model); not every transport has one.
+    """
+    ref = getattr(transport, "ref", None)
+    return {
+        "provider": getattr(ref, "provider", None),
+        "model": getattr(ref, "model", None),
+        "session_id": getattr(transport, "session_id", None),
+        "errors": list(getattr(transport, "errors", [])),
+    }
+
+
 def call_usage(
     *,
     transport: Any,
@@ -489,8 +498,8 @@ def call_usage(
     """What the call consumed, part by part, in tokens and characters.
 
     The agent's comes from its transport, where the transport meters it (the
-    OpenAI Realtime one does); the caller's LLM, its decisions and its TTS
-    from the caller's side.
+    OpenAI Realtime one does; a cascade gives one record per slot); the
+    caller's LLM, its decisions and its TTS from the caller's side.
     """
     usage: list[UsageRecord] = []
     records = getattr(transport, "usage_records", None)

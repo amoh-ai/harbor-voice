@@ -21,6 +21,11 @@ and checked, not probed.
 - `google.live` signs in with an AI Studio key (`GEMINI_API_KEY`), or with
   Vertex AI when `GOOGLE_GENAI_USE_VERTEXAI=true` (Application Default
   Credentials, `GOOGLE_CLOUD_PROJECT`, the `google` extra).
+- `openai.llm` calls `/v1/chat/completions` by default. OpenAI's reasoning
+  models refuse tools there unless `reasoning_effort` is `"none"`, so to
+  reason and call tools set `api = "responses"` with an effort
+  (`--agent-config '{"llm": {"api": "responses", "reasoning_effort": "low"}}'`),
+  which sends the conversation to `/v1/responses` instead.
 - `litellm.llm/<litellm model>` routes through litellm, which harbor already
   depends on: `litellm.llm/gemini/...`, `litellm.llm/vertex_ai/...`,
   `litellm.llm/xai/...`, `litellm.llm/bedrock/...`,
@@ -58,11 +63,15 @@ and checked, not probed.
   sampler at startup and fails.
 
 A benchmark driver that runs a full-duplex call (tau-voice's) gets a cascade
-as `harbor_voice.cascade.DuplexCascadeTransport`: it finds the caller's turns
-on the open line, with tau2's cascaded turn-taking, and keeps the whole
-conversation, tool calls and results included. Its LLM slot has to implement
+as `harbor_voice.cascade.DuplexCascadeTransport`. It follows tau2's cascaded
+turn-taking and keeps the whole conversation, tool calls and results
+included. Turn detection is Deepgram's, as in tau2: one Deepgram stream per
+call gives the turns and the transcript, so the STT slot must be
+`deepgram.stt`, and any other is refused. Its LLM slot has to implement
 `ChatLLM` (`openai.llm`, `selfhosted.llm`, `litellm.llm`, `offline.echo-llm`,
-`offline.tool-echo-llm`). A job can set a driver's options for every task it
+`offline.tool-echo-llm`). Its `ref` names all three slots, and
+`usage_records()` gives one record per slot: audio seconds, LLM tokens and
+TTS characters. A job can set a driver's options for every task it
 runs with the call agent's `call_config` kwarg (`--ak 'call_config={...}'`),
 which overrides the task's `[call].config`.
 

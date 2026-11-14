@@ -86,7 +86,8 @@ class InputSpeech:
 
 @dataclass(frozen=True, slots=True)
 class InputTranscript:
-    """The provider's transcript of a stretch of our audio, once final.
+    """The provider's transcript of a stretch of our audio, once final
+    (unless :attr:`is_final` says otherwise).
 
     Realtime: ``conversation.item.input_audio_transcription.completed``, or
     ``.failed`` with :attr:`error` set and empty text. ``text`` is exactly as
@@ -100,6 +101,10 @@ class InputTranscript:
     error: str | None = None
     """Why transcription failed, when it did. A recorder that keeps the turn
     anyway (EVA writes a placeholder) needs to know it happened."""
+    is_final: bool = True
+    """``False`` for an interim transcript, which a later one replaces. Only
+    a duplex cascade sends these (Deepgram's interim results); tau2's
+    cascaded adapter treats one as a barge-in, like a final."""
 
 
 @dataclass(frozen=True, slots=True)

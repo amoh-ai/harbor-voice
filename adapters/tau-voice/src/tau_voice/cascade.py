@@ -24,6 +24,7 @@ from typing import Any
 from collections.abc import Mapping
 
 from harbor_voice.capabilities import Pipeline
+from harbor_voice.cascade.duplex import stt_refusal
 from harbor_voice.trial import AgentSpec
 from harbor_voice.trial import TrialConfigError
 
@@ -71,7 +72,9 @@ You are a customer service agent handling a VOICE CALL with a customer.
 
 
 def is_cascade(agent: AgentSpec | None, config: Mapping[str, Any]) -> bool:
-    """Whether the agent under test is a cascade; refuses one not opted into."""
+    """Whether the agent under test is a cascade; refuses one not opted into,
+    and one whose STT is not ``deepgram.stt`` (Deepgram finds the turns, as in
+    tau2)."""
     if agent is None or agent.pipeline is not Pipeline.CASCADE:
         return False
     if not config.get(ALLOW_CASCADE):
@@ -83,6 +86,8 @@ def is_cascade(agent: AgentSpec | None, config: Mapping[str, Any]) -> bool:
             f"pass the call agent 'call_config' = {{\"{ALLOW_CASCADE}\": true}} "
             f"(--ak 'call_config={{\"{ALLOW_CASCADE}\": true}}')"
         )
+    if (refusal := stt_refusal(str(agent.stt))) is not None:
+        raise TrialConfigError(refusal)
     return True
 
 

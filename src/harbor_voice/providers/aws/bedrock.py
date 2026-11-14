@@ -48,7 +48,6 @@ from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
-from harbor_voice.providers.aws.nova_sonic import MAX_SESSION_S
 from harbor_voice.providers.aws.nova_sonic import NOVA_OUTPUT_FORMAT
 from harbor_voice.providers.aws.nova_sonic import NovaSonicTransport
 from harbor_voice.providers.aws.nova_sonic import _classify
@@ -66,7 +65,6 @@ from harbor_voice.providers.protocols import Transcript
 from harbor_voice.transport.base import SessionConfig
 
 VOXTRAL_MINI = "mistral.voxtral-mini-3b-2507"
-VOXTRAL_SMALL = "mistral.voxtral-small-24b-2507"
 NOVA_TTS_MODEL = "amazon.nova-2-5-sonic"
 DEFAULT_LLM = "amazon.nova-pro-v1:0"
 """ON_DEMAND and streaming in us-east-1.
@@ -936,5 +934,3 @@ REGISTRATIONS: tuple[tuple[ProviderSpec, Any], ...] = (
     (NOVA_TTS_SPEC, build_tts),
     (NOVA_STT_SPEC, build_nova_stt),
 )
-
-MAX_TTS_SESSION_S = MAX_SESSION_S

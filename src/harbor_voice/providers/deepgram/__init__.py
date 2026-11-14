@@ -1,6 +1,7 @@
-"""Deepgram providers: streaming STT (``deepgram.stt``), Aura TTS
-(``deepgram.tts``) and the Voice Agent API as a speech-to-speech transport
-(``deepgram.agent``). All three read ``DEEPGRAM_API_KEY``.
+"""Deepgram providers: streaming STT (``deepgram.stt``, also as one stream for
+a whole call: :class:`DeepgramCallStream`), Aura TTS (``deepgram.tts``) and
+the Voice Agent API as a speech-to-speech transport (``deepgram.agent``). All
+three read ``DEEPGRAM_API_KEY``.
 
 Imported lazily, like the other vendor packages.
 """
@@ -13,7 +14,9 @@ from harbor_voice.providers.deepgram import agent
 from harbor_voice.providers.deepgram import stt
 from harbor_voice.providers.deepgram import tts
 from harbor_voice.providers.deepgram.agent import DeepgramAgentTransport
+from harbor_voice.providers.deepgram.stt import DeepgramCallStream
 from harbor_voice.providers.deepgram.stt import DeepgramSTT
+from harbor_voice.providers.deepgram.stt import ListenSettings
 from harbor_voice.providers.deepgram.tts import DeepgramTTS
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -21,8 +24,10 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 __all__ = [
     "DeepgramAgentTransport",
+    "DeepgramCallStream",
     "DeepgramSTT",
     "DeepgramTTS",
+    "ListenSettings",
     "register_all",
 ]
 

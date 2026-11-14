@@ -177,7 +177,8 @@ class LiteLLMChat:
             )
         except tuple(LITELLM_EXCEPTION_TYPES) as exc:
             raise _classify(exc, self.name, self.model, started=False) from exc
-        if usage := getattr(response, "usage", None):
+        usage = getattr(response, "usage", None)
+        if usage:
             self.usage = self._usage(usage)
         message = response.choices[0].message
         return ChatRound(
@@ -190,6 +191,7 @@ class LiteLLMChat:
                 )
                 for call in message.tool_calls or ()
             ),
+            usage=_chat_usage(usage),
         )
 
     def _usage(self, usage: Any) -> Usage:
@@ -209,6 +211,20 @@ class LiteLLMChat:
             ),
             cost_usd=cost,
         )
+
+
+def _chat_usage(usage: Any) -> dict[str, Any]:
+    """litellm's usage object as :attr:`ChatRound.usage`."""
+    if not usage:
+        return {}
+    details = getattr(usage, "prompt_tokens_details", None)
+    return {
+        "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+        "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+        "prompt_tokens_details": {
+            "cached_tokens": int(getattr(details, "cached_tokens", 0) or 0)
+        },
+    }
 
 
 def _cost(model: str, prompt: int, completion: int, cached: int) -> float | None:

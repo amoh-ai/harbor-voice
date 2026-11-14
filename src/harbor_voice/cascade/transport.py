@@ -27,6 +27,7 @@ from harbor_voice.providers import LLMProvider
 from harbor_voice.providers import STTProvider
 from harbor_voice.providers import Transcript
 from harbor_voice.providers import TTSProvider
+from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.tools import ToolCallingLLM
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.capabilities import Capabilities
@@ -285,6 +286,18 @@ class CascadeTransport(VoiceTransport):
         return self._llm.respond_with_tools(heard, self._history, router=self._tools)
 
     @property
+    def ref(self) -> ProviderRef:
+        """The three slots as one agent: provider ``cascade``, and as model
+        each slot's ``provider/model`` joined by ``+``, the form tau-voice's
+        job config names a cascade in."""
+        return ProviderRef(
+            provider="cascade",
+            model="+".join(
+                _slot_name(slot) for slot in (self._stt, self._llm, self._tts)
+            ),
+        )
+
+    @property
     def tools(self) -> ToolRouter | None:
         """The tool router, if the task configured one."""
         return self._tools
@@ -320,3 +333,10 @@ class CascadeTransport(VoiceTransport):
                 meta=dict(meta),
             )
         )
+
+
+def _slot_name(slot: object) -> str:
+    """``provider/model``, or the provider alone when it has no model."""
+    name = str(getattr(slot, "name", type(slot).__name__))
+    model = getattr(slot, "model", None)
+    return f"{name}/{model}" if isinstance(model, str) and model else name

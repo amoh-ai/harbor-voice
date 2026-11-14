@@ -153,6 +153,20 @@ call agent once per seed 0, 1, 2.
 
 The sidecar is EVA's image at the commit plus `sidecar/server.py`; `main`
 is a slim Python with uv. Tags carry the EVA commit and a digest of our files.
+All three are built for `linux/amd64` and `linux/arm64`, so they run without
+emulation on x86 backends and on Apple silicon.
+
+The current images on `ghcr.io/amoh-ai`, each one tag with both
+architectures:
+
+| Image | Tag |
+|---|---|
+| sidecar | `ghcr.io/amoh-ai/eva-sidecar:039efa0a-077f8e4f23` |
+| `main` | `ghcr.io/amoh-ai/eva-main:413a7f6ab7` |
+| `main` for perturbed tasks | `ghcr.io/amoh-ai/eva-main:perturbed-117ca3664e` |
+
+`adapters/eva/images.json` records their digests. Dataset versions before
+0.1.1 pin older images built for x86 only.
 
 - **Default**: each task builds the sidecar where it runs, EVA included, from
   ServiceNow's public repo at the full commit (`EVA_BASE=eva-from-source`: EVA's

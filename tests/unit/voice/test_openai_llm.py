@@ -104,6 +104,7 @@ class TestOpenAILLM:
         assert body["messages"] == BODY["messages"]
         assert body["tools"] == [spec.as_chat()]
         assert round_.text == "One moment."
+        assert round_.usage == payload["usage"]  # the cascade reports it
         (call,) = round_.calls
         assert (call.tool_use_id, call.name, call.arguments) == (
             "call_1",
@@ -171,3 +172,265 @@ class TestOpenAILLM:
             await oa.OpenAILLM(client=client).complete(BODY)
         assert info.value.kind is ProviderFailure.AUTH
         assert seen == []
+
+
+SPEC_ARGS = ("find_user", "Look a customer up.", {"type": "object"})
+
+HISTORY: list[dict[str, Any]] = [
+    {"role": "system", "content": "You are an agent."},
+    {"role": "user", "content": "Find me, I am u1."},
+    {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [_tool("find_user", '{"id": "u1"}', "call_a")],
+    },
+    {"role": "tool", "tool_call_id": "call_a", "content": '{"name": "Ana"}'},
+]
+
+REASONING = {
+    "type": "reasoning",
+    "id": "rs_1",
+    "summary": [],
+    "encrypted_content": "opaque",
+}
+
+
+def _response(*output: dict[str, Any], status: str = "completed") -> dict:
+    return {
+        "model": "gpt-6-luna",
+        "status": status,
+        "output": list(output),
+        "usage": {
+            "input_tokens": 50,
+            "input_tokens_details": {"cached_tokens": 10},
+            "output_tokens": 20,
+            "output_tokens_details": {"reasoning_tokens": 12},
+            "total_tokens": 70,
+        },
+    }
+
+
+def _call_item(call_id: str, name: str, arguments: str) -> dict:
+    return {
+        "type": "function_call",
+        "id": f"fc_{call_id}",
+        "call_id": call_id,
+        "name": name,
+        "arguments": arguments,
+        "status": "completed",
+    }
+
+
+def _message_item(text: str) -> dict:
+    return {
+        "type": "message",
+        "id": "msg_1",
+        "role": "assistant",
+        "content": [{"type": "output_text", "text": text, "annotations": []}],
+    }
+
+
+class TestResponsesAPI:
+    def _llm(self, client: httpx.AsyncClient, **config: Any) -> oa.OpenAILLM:
+        return oa.OpenAILLM(
+            client=client,
+            api_key="k",
+            model="gpt-6-luna",
+            api="responses",
+            reasoning_effort="low",
+            **config,
+        )
+
+    async def test_the_request_has_input_items_flat_tools_and_effort(self) -> None:
+        from harbor_voice.providers.tools import ToolSpec
+
+        client, seen = _client(
+            lambda _: httpx.Response(200, json=_response(_message_item("Hi Ana.")))
+        )
+        spec = ToolSpec(*SPEC_ARGS)
+        await self._llm(client).chat(HISTORY, [spec])
+
+        (request,) = seen
+        assert request.url.path == "/v1/responses"
+        body = json.loads(request.content)
+        assert body["input"] == [
+            {"role": "system", "content": "You are an agent."},
+            {"role": "user", "content": "Find me, I am u1."},
+            {
+                "type": "function_call",
+                "call_id": "call_a",
+                "name": "find_user",
+                "arguments": '{"id": "u1"}',
+            },
+            {
+                "type": "function_call_output",
+                "call_id": "call_a",
+                "output": '{"name": "Ana"}',
+            },
+        ]
+        assert body["tools"] == [
+            {
+                "type": "function",
+                "name": "find_user",
+                "description": "Look a customer up.",
+                "parameters": {"type": "object"},
+            }
+        ]
+        assert body["reasoning"] == {"effort": "low"}
+        assert body["store"] is False
+        assert body["include"] == ["reasoning.encrypted_content"]
+        # Reasoning models refuse temperature on /responses.
+        assert "temperature" not in body and "messages" not in body
+
+    @pytest.mark.parametrize("effort", [None, "none"])
+    async def test_temperature_is_sent_without_reasoning(self, effort) -> None:
+        client, seen = _client(
+            lambda _: httpx.Response(200, json=_response(_message_item("Hi")))
+        )
+        llm = oa.OpenAILLM(
+            client=client, api_key="k", api="responses", reasoning_effort=effort
+        )
+        await llm.chat(HISTORY[:2], [])
+        body = json.loads(seen[0].content)
+        assert body["temperature"] == 0.0
+        assert body.get("reasoning") == (None if effort is None else {"effort": effort})
+        assert "tools" not in body
+
+    async def test_a_tool_round_then_a_final_answer_replays_the_reasoning(
+        self,
+    ) -> None:
+        """Reasoning items from a tool round go back in front of its calls."""
+        from harbor_voice.cascade.duplex import _assistant
+        from harbor_voice.providers.tools import ToolSpec
+
+        replies = iter(
+            [
+                _response(
+                    REASONING,
+                    _call_item("call_b", "find_user", '{"id": "u2"}'),
+                    _call_item("call_c", "find_user", "{bad"),
+                ),
+                _response(_message_item("Found "), _message_item("both.")),
+            ]
+        )
+        client, seen = _client(lambda _: httpx.Response(200, json=next(replies)))
+        llm = self._llm(client)
+        spec = ToolSpec(*SPEC_ARGS)
+        messages = list(HISTORY[:2])
+
+        first = await llm.chat(messages, [spec])
+        assert first.text == ""
+        assert [(c.tool_use_id, c.name, c.arguments) for c in first.calls] == [
+            ("call_b", "find_user", {"id": "u2"}),
+            ("call_c", "find_user", {}),
+        ]
+
+        # The history as the cascade keeps it.
+        messages.append(_assistant(first))
+        messages += [
+            {"role": "tool", "tool_call_id": c.tool_use_id, "content": "ok"}
+            for c in first.calls
+        ]
+        second = await llm.chat(messages, [spec])
+        assert second.text == "Found both." and second.calls == ()
+
+        items = json.loads(seen[1].content)["input"]
+        assert items[2:] == [
+            REASONING,
+            {
+                "type": "function_call",
+                "call_id": "call_b",
+                "name": "find_user",
+                "arguments": '{"id": "u2"}',
+            },
+            {
+                "type": "function_call",
+                "call_id": "call_c",
+                "name": "find_user",
+                "arguments": "{}",
+            },
+            {"type": "function_call_output", "call_id": "call_b", "output": "ok"},
+            {"type": "function_call_output", "call_id": "call_c", "output": "ok"},
+        ]
+
+    async def test_assistant_text_and_content_parts_convert(self) -> None:
+        client, seen = _client(
+            lambda _: httpx.Response(200, json=_response(_message_item("ok")))
+        )
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": "Hi"}]},
+            {"role": "assistant", "content": [{"type": "text", "text": "Hello"}]},
+            {"role": "user", "content": "Bye"},
+        ]
+        await self._llm(client).chat(messages, [])
+        assert json.loads(seen[0].content)["input"] == [
+            {"role": "user", "content": [{"type": "input_text", "text": "Hi"}]},
+            {
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": "Hello"}],
+            },
+            {"role": "user", "content": "Bye"},
+        ]
+
+    async def test_usage_is_renamed_to_chat_completions_keys(self) -> None:
+        client, _ = _client(
+            lambda _: httpx.Response(200, json=_response(_message_item("Hi.")))
+        )
+        reply = await self._llm(client)._respond(HISTORY[:2], ())
+        assert reply.usage == {
+            "prompt_tokens": 50,
+            "completion_tokens": 20,
+            "total_tokens": 70,
+            "prompt_tokens_details": {"cached_tokens": 10},
+            "completion_tokens_details": {"reasoning_tokens": 12},
+        }
+        record = oa.usage_record([reply], component="agent")
+        assert (record.input_tokens, record.cached_input_tokens) == (50, 10)
+        assert record.output_tokens == 20
+
+    async def test_respond_uses_responses_and_complete_stays_on_chat(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/v1/responses":
+                return httpx.Response(200, json=_response(_message_item("Sure.")))
+            return httpx.Response(200, json=_completion("Chat."))
+
+        client, seen = _client(handler)
+        llm = self._llm(client)
+        chunks = [c async for c in llm.respond("Again?", ["Hi", "Hello"])]
+        assert chunks == ["Sure."]
+        assert json.loads(seen[0].content)["input"] == [
+            {"role": "user", "content": "Hi"},
+            {"role": "assistant", "content": "Hello"},
+            {"role": "user", "content": "Again?"},
+        ]
+        assert (await llm.complete(BODY)).text == "Chat."
+        assert seen[1].url.path == "/v1/chat/completions"
+
+    @pytest.mark.parametrize(
+        ("status", "kind", "attempts"),
+        [
+            (400, ProviderFailure.MALFORMED, 1),
+            (401, ProviderFailure.AUTH, 1),
+            (404, ProviderFailure.NOT_ENABLED, 1),
+            (429, ProviderFailure.THROTTLED, oa.RETRY_ATTEMPTS),
+        ],
+    )
+    async def test_statuses_map_as_on_chat(
+        self, status: int, kind: ProviderFailure, attempts: int
+    ) -> None:
+        client, seen = _client(lambda _: httpx.Response(status, text="no"))
+        with pytest.raises(ProviderError) as info:
+            await self._llm(client).chat(HISTORY, [])
+        assert info.value.kind is kind
+        assert len(seen) == attempts
+
+    async def test_a_failed_response_is_malformed(self) -> None:
+        payload = {"status": "failed", "error": {"code": "server_error"}}
+        client, _ = _client(lambda _: httpx.Response(200, json=payload))
+        with pytest.raises(ProviderError) as info:
+            await self._llm(client).chat(HISTORY, [])
+        assert info.value.kind is ProviderFailure.MALFORMED
+
+    def test_an_unknown_api_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="api must be one of"):
+            oa.OpenAILLM(api="completions")  # type: ignore[arg-type]

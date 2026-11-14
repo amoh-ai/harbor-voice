@@ -12,7 +12,7 @@ from harbor.models.job.config import JobConfig
 from harbor_voice.cascade import DuplexCascadeTransport
 from harbor_voice.driver import DriverContext
 from harbor_voice.ids import PartyId
-from harbor_voice.providers import ScriptedSTT
+from harbor_voice.providers.deepgram import DeepgramSTT
 from harbor_voice.providers import ToneTTS
 from harbor_voice.providers.offline import ToolCallingEchoLLM
 from harbor_voice.providers.openai.realtime import TELEPHONY
@@ -45,16 +45,19 @@ from tau_voice.reactive import Say
 from tau_voice.reactive import StepRecord
 from tau_voice.run import SidecarToolExecutor
 from tau_voice.run import _stepping
+from tau_voice.run import agent_summary
+from tau_voice.run import call_usage
 from tau_voice.stepped_call import SteppedCall
 from tau_voice.stepped_call import Termination
 from tau_voice.trial import drive
+from tests.unit.voice.fakes import FakeDeepgram
 
 pytestmark = pytest.mark.unit
 
 CASCADE = AgentSpec.model_validate(
     {
         "pipeline": "cascade",
-        "stt": "offline.scripted-stt",
+        "stt": "deepgram.stt/nova-3",
         "llm": "offline.tool-echo-llm",
         "tts": "offline.tone-tts",
     }
@@ -97,6 +100,13 @@ def test_a_run_that_opts_in_takes_a_cascade() -> None:
     assert is_cascade(CASCADE, {"allow_cascade": True}) is True
     assert is_cascade(S2S, {}) is False
     assert is_cascade(None, {}) is False
+
+
+def test_a_cascade_whose_stt_is_not_deepgram_is_refused() -> None:
+    """Deepgram finds the turns, as in tau2; no other STT can."""
+    other = CASCADE.model_copy(update={"stt": "openai.stt/gpt-4o-transcribe"})
+    with pytest.raises(TrialConfigError, match="turn detection is Deepgram's"):
+        is_cascade(other, {"allow_cascade": True})
 
 
 def test_job_config_needs_the_opt_in_and_passes_it_to_the_driver(
@@ -269,8 +279,9 @@ async def test_a_cascade_takes_a_whole_call_with_a_tool_at_a_step_boundary() -> 
         sidecar,  # ty: ignore[invalid-argument-type]
         [ToolSpec("find_user", "Look a customer up.")],
     )
+    deepgram = FakeDeepgram(["I need to change a flight."])
     agent = DuplexCascadeTransport(
-        stt=ScriptedSTT(turns=["I need to change a flight."]),
+        stt=DeepgramSTT(api_key="test-key", connect=deepgram.connect()),
         llm=ToolCallingEchoLLM(tool="find_user", arguments={"user_id": "u1"}),
         tts=ToneTTS(),
         party=PartyId("agent"),
@@ -324,3 +335,31 @@ async def test_a_cascade_takes_a_whole_call_with_a_tool_at_a_step_boundary() -> 
         "tool_call_id": "call-0",
         "content": "user u1: Jane Doe",
     } in (agent.messages)
+
+    # The run summary names the cascade and meters each slot.
+    summary = agent_summary(agent)
+    assert summary["provider"] == "cascade"
+    assert summary["model"] == ("deepgram.stt/nova-3+offline.tool-echo-llm+tone-tts")
+    usage = {
+        u.component: u
+        for u in call_usage(
+            transport=agent,
+            content=Tau2ContentStub(),  # ty: ignore[invalid-argument-type]
+            listener=None,
+            tts=CallerTTSStub(),
+            caller_llm="gpt-4.1",
+        )
+    }
+    assert set(usage) >= {"agent.stt", "agent.llm", "agent.tts"}
+    assert (usage["agent.stt"].seconds or 0) > 0
+    assert usage["agent.llm"].requests == 2  # the tool round and the answer
+    assert usage["agent.tts"].characters == len("the tool said: user u1: Jane Doe")
+
+
+class Tau2ContentStub:
+    exchanges: list[Any] = []
+
+
+class CallerTTSStub:
+    model = "eleven_flash_v2_5"
+    characters_billed = 0

@@ -549,7 +549,12 @@ def test_g6_aggregation_over_per_trial_runs_matches_evas(
     image: str, tmp_path: Path
 ) -> None:
     """Each trial's metrics in its own run directory, as ``/files`` returns
-    them; ``aggregate.py`` must give EVA's ``--aggregate-only`` summary."""
+    them; ``aggregate.py`` must give EVA's ``--aggregate-only`` summary.
+
+    EVA lists records unsorted, and its bootstrap CIs follow that order, so
+    aggregate.py sorts them. The golden's CI bounds are EVA's own code run
+    in sorted order (the same on x86 and ARM); every other number is EVA's
+    original output."""
     golden = _fixture("g6_aggregation.json")
     sources = []
     for n, (oid, metrics) in enumerate(sorted(golden["inputs"].items())):

@@ -155,7 +155,9 @@ OpenAI reasoning models (`gpt-6-luna`) refuse tools on chat completions at
 their default effort, so give them `'{"llm": {"reasoning_effort": "none"}}'`.
 A provider failure that cannot clear by itself (a rejected key, a refused
 request) ends the call as an error rather than a silent agent.
-Any registered STT and TTS work. The LLM slot has to keep the whole
+The STT slot must be `deepgram.stt`: Deepgram finds the turns, as in tau2,
+and any other STT is refused before the call starts. Any registered TTS
+works. The LLM slot has to keep the whole
 conversation, tool results included: `openai.llm`, `selfhosted.llm`,
 `litellm.llm` (which also reaches Bedrock, as `litellm.llm/bedrock/...`) and
 the offline LLMs do; `aws.bedrock-llm` does not, and is refused.
@@ -166,9 +168,11 @@ providers in LiveKit's place:
 
 - **Prompt:** tau2's cascade instructions (it hears transcribed speech; no
   markdown) over the same domain policy.
-- **Turn end:** the caller's speech followed by 350 ms of non-speech
-  (Deepgram's `endpointing_ms` in tau2's config). The utterance is
-  transcribed, and when at least one character was heard the LLM answers.
+- **Turns:** one Deepgram stream per call, with tau2's settings (`nova-3`,
+  350 ms endpointing, VAD events, interim results), gives both the turns and
+  the transcript. When Deepgram ends the speech and at least one character
+  was heard, the LLM answers. If a final transcript waits 2 s with no end of
+  speech, the LLM answers anyway (tau2's `utterance_end_ms` fallback).
 - **Tools:** a round with tool calls is not spoken; the calls run through
   tau2 at the step they arrived in, and the results start the next round a
   step later, as tau2 orders them. Every call and result stays in the
@@ -180,17 +184,16 @@ providers in LiveKit's place:
   audio that arrives later plays without transcript, as in tau2.
 - **Audio:** the 8 kHz line goes to the recogniser as 16 kHz PCM, and the
   TTS audio back to μ-law, through tau2's own converter.
+- **Usage:** the run summary names the agent as provider `cascade`, with
+  the three slots as its model, and has one usage record per slot:
+  `agent.stt` (seconds of audio sent to Deepgram), `agent.llm` (calls and
+  tokens) and `agent.tts` (characters).
 
-Differences that follow from our providers, not from choice:
+Differences from tau2:
 
-- tau2 gets speech start and end from Deepgram's streaming VAD. Here they come
-  from a level detector on the line (speech is 10 dB above the line's noise
-  floor), with no network delay. It splits utterances at the same 350 ms
-  pauses; under heavy noise it can split more often, and a loud noise burst
-  counts as speech, as it sometimes does for Deepgram.
-- Our recognisers transcribe a finished utterance, so there are no interim
-  transcripts, and tau2's `utterance_end_ms` fallback (a transcript waiting
-  for an end of speech that never came) cannot happen.
+- A dropped Deepgram stream ends the call as an error. LiveKit would
+  reconnect, but a call with a gap in what the agent heard should not be
+  scored.
 - The LLM answers in one call instead of streaming tokens; tau2 waits for the
   whole reply before speaking too, so what the caller hears is the same.
 - A failed provider call is recorded in the attempt's `summary.json`
@@ -203,6 +206,17 @@ start); the sidecar is tau2 at the commit plus `sidecar/server.py` and
 `sidecar/evaluate.py`. Tags carry a digest of what goes into each image.
 Both are built for `linux/amd64` and `linux/arm64`, so they run without
 emulation on x86 backends and on Apple silicon (Docker Sandboxes on a Mac).
+
+The current images on `ghcr.io/amoh-ai`, each one tag with both
+architectures:
+
+| Image | Tag |
+|---|---|
+| sidecar | `ghcr.io/amoh-ai/tau-voice-runtime:2174a60-ce6c029644` |
+| `main` | `ghcr.io/amoh-ai/tau-voice-main:413a7f6ab7` |
+
+`adapters/tau-voice/images.json` records their digests. Dataset versions
+before 0.1.1 pin older images built for x86 only.
 
 - **Default:** each task builds both images where it runs, as harbor tasks
   do; after the first trial the build is a cache hit.
@@ -236,8 +250,9 @@ fixtures.
   audio effects (`test_tau2_audio.py`), and the caller end to end, effects
   and behaviour (`test_tau2_caller_effects.py`,
   `test_tau2_caller_behavior.py`).
-- Cascade agents: the opt-in, tau2's cascade prompt, the cascaded tick's
-  barge-in, and a whole call with a tool on offline providers
+- Cascade agents: the opt-in, the Deepgram-only STT, tau2's cascade
+  prompt, the cascaded tick's barge-in, and a whole call with a tool on
+  offline providers and a fake Deepgram, with its summary and usage
   (`test_cascade.py`).
 - The step loop (`test_stepped_call.py`), the caller's policy
   (`test_reactive_caller.py`), the trial and trajectory (`test_trial.py`,

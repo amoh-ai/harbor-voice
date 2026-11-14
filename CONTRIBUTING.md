@@ -121,6 +121,8 @@ uv run python scripts/hub.py images             # build, push, record
 ```
 
 - Commit the records it writes, `adapters/*/images.json`.
+- Every image is built for `linux/amd64` and `linux/arm64` under one tag.
+- Update the tag tables in both adapters' READMEs ("Images") to the new tags.
 - A tag the registry already serves is never pushed again.
 - `--force` rebuilds first; an image built without the OCI labels needs it.
 

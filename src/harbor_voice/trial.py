@@ -599,11 +599,16 @@ class VoiceTrial:
         (:class:`~harbor_voice.cascade.DuplexCascadeTransport`) and takes only
         a ``system_prompt``; any other override is a speech-to-speech
         provider's setting, and a driver that passes one is refused rather
-        than given an agent that ignores it.
+        than given an agent that ignores it. Its STT slot must be
+        ``deepgram.stt``, which finds the turns; another is refused.
         """
         spec = self.agent_spec()
         if spec.pipeline is Pipeline.CASCADE:
             from harbor_voice.cascade import DuplexCascadeTransport
+            from harbor_voice.cascade.duplex import stt_refusal
+
+            if (refusal := stt_refusal(str(spec.stt))) is not None:
+                raise TrialConfigError(refusal)
 
             unknown = sorted(set(overrides) - {"system_prompt"})
             if unknown:

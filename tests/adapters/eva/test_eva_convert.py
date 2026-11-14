@@ -455,8 +455,10 @@ CLEAN_BYTES = {
     # perturbations existed: a clean task must not change by one byte. Since
     # then the eva service's optional env names grew by
     # EVA_SIDECAR_METRIC_CONFIGS, and [environment] lost its storage_mb (the
-    # backend's default; a job sets one with --override-storage-mb). Each
-    # time the earlier digests were checked to be what the old text gives.
+    # backend's default; a job sets one with --override-storage-mb). With a
+    # registry the image tags also change when the images do (now built for
+    # x86 and ARM). Each time the earlier digests were checked to be what the
+    # old text gives.
     "": {
         "voice.toml": "7f5778d3e485597c11635a43f7c196d0123198d350fde3fe8252d2227c738ca4",
         "task.toml": "9bd31900e434ea5636739fdb1c021f79066db7d28292fc697ddaf3b3713ccf87",
@@ -464,9 +466,9 @@ CLEAN_BYTES = {
         "environment/Dockerfile": "645b00ea31f2abf86fcb42f8a1aab1a9e07b2a3dbe2330359dd5baac4b8ff0ae",
     },
     "ghcr.io/x": {
-        "voice.toml": "29f9a60d340c65fa8ce82173e5b4c417f4ee4af0d9c9069fd2974282a6447804",
-        "task.toml": "a158caf3e52625dcd6bd6dd346927623cf68d3da6cccea458859a8f99a22590d",
-        "instruction.md": "62c63d182e5cb7f23fe08ac55eeef193908d30af90470a346afc25d394696082",
+        "voice.toml": "4b2dfb45164bc30793415e60da872654591585fc75dde0a9be1639cd11717caa",
+        "task.toml": "644be3c9d2690a3bf76fa7ea86be6a94e2e3c7e6a2db795ddb0aa9ac9dad2a73",
+        "instruction.md": "6959b62b72aa6e7fe409ae3df2396e50720a86de712029971a494d59af0fa856",
         "environment/Dockerfile": "645b00ea31f2abf86fcb42f8a1aab1a9e07b2a3dbe2330359dd5baac4b8ff0ae",
     },
 }

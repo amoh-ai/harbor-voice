@@ -8,7 +8,7 @@ your account go in your own copy of the job config, never in the tasks.
 The benchmark runs in a sidecar container next to the agent's, so a backend
 needs docker-compose support. tau-voice has run on local Docker, Daytona,
 EC2, Modal, Docker Sandboxes (`sbx`), GKE, Prime Intellect and Vercel.
-LangSmith's sandbox could not start the sidecar, so it is not supported yet.
+LangSmith is not tested yet.
 
 Each backend is harbor's; its extra installs its SDK (`uv sync` installs them
 all). Account settings go under `environment.kwargs` in the job config.
@@ -57,7 +57,10 @@ environment:
 ## Faster startup
 
 The published datasets name prebuilt images on `ghcr.io/amoh-ai`, so a fresh
-environment pulls them. Tasks you convert yourself build their images in each
+environment pulls them. From version 0.1.1 they are built for both
+`linux/amd64` and `linux/arm64`; the current tags are in
+[tau-voice's](../adapters/tau-voice/README.md#images) and
+[EVA's](../adapters/eva/README.md#images) READMEs. Tasks you convert yourself build their images in each
 environment by default, which takes minutes on a fresh cloud sandbox. To
 avoid that, build the images once, push them to a registry the backend can
 pull from, and convert against it, from a checkout:
