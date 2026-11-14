@@ -299,12 +299,14 @@ class Recorder:
                 _last(sent_frames, Clock.TX) or 0.0,
                 party=sent_frames[0].party,
             )
-            self._place(sent_frames)
+            # What the caller sent carries a send stamp only; placing it by a
+            # receive stamp put every caller turn at zero.
+            self._place(sent_frames, Clock.TX)
 
         if turn.received:
             self._event(EventType.SPEECH_START, turn.first_rx or 0.0, party=turn.party)
             self._event(EventType.SPEECH_END, turn.last_rx or 0.0, party=turn.party)
-            self._place(turn.received)
+            self._place(turn.received, Clock.RX)
 
         for mark in turn.stages:
             self._event(
@@ -356,7 +358,7 @@ class Recorder:
         self._turns.append(record)
         return record
 
-    def _place(self, frames: Sequence[AudioFrame]) -> None:
+    def _place(self, frames: Sequence[AudioFrame], clock: Clock) -> None:
         from harbor_voice.trajectory.render import placed_from_frames
 
         for frame in frames:
@@ -367,7 +369,7 @@ class Recorder:
                 # A plan touched it but left no reference — the exact failure
                 # the clean reference exists to prevent.
                 self._unreferenced += 1
-        self._placed.extend(placed_from_frames(frames))
+        self._placed.extend(placed_from_frames(frames, clock=clock))
 
     # ---------------------------------------------------------- validity
 

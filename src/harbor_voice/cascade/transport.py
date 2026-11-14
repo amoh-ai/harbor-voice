@@ -3,8 +3,9 @@
 STT -> LLM -> TTS, composed in-process, so harbor-voice owns every seam and
 can mark all seven stages. A speech-to-speech provider exposes two.
 
-Turn boundaries are detected by input-side tail silence: once no frame has
-arrived for ``input_idle_s``, the accumulated audio is a turn and the pipeline
+Turn boundaries are detected by input-side tail silence: once no speech has
+arrived for ``input_idle_s`` (a driver's ``filler`` frames do not count), the
+accumulated audio is a turn and the pipeline
 runs. That is deliberately the same rule the output side uses
 (:func:`~harbor_voice.transport.drain.drain_until_idle`) — a turn ends when
 somebody stops talking, on both sides.
@@ -170,6 +171,10 @@ class CascadeTransport(VoiceTransport):
     @override
     async def tx(self, frame: AudioFrame) -> None:
         self.require_open()
+        # The driver's line silence between turns is not the caller talking;
+        # the tail silence below is measured from speech.
+        if frame.filler:
+            return
         if not self._inbound:
             self._mark(Stage.VAD_SPEECH_START, self._clock.now())
         self._inbound.append(frame)

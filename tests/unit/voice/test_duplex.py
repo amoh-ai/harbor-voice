@@ -136,6 +136,11 @@ class TalkativeAgent(VoiceTransport):
     async def tx(self, frame: AudioFrame) -> None:
         self.require_open()
         self.received.append(frame)
+        # The driver keeps the line open with silence between utterances, as
+        # a phone line does; like a real agent's speech detector, only sound
+        # counts as the caller talking.
+        if frame.filler:
+            return
         self._last_tx = asyncio.get_running_loop().time()
         if self._emitter is None:
             self._emitter = asyncio.create_task(self._emit())

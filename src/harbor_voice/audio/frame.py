@@ -62,6 +62,10 @@ class AudioFrame:
     t_voiced: float | None = None
     clean_ref: Digest | None = None
     plan_ref: PlanId | None = None
+    filler: bool = False
+    """Silence a call driver sends between utterances to keep the line open,
+    as a phone line carries. Not anyone speaking: an in-process pipeline that
+    finds turns by tail silence skips it; a real agent just hears silence."""
 
     def __post_init__(self) -> None:
         self.fmt.validate_buffer(len(self.pcm))
