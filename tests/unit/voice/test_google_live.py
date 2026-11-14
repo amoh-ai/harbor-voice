@@ -4,6 +4,8 @@ error mapping. No test reaches Google."""
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 import asyncio
 import base64
 from typing import Any
@@ -164,8 +166,11 @@ async def test_vertex_by_argument_defaults_the_location(monkeypatch) -> None:
     socket = FakeSocket()
     transport = _transport(socket, vertex=True, project="p")
     await transport.open(CONFIG)
-    assert socket.url is not None and socket.url.startswith(
-        "wss://us-central1-aiplatform.googleapis.com/"
+    assert socket.url is not None
+    url = urlsplit(socket.url)
+    assert (url.scheme, url.hostname) == (
+        "wss",
+        "us-central1-aiplatform.googleapis.com",
     )
     await transport.close()
 
