@@ -1,4 +1,5 @@
-"""OpenRouter's speech models: ``openrouter.stt`` and ``openrouter.tts``.
+"""OpenRouter's speech models: ``openrouter.stt``, ``openrouter.tts`` and
+``openrouter.omni`` (audio in, text out).
 
 OpenRouter's LLMs go through ``litellm.llm/openrouter/<model>``. Imported
 lazily, like the other vendor packages.
@@ -8,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from harbor_voice.providers.openrouter import omni
 from harbor_voice.providers.openrouter import speech
 from harbor_voice.providers.openrouter.speech import OPENROUTER_STT_SPEC
 from harbor_voice.providers.openrouter.speech import OPENROUTER_TTS_SPEC
@@ -24,5 +26,5 @@ __all__ = [
 
 def register_all(registry: ProviderRegistry) -> None:
     """Add OpenRouter's speech providers to a registry. See ``aws.register_all``."""
-    for spec, build in speech.REGISTRATIONS:
+    for spec, build in (*speech.REGISTRATIONS, *omni.REGISTRATIONS):
         registry.register(spec, build)

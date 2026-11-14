@@ -101,7 +101,7 @@ VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
         f"selfhosted-{slot}": CredentialAccess(
             (), extra_envs=(f"SELFHOSTED_{slot.upper()}_BASE_URL", "SELFHOSTED_API_KEY")
         )
-        for slot in ("stt", "tts", "llm", "realtime")
+        for slot in ("stt", "tts", "llm", "realtime", "omni")
     },
 }
 """Voice-only providers, consulted before harbor's table."""

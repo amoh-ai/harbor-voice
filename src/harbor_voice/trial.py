@@ -93,6 +93,9 @@ class AgentSpec(BaseModel):
     stt: str | None = None
     llm: str | None = None
     tts: str | None = None
+    omni: str | None = None
+    """An omni model (audio in, text out) in place of ``stt`` and ``llm``: a
+    cascade of two slots, ``omni`` and ``tts``."""
     config: dict[str, dict[str, Any]] = Field(default_factory=dict)
     """Per-slot provider settings, keyed by slot name.
 
@@ -109,11 +112,24 @@ class AgentSpec(BaseModel):
         if self.pipeline is Pipeline.S2S:
             if self.s2s is None:
                 raise TrialConfigError("pipeline is s2s but no s2s provider was given")
-            if any(cascade):
+            if any(cascade) or self.omni is not None:
                 raise TrialConfigError(
                     "pipeline is s2s but cascade slots were also given; an S2S "
                     "model exposes no seam between hearing and reasoning, so "
                     "those slots would be silently ignored"
+                )
+            return self
+        if self.omni is not None:
+            if self.stt is not None or self.llm is not None:
+                raise TrialConfigError(
+                    "an omni cascade hears and answers in one model; stt and llm "
+                    "would be silently ignored, so give omni and tts only"
+                )
+            if self.tts is None:
+                raise TrialConfigError("an omni cascade needs a tts to speak its reply")
+            if self.s2s is not None:
+                raise TrialConfigError(
+                    "pipeline is cascade but an s2s provider was given"
                 )
             return self
         missing = [
@@ -407,6 +423,20 @@ class VoiceTrial:
                 tools=self._router,
                 **spec.config.get("s2s", {}),
             )
+        if spec.omni is not None:
+            from harbor_voice.cascade.omni import OmniCascadeTransport
+
+            return OmniCascadeTransport(
+                omni=self._registry.create(
+                    spec.omni, modality=Modality.OMNI, **spec.config.get("omni", {})
+                ),
+                tts=self._registry.create(
+                    str(spec.tts), modality=Modality.TTS, **spec.config.get("tts", {})
+                ),
+                tools=self._router,
+                party=self._agent,
+                clock=self._clock,
+            )
         from harbor_voice.cascade import CascadeTransport
 
         return CascadeTransport(
@@ -607,6 +637,12 @@ class VoiceTrial:
         ``deepgram.stt``, which finds the turns; another is refused.
         """
         spec = self.agent_spec()
+        if spec.omni is not None:
+            raise TrialConfigError(
+                "an omni cascade runs on harbor-voice's own call loop only; a "
+                "driven benchmark's cascade needs deepgram.stt to find the turns "
+                "and an LLM that holds the conversation and its tools"
+            )
         if spec.pipeline is Pipeline.CASCADE:
             from harbor_voice.cascade import DuplexCascadeTransport
             from harbor_voice.cascade.duplex import stt_refusal

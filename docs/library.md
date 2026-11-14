@@ -16,6 +16,7 @@ and checked, not probed.
 | Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral`, `deepgram.stt`, `cartesia.stt`, `sarvam.stt`, `fishaudio.stt`, `xai.stt`, `meta.stt`, `microsoft.stt`, `openrouter.stt`, `selfhosted.stt` |
 | LLM, for cascades | `openai.llm`, `aws.bedrock-llm`, `litellm.llm`, `selfhosted.llm` |
 | Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts`, `deepgram.tts`, `cartesia.tts`, `sarvam.tts`, `fishaudio.tts`, `xai.tts`, `openrouter.tts`, `selfhosted.tts` |
+| Omni (audio in, text out), in place of STT and LLM | `openrouter.omni`, `selfhosted.omni` |
 | Offline, for tests | `offline.scripted-stt`, `offline.echo-llm`, `offline.scripted-llm`, `offline.tool-echo-llm`, `offline.tone-tts` |
 
 - `google.live` signs in with an AI Studio key (`GEMINI_API_KEY`), or with
@@ -49,8 +50,20 @@ and checked, not probed.
   Most speech models need a voice; each model's voices are in
   `GET https://openrouter.ai/api/v1/models?output_modalities=speech`.
   Models OpenRouter serves only as MP3 (MiniMax) are not supported.
+- `openai.llm` takes the agent's instructions as `system`, sent with the role
+  `system_role` names: `"system"` (default) or `"developer"` as the first
+  message, or `"instructions"`, the Responses API's top-level field (with
+  `api = "responses"`). A conversation that brings its own instructions (a
+  tau-voice cascade) keeps them, with these added after.
+- An omni model hears the caller and writes the reply in one call, and a TTS
+  speaks it: `pipeline = "cascade"` with `omni` and `tts` instead of `stt`,
+  `llm` and `tts`. `openrouter.omni/<model>` (e.g.
+  `openrouter.omni/qwen/qwen3.8-omni-flash`) and `selfhosted.omni/<model>` (a
+  server's `/v1/chat/completions` taking `input_audio`, at
+  `SELFHOSTED_OMNI_BASE_URL`). It runs on the built-in call loop only, offers
+  no tools, and has no ASR seam (said-vs-heard has nothing to read).
 - `selfhosted.realtime/<model>` is a speech-to-speech model behind vLLM-Omni's
-  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All four
+  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All five
   send `SELFHOSTED_API_KEY` as a bearer token when it is set. Inside a
   trial's sandbox `localhost` is the sandbox itself, so a base URL pointing
   there is refused before the call starts: use `host.docker.internal` for
