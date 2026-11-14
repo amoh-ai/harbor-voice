@@ -64,7 +64,7 @@ Homepage = "https://github.com/amoh-ai/harbor-voice"
 Repository = "https://github.com/amoh-ai/harbor-voice"
 Documentation = "https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md"
 Issues = "https://github.com/amoh-ai/harbor-voice/issues"
-Changelog = "https://github.com/amoh-ai/harbor-voice/releases"
+Changelog = "https://github.com/amoh-ai/harbor-voice/blob/main/CHANGELOG.md"
 
 [project.scripts]
 harbor-voice = "harbor_voice.cli:main"
