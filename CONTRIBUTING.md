@@ -163,11 +163,12 @@ rm $D/eva/job.yaml $D/eva-parity/job.yaml eva-parity.json
 - `eva-adapter convert` also writes a `job.yaml` with local paths; the
   datasets repo's CI rejects it.
 
-**3. Release the tasks.** In the datasets repo, review the diff, then:
+**3. Release the tasks.** In the datasets repo, review the diff, then
+(with the new version in place of 0.1.2 throughout these steps):
 
 ```bash
-git add -A && git commit -m "v0.1.0" && git push
-git tag v0.1.0 && git push origin v0.1.0
+git add -A && git commit -m "v0.1.2" && git push
+git tag v0.1.2 && git push origin v0.1.2
 ```
 
 Its CI (the task checks, then `harbor lint`) must pass. Merge pull requests
@@ -178,7 +179,7 @@ squash or a rebase drops breaks every version pinned to it.
 
 ```bash
 uv run python scripts/hub.py register --datasets-repo ../harbor-voice-datasets \
-    --commit v0.1.0 --version 0.1.0 \
+    --commit v0.1.2 --version 0.1.2 \
     --dataset tau-voice-control "tau-voice: all 278 tau2 tasks, control speech" \
     --dataset tau-voice-regular "tau-voice: all 278 tau2 tasks, regular speech" \
     --dataset tau-voice-control-test "tau-voice: tau2's test split (100), control speech" \

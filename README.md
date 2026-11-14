@@ -114,8 +114,10 @@ harbor-voice jobs start -c tau.yaml
 [`registry.json`](https://github.com/amoh-ai/harbor-voice/blob/main/registry.json) lists the datasets. Their tasks are in
 [harbor-voice-datasets](https://github.com/amoh-ai/harbor-voice-datasets) and
 their images on `ghcr.io/amoh-ai`, both pinned, so a version always runs the
-same thing. From 0.1.1 the images are built for x86 and ARM; each adapter's
-README lists the current tags. Without `@VERSION`, harbor picks the latest. For a condition or
+same thing. Published versions: 0.1.0, 0.1.1 and 0.1.2, the latest. The
+datasets repo's README says what changed in each and which images each pins.
+From 0.1.1 the images are built for x86 and ARM; each adapter's README lists
+the current tags. Without `@VERSION`, harbor picks the latest. For a condition or
 subset that isn't published, convert the tasks yourself from a checkout: each
 adapter's README shows how.
 
