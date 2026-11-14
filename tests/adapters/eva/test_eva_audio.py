@@ -34,6 +34,9 @@ EXACT = sorted(
 
 MAX_DITHER_SHARE = 0.03
 """EVA against itself differs on 0.8 % of codes (123 of 16 000); allow 3 %."""
+DITHER_FLOOR = 5
+"""On a short case the share is a handful of codes, and dither alone can pass
+it (4 of 80 once on CI); the off-by-one bound is the real check there."""
 
 
 def _ulaw_rank() -> dict[int, int]:
@@ -62,7 +65,7 @@ def test_soxr_output_matches_eva_up_to_its_dither(case: str) -> None:
     b = base64.b64decode(theirs["b64"])
     steps = [abs(RANK[x] - RANK[y]) for x, y in zip(a, b, strict=True)]
     assert max(steps, default=0) <= 1
-    assert sum(1 for s in steps if s) <= MAX_DITHER_SHARE * max(len(steps), 1) + 1
+    assert sum(1 for s in steps if s) <= MAX_DITHER_SHARE * len(steps) + DITHER_FLOOR
 
 
 def test_soxr_resampler_core_matches_eva() -> None:
