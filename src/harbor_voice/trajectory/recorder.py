@@ -577,12 +577,20 @@ def _ref(pcm: bytes | None, fmt: AudioFormat) -> AudioRef | None:
 
 
 def matrix_from(
-    *, floor: BaseFloor, pipeline: PerturbationPipeline, profile: str = "clean"
+    *,
+    floor: BaseFloor,
+    pipeline: PerturbationPipeline,
+    agent_pipeline: Pipeline,
+    profile: str = "clean",
 ) -> ConfigMatrix:
-    """Build the pinned comparison dimensions from what actually ran."""
+    """Build the pinned comparison dimensions from what actually ran.
+
+    ``pipeline`` is the caller's perturbation stack; ``agent_pipeline`` is how
+    the agent under test turns audio into audio (cascade or s2s).
+    """
     return ConfigMatrix(
         duplex=floor.duplex,
-        pipeline=Pipeline.CASCADE,
+        pipeline=agent_pipeline,
         floor_policy=floor.name,
         profile=profile,
         seed_root=pipeline.seeds.root,

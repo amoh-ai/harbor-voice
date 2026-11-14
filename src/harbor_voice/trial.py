@@ -191,8 +191,10 @@ class VoiceTaskConfig(BaseModel):
     seed: int = 0
     duplex: Duplex = Duplex.HALF
     max_turns: int = Field(default=8, gt=0)
-    idle_s: float = Field(default=0.2, gt=0)
-    """Quiet period that ends the agent's turn.
+    idle_s: float | None = Field(default=None, gt=0)
+    """Quiet period that ends the agent's turn. Unset, it is 0.2 s on a
+    half-duplex call and 1.0 s on a full-duplex one, where the agent streams at
+    speaking pace and pauses between sentences.
 
     Tunable because it is a property of the agent, not of the harness: a
     model that pauses mid-sentence needs a longer one, and a run that cuts
@@ -469,13 +471,14 @@ class VoiceTrial:
             return await self._call_duplex(transport, simulator, floor)
 
         from harbor_voice.cascade import CascadeAdapter
+        from harbor_voice.transport.drain import DEFAULT_IDLE_S
 
         adapter = CascadeAdapter(
             transport,
             party=self._agent,
             floor=floor,
             clock=self._clock,
-            idle_s=self._config.idle_s,
+            idle_s=self._config.idle_s or DEFAULT_IDLE_S,
             turn_timeout_s=self._config.turn_timeout_s,
         )
         await adapter.open(SessionConfig(party=self._agent))
@@ -493,6 +496,7 @@ class VoiceTrial:
     async def _call_duplex(
         self, transport: Any, simulator: UniversalSimulator, floor: Any
     ) -> tuple[list[Turn], list[Any]]:
+        from harbor_voice.duplex import DUPLEX_IDLE_S
         from harbor_voice.duplex import DuplexDriver
         from harbor_voice.transport.base import SessionConfig
 
@@ -502,7 +506,7 @@ class VoiceTrial:
             party=self._agent,
             floor=floor,
             clock=self._clock,
-            idle_s=self._config.idle_s,
+            idle_s=self._config.idle_s or DUPLEX_IDLE_S,
             turn_timeout_s=self._config.turn_timeout_s,
         )
         await driver.open(SessionConfig(party=self._agent))
@@ -702,7 +706,10 @@ class VoiceTrial:
 
         trajectory = recorder.finish(
             config_matrix=matrix_from(
-                floor=floor, pipeline=pipeline, profile=self._config.profile
+                floor=floor,
+                pipeline=pipeline,
+                agent_pipeline=self.agent_spec().pipeline,
+                profile=self._config.profile,
             ),
             pipeline=pipeline,
             fidelity=simulator.fidelity(),

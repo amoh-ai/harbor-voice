@@ -778,3 +778,44 @@ class TestTheFloorStaysASeparateConcern:
         trajectory = recorder.finish(render=False)
         assert not [e for e in trajectory.timeline if e.type is EventType.BARGE_IN]
         assert [e for e in trajectory.timeline if e.type is EventType.OVERLAP]
+
+
+class PausingAgent(TalkativeAgent):
+    """Speaks ten frames, pauses half a second, then finishes its reply."""
+
+    @override
+    async def _emit(self) -> None:
+        loop = asyncio.get_running_loop()
+        while loop.time() - self._last_tx < self._input_idle_s:
+            await asyncio.sleep(self._gap)
+        for seq in range(self._reply_frames):
+            if seq == 10:
+                await asyncio.sleep(0.5)
+            await asyncio.sleep(self._gap)
+            await self._q.put(
+                AudioFrame(
+                    pcm=b"\x20" * 960, seq=seq, party=AGENT, t_produced=seq * 0.02
+                ).stamp(Clock.RX, seq * 0.02)
+            )
+
+
+class TestAPauseMidReplyIsNotTheEndOfTheTurn:
+    """An agent streaming at speaking pace pauses between sentences."""
+
+    async def test_the_default_quiet_period_keeps_the_whole_reply(self) -> None:
+        simulator = _simulator()
+        driver = DuplexDriver(
+            PausingAgent(reply_frames=20),
+            simulator=simulator,
+            party=AGENT,
+            turn_timeout_s=5.0,
+        )
+        await driver.open(SessionConfig(party=AGENT))
+        try:
+            utterance = await simulator.next_utterance()
+            assert utterance is not None
+            turn = await driver.exchange(utterance)
+        finally:
+            await driver.close()
+        assert len(turn.received) == 20
+        assert turn.stop.value == "idle"

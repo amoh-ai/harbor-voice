@@ -80,7 +80,6 @@ from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.base import VoiceTransport
-from harbor_voice.transport.drain import DEFAULT_IDLE_S
 from harbor_voice.transport.drain import DrainStop
 from harbor_voice.transport.pump import InboundPump
 
@@ -89,6 +88,11 @@ LINE_FRAME_S = 0.02
 """The line's pace: one frame every 20 ms for the whole call, caller speech
 when there is some and silence otherwise, as a phone line carries. Agents
 find the end of a turn by hearing the pause after it."""
+
+DUPLEX_IDLE_S = 1.0
+"""Quiet that ends the agent's turn on a full-duplex call. A model streaming
+at speaking pace leaves short gaps between words and sentences, so the 0.2 s a
+half-duplex drain uses would cut its reply after the first word."""
 
 
 @dataclass(slots=True)
@@ -221,7 +225,8 @@ class DuplexDriver:
             than the gap between the two constructors -- so it surfaces under
             load and nowhere else. Share it with the transport too, if the
             transport stamps its own frames.
-        idle_s: Quiet period that ends the agent's turn.
+        idle_s: Quiet period that ends the agent's turn
+            (:data:`DUPLEX_IDLE_S` by default).
         turn_timeout_s: Hard ceiling. A turn that hits it is a reply we gave
             up on, so any yield aimed at it stays unresolved rather than being
             recorded as an agent that eventually stopped.
@@ -236,7 +241,7 @@ class DuplexDriver:
         floor: BargeInFloor | None = None,
         conversation: ConversationPlan | None = None,
         clock: SessionClock | None = None,
-        idle_s: float = DEFAULT_IDLE_S,
+        idle_s: float = DUPLEX_IDLE_S,
         turn_timeout_s: float = DEFAULT_TURN_TIMEOUT_S,
     ) -> None:
         self._transport = transport

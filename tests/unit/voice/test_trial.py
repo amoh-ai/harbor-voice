@@ -173,9 +173,22 @@ class TestAHalfDuplexRun:
         matrix = result.trajectory.config_matrix
         assert matrix is not None
         assert matrix.duplex is Duplex.HALF
+        assert matrix.pipeline is Pipeline.CASCADE
         assert matrix.floor_policy == "HalfDuplexFloor"
         assert matrix.profile == "telephony"
         assert matrix.seed_root == 7
+
+    def test_an_s2s_agent_is_recorded_as_s2s(self) -> None:
+        """The matrix names the agent's pipeline, not a fixed cascade."""
+        from harbor_voice.trajectory.recorder import matrix_from
+
+        trial = VoiceTrial(_config())
+        matrix = matrix_from(
+            floor=trial.floor(),
+            pipeline=trial.pipeline(),
+            agent_pipeline=Pipeline.S2S,
+        )
+        assert matrix.pipeline is Pipeline.S2S
 
     async def test_it_writes_the_three_documents_and_the_call(
         self, tmp_path: Path
