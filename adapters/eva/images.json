@@ -1,7 +1,10 @@
 {
   "ghcr.io/amoh-ai": {
+    "eva-main:413a7f6ab7": "sha256:8b6b809c619cab526575235dedf2f3acc3c01d39040f34a9784139ebce22a5f6",
     "eva-main:c168c1f67a": "sha256:92dac11ab9ecd6e5e87bbb96c25031618aacd353f442646920c30270b015594d",
+    "eva-main:perturbed-117ca3664e": "sha256:115f187439d29785588ae9ba9f131b53cf15d4f36055522b6322b923417fba8e",
     "eva-main:perturbed-92fefcaa2c": "sha256:ec60fe5d6c1016c9bd98e65c1a0f385a74443b92e72767e6938a96901fc8e931",
+    "eva-sidecar:039efa0a-077f8e4f23": "sha256:e6a952e88feea996a790f977266f3b1b52c1542550aa9e5cc931e9d48fe9ef12",
     "eva-sidecar:039efa0a-21e9a0b06c": "sha256:6de7f4ff116baf7ddac7bdc7ae190b19a90987d1d1ecb45d9b59699d51ecc206"
   }
 }
