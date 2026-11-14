@@ -317,3 +317,40 @@ class TestWhatTheProfileDecides:
 
         with pytest.raises(UnknownProfile):
             await VoiceTrial(_config(profile="nope")).run()
+
+
+class TestAPersonaCallerHearsTheAgent:
+    """The caller reacts to what the agent said, not to the turn number."""
+
+    async def test_it_hears_a_cascades_own_words(self) -> None:
+        config = _config(
+            caller={
+                "source": "persona",
+                "brief": "a caller",
+                "llm": "offline.echo-llm",
+                "tts": "offline.tone-tts",
+            },
+            max_turns=2,
+        )
+        result = await VoiceTrial(config).run()
+        said = [t.said for t in result.trajectory.turns]
+        assert len(said) == 2
+        # The echo caller repeats what it was last told: on turn two that is
+        # the agent's first reply, not "0".
+        assert said[1] not in ("0", "1")
+        assert said[1] and said[1] != said[0]
+
+    async def test_a_speech_to_speech_agent_needs_a_caller_stt(self) -> None:
+        from types import SimpleNamespace
+
+        from harbor_voice.trial import TrialConfigError
+
+        config = _config(
+            caller={"source": "persona", "brief": "x", "llm": "offline.echo-llm"}
+        )
+        trial = VoiceTrial(config)
+        with pytest.raises(TrialConfigError, match="stt"):
+            await trial._agent_words(object(), [SimpleNamespace(received=())])  # ty: ignore[invalid-argument-type]
+
+    async def test_a_scripted_caller_reads_nothing(self) -> None:
+        assert await VoiceTrial(_config())._agent_words(object(), []) == []

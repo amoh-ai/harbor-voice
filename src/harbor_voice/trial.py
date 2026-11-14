@@ -157,6 +157,11 @@ class CallerSpec(BaseModel):
     turns: tuple[str, ...] = ()
     brief: str = ""
     llm: str | None = None
+    stt: str | None = None
+    """How a persona caller hears the agent: an STT that transcribes each
+    reply's audio. Without one, a cascade agent's own words (what its TTS
+    was given) are used; a speech-to-speech agent's words exist only as
+    audio, so a persona caller talking to one needs this."""
     config: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -341,6 +346,8 @@ class VoiceTrial:
         self._task_dir = task_dir
         self._agent_spec_override = agent_spec
         self._registry = registry if registry is not None else provider_registry()
+        self._hearing: Any = None
+        self._heard_lines: list[str] = []
         self._out_dir = out_dir
         self._caller = caller
         self._agent = agent
@@ -491,6 +498,34 @@ class VoiceTrial:
         trajectory = self._record(pipeline, simulator, transport, floor, turns, probes)
         return self._score(trajectory, turns)
 
+    async def _agent_words(self, transport: Any, turns: Sequence[Turn]) -> list[str]:
+        """What the agent has said so far, one line per turn, for a caller
+        that reacts to it. A scripted caller reads nothing."""
+        caller = self._config.caller
+        if caller is None or caller.source != "persona":
+            return []
+        if caller.stt is not None:
+            if self._hearing is None:
+                self._hearing = self._registry.create(
+                    caller.stt, modality=Modality.STT, **caller.config.get("stt", {})
+                )
+            while len(self._heard_lines) < len(turns):
+                turn = turns[len(self._heard_lines)]
+                text = ""
+                async for partial in self._hearing.transcribe(list(turn.received)):
+                    if partial.is_final:
+                        text = partial.text
+                self._heard_lines.append(text)
+            return list(self._heard_lines)
+        said = getattr(transport, "said", None)
+        if said is None:
+            raise TrialConfigError(
+                "a persona caller cannot hear this agent: a speech-to-speech "
+                "agent's words exist only as audio, so set [caller] stt to "
+                "transcribe them"
+            )
+        return list(said)
+
     async def _call(
         self, transport: Any, simulator: UniversalSimulator, floor: Any
     ) -> tuple[list[Turn], list[Any]]:
@@ -515,7 +550,9 @@ class VoiceTrial:
         turns: list[Turn] = []
         try:
             for _ in range(self._config.max_turns):
-                utterance = await simulator.next_utterance(_heard(turns))
+                utterance = await simulator.next_utterance(
+                    await self._agent_words(transport, turns)
+                )
                 if utterance is None or not utterance.frames:
                     break
                 turns.append(await adapter.call(utterance.frames))
@@ -544,7 +581,9 @@ class VoiceTrial:
         probes: list[Any] = []
         try:
             for _ in range(self._config.max_turns):
-                utterance = await simulator.next_utterance(_heard(turns))
+                utterance = await simulator.next_utterance(
+                    await self._agent_words(transport, turns)
+                )
                 if utterance is None or not utterance.frames:
                     break
                 exchange = await driver.exchange(utterance)
@@ -886,11 +925,6 @@ def _resolved(
         except Exception:  # noqa: BLE001 - see the docstring
             continue
     return found
-
-
-def _heard(turns: Sequence[Turn]) -> list[str]:
-    """What the agent has said so far, for a content source that reacts."""
-    return [str(t.index) for t in turns]
 
 
 def _utterance_for(simulator: UniversalSimulator, index: int) -> Utterance | None:
