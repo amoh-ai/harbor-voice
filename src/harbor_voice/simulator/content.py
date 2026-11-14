@@ -163,11 +163,12 @@ PERSONA_FRAMING = (
     "{end_marker} to hang up. The call has just connected: say your opening "
     "line."
 )
+"""The persona's instructions, sent as the conversation's first message so
+any LLM provider takes them, whatever it does with a system prompt."""
+
 END_CALL = "[END CALL]"
 """What a persona caller ends its last line with to hang up. Stripped before
 the line is spoken."""
-"""The persona's instructions, sent as the conversation's first message so
-any LLM provider takes them, whatever it does with a system prompt."""
 
 
 @dataclass(slots=True)

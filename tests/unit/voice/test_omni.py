@@ -28,6 +28,7 @@ from harbor_voice.transport import SessionConfig
 from harbor_voice.trial import AgentSpec
 from harbor_voice.trial import VoiceTaskConfig
 from harbor_voice.trial import VoiceTrial
+from harbor_voice.trial import required_env
 
 pytestmark = pytest.mark.unit
 
@@ -183,3 +184,12 @@ class TestTheAgentShape:
         )
         with pytest.raises(ValueError, match="own call loop"):
             VoiceTrial(config).build_agent()
+
+    def test_the_omni_slot_s_keys_reach_the_sandbox(self, monkeypatch) -> None:
+        monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+        spec = AgentSpec(
+            pipeline=Pipeline.CASCADE,
+            omni="openrouter.omni/qwen/omni",
+            tts="offline.tone-tts",
+        )
+        assert required_env(spec).get("OPENROUTER_API_KEY") == "or-key"

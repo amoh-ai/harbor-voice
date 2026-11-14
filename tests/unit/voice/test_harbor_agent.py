@@ -285,6 +285,8 @@ async def test_keys_reach_the_call_as_a_file_never_a_command(
     assert not any("secret-xai" in c for c in commands)
     drive = next(c for c in commands if "harbor-voice drive" in c)
     assert f"rm -f {harbor_agent.KEYS_IN_ENV}" in drive
+    # Removed even when sourcing it fails and the && chain stops early.
+    assert f"trap 'rm -f {harbor_agent.KEYS_IN_ENV}' EXIT" in drive
     assert _keys(environment) == {"XAI_API_KEY": "secret-xai"}
 
 

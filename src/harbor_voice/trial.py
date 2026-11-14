@@ -22,6 +22,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -495,6 +497,10 @@ class VoiceTrial:
             turns, probes = await self._call(transport, simulator, floor)
         finally:
             await simulator.aclose()
+            if (close := getattr(self._hearing, "aclose", None)) is not None:
+                with contextlib.suppress(Exception):
+                    await close()
+            self._hearing = None
         trajectory = self._record(pipeline, simulator, transport, floor, turns, probes)
         return self._score(trajectory, turns)
 
@@ -511,8 +517,11 @@ class VoiceTrial:
                 )
             while len(self._heard_lines) < len(turns):
                 turn = turns[len(self._heard_lines)]
+                # A half-duplex turn keeps the agent's frames in its TTS's
+                # format; the STT expects the recording format.
+                frames = [_canonical(frame) for frame in turn.received]
                 text = ""
-                async for partial in self._hearing.transcribe(list(turn.received)):
+                async for partial in self._hearing.transcribe(frames):
                     if partial.is_final:
                         text = partial.text
                 self._heard_lines.append(text)
@@ -907,6 +916,18 @@ sandbox: an ``AWS_PROFILE`` there fails with ProfileNotFound even when the
 exported keys are present."""
 
 
+def _canonical(frame: Any) -> Any:
+    """``frame`` in :data:`~harbor_voice.audio.format.CANONICAL`."""
+    from dataclasses import replace
+
+    from harbor_voice.audio.convert import convert
+    from harbor_voice.audio.format import CANONICAL
+
+    if frame.fmt == CANONICAL:
+        return frame
+    return replace(frame, pcm=convert(frame.pcm, frame.fmt, CANONICAL), fmt=CANONICAL)
+
+
 def _resolved(
     spec: AgentSpec, registry: ProviderRegistry | None = None
 ) -> list[tuple[Registration, str]]:
@@ -917,7 +938,7 @@ def _resolved(
     """
     registry = registry or provider_registry()
     found: list[tuple[Registration, str]] = []
-    for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
+    for name in (spec.s2s, spec.stt, spec.llm, spec.omni, spec.tts):
         if not name:
             continue
         try:

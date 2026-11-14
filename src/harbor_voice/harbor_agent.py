@@ -259,7 +259,11 @@ class VoiceCallAgent(BaseInstalledAgent):
             f"call: {config.task or 'task'} · seed {seed if seed is not None else config.seed}"
             f" · agent {self.model_name or 'agent_json'}"
         )
+        # The file is removed whether or not it loaded: a failed source must
+        # not leave plaintext keys in the sandbox (or a snapshot of it). A
+        # POSIX shell exits outright when `.` fails, hence the exit trap.
         load_keys = (
+            f"trap 'rm -f {KEYS_IN_ENV}' EXIT; "
             f"set -a && . {KEYS_IN_ENV} && set +a && rm -f {KEYS_IN_ENV} && "
             if keys
             else ""

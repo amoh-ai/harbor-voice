@@ -511,13 +511,16 @@ class DuplexDriver:
         stream = self._pump.stream()
 
         voiced = 0
+        # Frames up to the last voiced one: the quiet a continuously
+        # streaming agent sends after its reply is not part of the reply.
+        reply_end = 0
 
         async def _consume() -> None:
             # An agent that streams continuously (WebRTC) sends silence
             # between replies. Silence before the reply starts is not the
             # reply; the reply ends when the agent goes quiet, not when frames
             # stop arriving.
-            nonlocal voiced
+            nonlocal voiced, reply_end
             async for frame in stream:
                 frame = self._from_wire(frame)
                 quiet = convert.is_quiet(frame.pcm)
@@ -526,6 +529,7 @@ class DuplexDriver:
                 received.append(frame)
                 if not quiet:
                     voiced += 1
+                    reply_end = len(received)
 
         task = asyncio.create_task(_consume())
         loop = asyncio.get_running_loop()
@@ -576,12 +580,14 @@ class DuplexDriver:
                     await self._inject(
                         probe, at_call_s=agent_t0 + reply_s, on_start=_landed
                     )
-                    at_reply_s, seen = landed[0] if landed else (reply_s, len(received))
+                    at_reply_s, frames_seen = (
+                        landed[0] if landed else (reply_s, len(received))
+                    )
                     fired.append(
                         _Injection(
                             probe=probe,
                             at_reply_s=at_reply_s,
-                            frames_seen=seen,
+                            frames_seen=frames_seen,
                             t_tx=agent_t0 + at_reply_s,
                         )
                     )
@@ -598,6 +604,8 @@ class DuplexDriver:
             with contextlib.suppress(asyncio.CancelledError):
                 await task
 
+        # Trailing quiet ends the reply; it is not part of it.
+        del received[reply_end:]
         if not received:
             stop = DrainStop.EMPTY
 

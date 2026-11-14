@@ -819,3 +819,30 @@ class TestAPauseMidReplyIsNotTheEndOfTheTurn:
             await driver.close()
         assert len(turn.received) == 20
         assert turn.stop.value == "idle"
+
+
+class QuietTailAgent(TalkativeAgent):
+    """Replies, then keeps streaming silence, as a WebRTC agent does."""
+
+    async def _emit(self) -> None:
+        loop = asyncio.get_running_loop()
+        while loop.time() - self._last_tx < self._input_idle_s:
+            await asyncio.sleep(self._gap)
+        for seq in range(self._reply_frames + 30):
+            await asyncio.sleep(self._gap)
+            voiced = seq < self._reply_frames
+            await self._q.put(
+                AudioFrame(
+                    pcm=(b"\x20" if voiced else b"\x00") * 960,
+                    seq=seq,
+                    party=AGENT,
+                    t_produced=seq * 0.02,
+                ).stamp(Clock.RX, seq * 0.02)
+            )
+
+
+class TestTheQuietAfterAReplyIsNotPartOfIt:
+    async def test_trailing_silence_is_trimmed(self) -> None:
+        _, turn, _ = await _run(QuietTailAgent(reply_frames=20), idle_s=0.2)
+        assert len(turn.received) == 20
+        assert all(f.pcm[0] == 0x20 for f in turn.received)
