@@ -8,7 +8,7 @@
                         [--background-noise <noise> [--snr-db 15]]
                         [--connection-degradation] [--sidecar-env NAME ...]
     eva-adapter build-image [--registry <prefix> --push] [--from-source] [--force]
-    eva-adapter job-config (--dataset datasets/eva | --hub-dataset eva@0.1.0) \\
+    eva-adapter job-config (--dataset datasets/eva | --hub-dataset eva@0.1.1) \\
                            --model openai.realtime/gpt-realtime-1.5 \\
                            [--trials 3] [-n 4] [--env daytona]
                            [--override-storage-mb <MB>] -o job.yaml

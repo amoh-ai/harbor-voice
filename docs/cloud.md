@@ -19,7 +19,7 @@ Set `DAYTONA_API_KEY`. Each trial is a Docker-in-Docker sandbox sized from
 the task.
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-control@0.1.1 \
     --model openai.realtime/gpt-realtime-1.5 --env daytona -o job.yaml
 harbor-voice jobs start -c job.yaml
 ```

@@ -66,7 +66,7 @@ READMEs. Every call is a live session with paid APIs, so start with one call.
 Published datasets run without converting anything:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-control@0.1.1 \
     --task-names airline-0-d9c07603 --trials 1 -n 1 \
     --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
     -o one.yaml
@@ -77,10 +77,10 @@ Then a full job: τ-Voice's leaderboard condition, 3 trials per task with 4
 calls at a time, or all of EVA:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.1 \
     --trials 3 -n 4 --model openai.live/gpt-live-1 \
     --agent-config '{"backend_model": "gpt-6-luna"}' -o tau.yaml
-eva-adapter job-config --hub-dataset eva@0.1.0 \
+eva-adapter job-config --hub-dataset eva@0.1.1 \
     --model openai.realtime/gpt-realtime-1.5 -o eva.yaml
 harbor-voice jobs start -c tau.yaml
 ```

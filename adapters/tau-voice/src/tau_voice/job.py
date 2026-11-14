@@ -12,7 +12,7 @@ its average::
         --model openai.realtime/gpt-realtime-1.5 --trials 3 -n 4 -o job.yaml
     harbor-voice jobs start -c job.yaml
 
-``--hub-dataset tau-voice-control@0.1.0`` runs a published dataset instead of
+``--hub-dataset tau-voice-control@0.1.1`` runs a published dataset instead of
 a local folder: harbor fetches its tasks at the commit ``registry.json``
 pins (:mod:`harbor_voice.datasets`).
 
