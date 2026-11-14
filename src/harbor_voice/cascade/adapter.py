@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from typing import override
 
+from harbor_voice.adapter import AdapterError
+from harbor_voice.adapter import Turn
 from harbor_voice.adapter import VoiceAgentAdapter
 from harbor_voice.audio.stages import StageMark
 from harbor_voice.capabilities import Pipeline
 from harbor_voice.cascade.transport import CascadeTransport
+from harbor_voice.transport.pump import PumpError
 
 
 class CascadeAdapter(VoiceAgentAdapter):
@@ -47,3 +50,17 @@ class CascadeAdapter(VoiceAgentAdapter):
         if marks:
             return marks
         return super()._mark_stages(first_rx, last_rx)
+
+    @override
+    async def _on_turn_end(self, turn: Turn) -> None:
+        """Raise a slot failure from this turn now.
+
+        The transport ends its audio with the error, but the drain reads the
+        pump's inbox, which does not carry it; left there, it would surface
+        only at the next turn, and after the last turn never, so a broken
+        call would be scored.
+        """
+        try:
+            self._pump.check()
+        except PumpError as exc:
+            raise AdapterError(str(exc)) from exc

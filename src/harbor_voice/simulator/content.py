@@ -154,6 +154,23 @@ class CorpusContent:
         self._index = 0
 
 
+PERSONA_FRAMING = (
+    "You are the caller in a phone call to a voice agent, and you play this "
+    "person:\n\n{brief}\n\nStay in character. Reply with only the words you "
+    "say aloud, one or two short sentences at a time; the agent's words come to "
+    "you as the other side of the call. When the call is over (your goal is "
+    "done, or you give up), say your goodbye and end that line with "
+    "{end_marker} to hang up. The call has just connected: say your opening "
+    "line."
+)
+"""The persona's instructions, sent as the conversation's first message so
+any LLM provider takes them, whatever it does with a system prompt."""
+
+END_CALL = "[END CALL]"
+"""What a persona caller ends its last line with to hang up. Stripped before
+the line is spoken."""
+
+
 @dataclass(slots=True)
 class PersonaContent:
     """An LLM speaking as a persona.
@@ -168,7 +185,8 @@ class PersonaContent:
     brief: str
     llm: Any
     max_turns: int = 20
-    _spoken: int = field(default=0, init=False)
+    _said: list[str] = field(default_factory=list, init=False)
+    _hung_up: bool = field(default=False, init=False)
 
     @property
     def kind(self) -> SourceKind:
@@ -179,13 +197,52 @@ class PersonaContent:
         return False
 
     async def next(self, heard: Sequence[str]) -> Content | None:
-        if self._spoken >= self.max_turns:
+        """The caller's next line, given the agent's lines so far.
+
+        The caller speaks first, so after ``k`` lines it has heard ``k``
+        replies. The model sees the call from the caller's side: the brief
+        and the opening as the first user message, its own lines as the
+        assistant's, the agent's as the user's. ``heard`` is what the agent
+        said, not anything about the turn.
+        """
+        if self._hung_up or len(self._said) >= self.max_turns:
             return None
-        last = heard[-1] if heard else ""
-        chunks = [chunk async for chunk in self.llm.respond(last, list(heard))]
-        self._spoken += 1
-        text = " ".join(chunks).strip()
-        return Content(text=text, intent=None) if text else None
+        opening = PERSONA_FRAMING.format(brief=self.brief, end_marker=END_CALL)
+        history: list[str] = []
+        prompt = opening
+        if self._said:
+            replies = list(heard[-len(self._said) :]) if heard else []
+            replies = [""] * (len(self._said) - len(replies)) + replies
+            history = [opening]
+            for own, reply in zip(self._said[:-1], replies[:-1], strict=True):
+                history += [own, reply or "(silence)"]
+            history.append(self._said[-1])
+            prompt = replies[-1] or "(The agent said nothing.)"
+        chunks = [chunk async for chunk in self.llm.respond(prompt, history)]
+        # Concatenated: a streaming LLM yields raw fragments (", I'll"),
+        # which a space-join mangles.
+        text = "".join(chunks).strip()
+        if text.rstrip(" .!\"'").endswith(END_CALL):
+            # Only at the end of a line, where it was asked for: a model that
+            # quotes its instructions has not hung up. The goodbye is still
+            # spoken; the call ends after it.
+            self._hung_up = True
+            text = text.rstrip(" .!\"'").removesuffix(END_CALL).strip()
+        if not text:
+            return None
+        self._said.append(text)
+        return Content(text=text, intent=None)
+
+    @property
+    def hung_up(self) -> bool:
+        """Whether the caller ended the call (rather than running out of turns)."""
+        return self._hung_up
 
     def reset(self) -> None:
-        self._spoken = 0
+        self._said = []
+        self._hung_up = False
+
+    async def aclose(self) -> None:
+        """Close the LLM's connections, if it holds any."""
+        if (aclose := getattr(self.llm, "aclose", None)) is not None:
+            await aclose()

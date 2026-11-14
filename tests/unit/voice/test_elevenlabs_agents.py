@@ -354,6 +354,23 @@ class TestConnect:
         assert info.value.kind is ProviderFailure.AUTH
         assert KEY not in str(info.value)
 
+    @pytest.mark.parametrize(
+        ("status", "kind"),
+        [(402, ProviderFailure.AUTH), (404, ProviderFailure.NOT_ENABLED)],
+    )
+    async def test_a_signed_url_status_maps_like_other_providers(
+        self, status: int, kind: ProviderFailure
+    ) -> None:
+        client = httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda _: httpx.Response(status))
+        )
+        transport = el.ElevenLabsAgentsTransport(
+            agent_id=AGENT, api=el.AgentsAPI(api_key=KEY, client=client)
+        )
+        with pytest.raises(ProviderError) as info:
+            await transport.open()
+        assert info.value.kind is kind
+
 
 # -------------------------------------------------------------------- stream
 

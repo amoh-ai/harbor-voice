@@ -20,12 +20,20 @@ the agent scoring zero.
 
 from __future__ import annotations
 
+import asyncio
+import json
+from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field
 from enum import StrEnum
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import override
+
+import httpx
 
 from harbor_voice.ids import Digest
 from harbor_voice.ids import sha256_digest
@@ -241,7 +249,7 @@ class ProviderSpec:
     """
 
     name: str
-    """Registry name, e.g. ``aws.polly``. The left side of a spec string."""
+    """Registry name, e.g. ``aws.nova-sonic``. The left side of a spec string."""
 
     modality: Modality
     capabilities: ProviderCapabilities
@@ -254,6 +262,14 @@ class ProviderSpec:
     """pip extra that must be installed to construct this, e.g. ``aws``."""
 
     default_model: str | None = None
+
+    credential_slug_for: Callable[[str], str | None] | None = None
+    """For a provider whose credentials depend on the model (``litellm.llm``):
+    the slug for a model, in place of :attr:`credential_provider`."""
+
+    sandbox_env: Callable[[dict[str, str]], dict[str, str]] | None = None
+    """Adjusts this provider's variables before they go into a trial's
+    sandbox, for settings that only work on this machine."""
 
     def __post_init__(self) -> None:
         if self.capabilities.modality is not self.modality:
@@ -362,3 +378,189 @@ class ProviderCall:
             out["failure"] = self.failure.value
             out["disposition"] = _DISPOSITIONS[self.failure].value
         return out
+
+
+def require_key(
+    explicit: str | None,
+    *env_names: str,
+    provider: str,
+    model: str | None,
+    hint: str | None = None,
+) -> str:
+    """An API key from the argument or the first of ``env_names`` that is set.
+
+    Never logged. Missing, it is an AUTH failure naming the variables, plus
+    ``hint`` when there is another way to sign in.
+    """
+    key = explicit or next(filter(None, map(os.environ.get, env_names)), None)
+    if not key:
+        message = f"{' or '.join(env_names)} is not set"
+        raise ProviderError(
+            ProviderFailure.AUTH,
+            f"{message} ({hint})" if hint else message,
+            provider=provider,
+            model=model,
+        )
+    return key
+
+
+def http_failure(
+    status: int, *, not_found: ProviderFailure = ProviderFailure.MALFORMED
+) -> ProviderFailure:
+    """An HTTP status (or a websocket error event's) as a failure kind.
+
+    402 is no credit left: every call fails the same way, so it fails the job
+    like a bad key. What a 404 means differs by vendor (an unknown voice, a
+    region without the model), so the caller says.
+    """
+    if status in (401, 402, 403):
+        return ProviderFailure.AUTH
+    if status == 404:
+        return not_found
+    if status in (408, 504):
+        return ProviderFailure.TIMEOUT
+    if status == 429:
+        return ProviderFailure.THROTTLED
+    if status >= 500:
+        return ProviderFailure.STREAM_BROKEN
+    return ProviderFailure.MALFORMED
+
+
+def socket_failure(
+    exc: Exception,
+    *,
+    provider: str,
+    model: str | None,
+    close_codes: Mapping[int, ProviderFailure] | None = None,
+) -> ProviderError:
+    """A websocket exception as a :class:`ProviderError`.
+
+    Checked in this order:
+
+    - a refused handshake carries an HTTP status: :func:`http_failure`;
+    - a close frame whose code is in ``close_codes``, the vendor's documented
+      codes: that kind;
+    - ``TimeoutError``: TIMEOUT, so it is retried;
+    - JSON that does not parse: MALFORMED;
+    - anything else: STREAM_BROKEN.
+
+    ``OSError`` falls in the last group. A refused or reset connection is not
+    a timeout: the server said no, or dropped a call already under way, and
+    retrying the same call at once rarely helps. STREAM_BROKEN marks the trial
+    invalid (no measurement) without a retry. ``TimeoutError`` is an
+    ``OSError`` too, which is why it is checked first.
+    """
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    code = getattr(getattr(exc, "rcvd", None), "code", None)
+    if isinstance(status, int):
+        kind = http_failure(status)
+    elif close_codes and code in close_codes:
+        kind = close_codes[code]
+    elif isinstance(exc, TimeoutError):
+        kind = ProviderFailure.TIMEOUT
+    elif isinstance(exc, json.JSONDecodeError):
+        kind = ProviderFailure.MALFORMED
+    else:
+        kind = ProviderFailure.STREAM_BROKEN
+    return ProviderError(
+        kind,
+        f"{type(exc).__name__}: {str(exc)[:300]}",
+        provider=provider,
+        model=model,
+    )
+
+
+RETRY_MIN_WAIT_S = 1.0
+RETRY_MAX_WAIT_S = 10.0
+
+
+def retry_wait(attempt: int) -> float:
+    """Seconds to wait after failed ``attempt`` (from 1): 1, 2, 4, up to 10.
+
+    tenacity's ``wait_exponential(multiplier=1, min=1, max=10)``, as tau2
+    retries.
+    """
+    return min(RETRY_MAX_WAIT_S, max(RETRY_MIN_WAIT_S, 2.0 ** (attempt - 1)))
+
+
+async def post_with_retries(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    attempts: int,
+    provider: str,
+    model: str | None,
+    retry_statuses: Collection[int] = (409, 429),
+    **request: Any,
+) -> httpx.Response:
+    """POST, retrying failed connections, 5xx and ``retry_statuses``.
+
+    Returns the last response whatever its status; the caller judges it.
+    If no attempt gets a response, raises TIMEOUT.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            response = await client.post(url, **request)
+        except httpx.TransportError as exc:  # timeouts included
+            if attempt == attempts:
+                raise ProviderError(
+                    ProviderFailure.TIMEOUT,
+                    f"POST {url} failed after {attempt} attempts: {exc}",
+                    provider=provider,
+                    model=model,
+                ) from exc
+            await asyncio.sleep(retry_wait(attempt))
+            continue
+        status = response.status_code
+        if (status in retry_statuses or status >= 500) and attempt < attempts:
+            await asyncio.sleep(retry_wait(attempt))
+            continue
+        return response
+    raise ValueError(f"attempts must be at least 1, got {attempts}")
+
+
+class HTTPSession:
+    """One HTTP client for a provider's whole life, not one per request.
+
+    A new client per turn is a new TCP and TLS handshake per turn, which
+    lands in the measured response time as harness overhead. The client is
+    made on first use; :meth:`aclose` closes it unless the caller passed
+    its own.
+
+    ``follow_redirects`` is for self-hosted servers only: one behind Modal's
+    web proxy that takes longer than ~150 s (a model still loading) answers
+    303 to a URL where the result will appear, and httpx turns the POST into
+    a GET for a 303, as the proxy expects. It is off by default because
+    httpx drops only ``Authorization`` when a redirect leaves the original
+    host; a key in a vendor header (``xi-api-key``,
+    ``Ocp-Apim-Subscription-Key``) would go to the new host with the body.
+    """
+
+    def __init__(
+        self, client: httpx.AsyncClient | None = None, *, follow_redirects: bool = False
+    ) -> None:
+        self._client = client
+        self._owned = client is None
+        self._follow_redirects = follow_redirects
+
+    def client(self, timeout_s: float) -> httpx.AsyncClient:
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                timeout=timeout_s, follow_redirects=self._follow_redirects
+            )
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._owned and self._client is not None:
+            await self._client.aclose()
+        self._client = None
+
+
+class PooledHTTP:
+    """For a provider holding an :class:`HTTPSession` as ``_http``."""
+
+    _http: HTTPSession
+
+    async def aclose(self) -> None:
+        """Close the provider's connections. Safe to call more than once."""
+        await self._http.aclose()

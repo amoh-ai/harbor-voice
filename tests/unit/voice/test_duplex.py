@@ -136,6 +136,11 @@ class TalkativeAgent(VoiceTransport):
     async def tx(self, frame: AudioFrame) -> None:
         self.require_open()
         self.received.append(frame)
+        # The driver keeps the line open with silence between utterances, as
+        # a phone line does; like a real agent's speech detector, only sound
+        # counts as the caller talking.
+        if frame.filler:
+            return
         self._last_tx = asyncio.get_running_loop().time()
         if self._emitter is None:
             self._emitter = asyncio.create_task(self._emit())
@@ -773,3 +778,164 @@ class TestTheFloorStaysASeparateConcern:
         trajectory = recorder.finish(render=False)
         assert not [e for e in trajectory.timeline if e.type is EventType.BARGE_IN]
         assert [e for e in trajectory.timeline if e.type is EventType.OVERLAP]
+
+
+class PausingAgent(TalkativeAgent):
+    """Speaks ten frames, pauses half a second, then finishes its reply."""
+
+    @override
+    async def _emit(self) -> None:
+        loop = asyncio.get_running_loop()
+        while loop.time() - self._last_tx < self._input_idle_s:
+            await asyncio.sleep(self._gap)
+        for seq in range(self._reply_frames):
+            if seq == 10:
+                await asyncio.sleep(0.5)
+            await asyncio.sleep(self._gap)
+            await self._q.put(
+                AudioFrame(
+                    pcm=b"\x20" * 960, seq=seq, party=AGENT, t_produced=seq * 0.02
+                ).stamp(Clock.RX, seq * 0.02)
+            )
+
+
+class TestAPauseMidReplyIsNotTheEndOfTheTurn:
+    """An agent streaming at speaking pace pauses between sentences."""
+
+    async def test_the_default_quiet_period_keeps_the_whole_reply(self) -> None:
+        simulator = _simulator()
+        driver = DuplexDriver(
+            PausingAgent(reply_frames=20),
+            simulator=simulator,
+            party=AGENT,
+            turn_timeout_s=5.0,
+        )
+        await driver.open(SessionConfig(party=AGENT))
+        try:
+            utterance = await simulator.next_utterance()
+            assert utterance is not None
+            turn = await driver.exchange(utterance)
+        finally:
+            await driver.close()
+        assert len(turn.received) == 20
+        assert turn.stop.value == "idle"
+
+
+class QuietTailAgent(TalkativeAgent):
+    """Replies, then keeps streaming silence, as a WebRTC agent does."""
+
+    async def _emit(self) -> None:
+        loop = asyncio.get_running_loop()
+        while loop.time() - self._last_tx < self._input_idle_s:
+            await asyncio.sleep(self._gap)
+        for seq in range(self._reply_frames + 30):
+            await asyncio.sleep(self._gap)
+            voiced = seq < self._reply_frames
+            await self._q.put(
+                AudioFrame(
+                    pcm=(b"\x20" if voiced else b"\x00") * 960,
+                    seq=seq,
+                    party=AGENT,
+                    t_produced=seq * 0.02,
+                ).stamp(Clock.RX, seq * 0.02)
+            )
+
+
+class TestTheQuietAfterAReplyIsNotPartOfIt:
+    async def test_trailing_silence_is_trimmed(self) -> None:
+        _, turn, _ = await _run(QuietTailAgent(reply_frames=20), idle_s=0.2)
+        assert len(turn.received) == 20
+        assert all(f.pcm[0] == 0x20 for f in turn.received)
+
+
+class TestABrokenCascadeSlotEndsTheTurn:
+    async def test_the_error_comes_out_of_exchange_without_waiting(self) -> None:
+        """Not after the turn's timeout, and not swallowed on the last turn."""
+        from harbor_voice.cascade import CascadeTransport
+        from harbor_voice.providers import EchoLLM
+        from harbor_voice.providers import ScriptedSTT
+        from harbor_voice.providers.base import ProviderError
+        from harbor_voice.providers.base import ProviderFailure
+        from harbor_voice.transport.pump import PumpError
+
+        class BrokenTTS(ToneTTS):
+            async def synthesize(self, text, *, party):  # noqa: ANN001, ANN202
+                raise ProviderError(
+                    ProviderFailure.STREAM_BROKEN, "cut off", provider="t", model="m"
+                )
+                yield b""  # pragma: no cover - makes this a generator
+
+        simulator = _simulator()
+        driver = DuplexDriver(
+            CascadeTransport(
+                stt=ScriptedSTT(turns=["hello"]),
+                llm=EchoLLM(),
+                tts=BrokenTTS(),
+                party=AGENT,
+                input_idle_s=0.05,
+            ),
+            simulator=simulator,
+            party=AGENT,
+            turn_timeout_s=30.0,
+        )
+        await driver.open(SessionConfig(party=AGENT))
+        try:
+            utterance = await simulator.next_utterance()
+            assert utterance is not None
+            with pytest.raises(PumpError, match="cut off"):
+                await asyncio.wait_for(driver.exchange(utterance), 5.0)
+        finally:
+            await driver.close()
+
+
+class SilentStreamAgent(TalkativeAgent):
+    """Replies, then streams silence until the call closes, as WebRTC does."""
+
+    async def _emit(self) -> None:
+        loop = asyncio.get_running_loop()
+        while loop.time() - self._last_tx < self._input_idle_s:
+            await asyncio.sleep(self._gap)
+        seq = 0
+        while True:
+            await asyncio.sleep(self._gap)
+            voiced = seq < self._reply_frames
+            await self._q.put(
+                AudioFrame(
+                    pcm=(b"\x20" if voiced else b"\x00") * 960,
+                    seq=seq,
+                    party=AGENT,
+                    t_produced=seq * 0.02,
+                ).stamp(Clock.RX, seq * 0.02)
+            )
+            seq += 1
+
+
+class TestQuietBetweenTurnsIsNotBleed:
+    async def test_streamed_silence_is_not_counted_as_bled(self) -> None:
+        pipeline = PerturbationPipeline(seeds=SeedSet.derive(7))
+        simulator = UniversalSimulator(
+            party=CALLER,
+            content=ScriptContent(turns=["first", "second"]),
+            tts=ToneTTS(),
+            pipeline=pipeline,
+            seeds=SeedSet.derive(7),
+        )
+        driver = DuplexDriver(
+            SilentStreamAgent(reply_frames=20),
+            simulator=simulator,
+            party=AGENT,
+            idle_s=0.1,
+            turn_timeout_s=5.0,
+        )
+        await driver.open(SessionConfig(party=AGENT))
+        try:
+            first = await simulator.next_utterance()
+            assert first is not None
+            await driver.exchange(first)
+            await asyncio.sleep(0.1)  # the agent keeps streaming silence
+            second = await simulator.next_utterance()
+            assert second is not None
+            turn = await driver.exchange(second)
+        finally:
+            await driver.close()
+        assert turn.bled == ()

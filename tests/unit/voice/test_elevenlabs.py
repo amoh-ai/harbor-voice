@@ -11,6 +11,7 @@ from harbor_voice.audio.format import AudioFormat
 from harbor_voice.ids import PartyId
 from harbor_voice.perturbation.persona import Accent
 from harbor_voice.perturbation.persona import VoiceSelection
+from harbor_voice.providers import base as provider_base
 from harbor_voice.providers.base import ProviderError
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.cache import BlobCache
@@ -44,7 +45,7 @@ def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     async def instant(_: float) -> None:
         return None
 
-    monkeypatch.setattr(el.asyncio, "sleep", instant)
+    monkeypatch.setattr(provider_base.asyncio, "sleep", instant)
 
 
 class TestRequestMatchesTau2:
@@ -134,6 +135,38 @@ class TestFailures:
             await tts.synthesize_pcm("x")
         assert info.value.kind is ProviderFailure.AUTH
         assert len(seen) == 1
+
+    @pytest.mark.parametrize(
+        ("status", "kind", "attempts"),
+        [
+            (402, ProviderFailure.AUTH, 1),
+            (404, ProviderFailure.MALFORMED, 1),
+            (504, ProviderFailure.TIMEOUT, el.RETRY_ATTEMPTS),
+        ],
+    )
+    async def test_statuses_map_like_every_other_provider(
+        self, status: int, kind: ProviderFailure, attempts: int
+    ) -> None:
+        tts, seen = _tts(lambda _: httpx.Response(status, text="no"))
+        with pytest.raises(ProviderError) as info:
+            await tts.synthesize_pcm("x")
+        assert info.value.kind is kind
+        assert len(seen) == attempts
+
+    async def test_an_empty_200_is_malformed_and_not_retried(self) -> None:
+        tts, seen = _tts(lambda _: httpx.Response(200, content=b""))
+        with pytest.raises(ProviderError) as info:
+            await tts.synthesize_pcm("x")
+        assert info.value.kind is ProviderFailure.MALFORMED
+        assert len(seen) == 1
+
+    async def test_the_last_frame_is_short_but_whole_samples(self) -> None:
+        tts, _ = _tts(
+            lambda _: httpx.Response(200, content=bytes(1_001)),
+            audio_format=AudioFormat(sample_rate_hz=16_000),
+        )
+        chunks = [c async for c in tts.synthesize("x", party=PartyId("caller"))]
+        assert [len(c) for c in chunks] == [640, 360]
 
     async def test_no_voice_is_an_error_not_a_default(self) -> None:
         tts, seen = _tts(_ok, voice_id=None)

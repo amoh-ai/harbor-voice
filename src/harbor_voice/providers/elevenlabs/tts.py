@@ -21,8 +21,6 @@ Plain HTTP via ``httpx`` rather than the ``elevenlabs`` SDK: the SDK's
 
 from __future__ import annotations
 
-import asyncio
-import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -33,12 +31,18 @@ import httpx
 from harbor_voice._deps import numpy as _numpy
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
+from harbor_voice.audio.format import FrameCutter
 from harbor_voice.ids import PartyId
 from harbor_voice.perturbation import dsp
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import http_failure
+from harbor_voice.providers.base import post_with_retries
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.cache import BlobCache
 from harbor_voice.providers.cache import SynthesisKey
 from harbor_voice.providers.capabilities import Modality
@@ -52,9 +56,8 @@ REQUEST_FORMAT = AudioFormat(sample_rate_hz=16_000)
 """``pcm_16000``: tau2's ``DEFAULT_ELEVENLABS_OUTPUT_FORMAT``."""
 
 RETRY_ATTEMPTS = 3
-RETRY_MIN_WAIT_S = 1.0
-RETRY_MAX_WAIT_S = 10.0
-"""tau2's ``tts_retry``: ``DEFAULT_RETRY_*`` in ``tau2/config.py``."""
+"""tau2's ``tts_retry``: ``DEFAULT_RETRY_*`` in ``tau2/config.py``. Its waits
+are :func:`~harbor_voice.providers.base.retry_wait`."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,7 +88,7 @@ class VoiceSettings:
 TAU2_VOICE_SETTINGS = VoiceSettings()
 
 
-class ElevenLabsTTS:
+class ElevenLabsTTS(PooledHTTP):
     """Whole-utterance ElevenLabs synthesis, cached, at tau2's settings.
 
     Args:
@@ -125,7 +128,7 @@ class ElevenLabsTTS:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
         self.last_cache_hit: bool | None = None
         """Whether the last utterance came from the cache; for the trajectory."""
         self.characters_billed = 0
@@ -194,10 +197,11 @@ class ElevenLabsTTS:
         del party
         if not text:
             return
-        pcm = await self.synthesize_pcm(text)
-        size = self._format.frame_bytes()
-        for start in range(0, len(pcm), size):
-            yield pcm[start : start + size]
+        cutter = FrameCutter(self._format)
+        for frame in cutter.feed(await self.synthesize_pcm(text)):
+            yield frame
+        if tail := cutter.tail():
+            yield tail
 
     # ----------------------------------------------------------- internals
 
@@ -213,17 +217,6 @@ class ElevenLabsTTS:
         )
         return dsp.to_pcm(_numpy().asarray(converted))
 
-    def _key_or_raise(self) -> str:
-        key = self._api_key or os.environ.get("ELEVENLABS_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                "ELEVENLABS_API_KEY is not set",
-                provider=self.name,
-                model=self.model,
-            )
-        return key
-
     async def _request(self, text: str) -> bytes:
         body: dict[str, Any] = {
             "text": text,
@@ -233,71 +226,40 @@ class ElevenLabsTTS:
         if self.seed is not None:
             body["seed"] = self.seed
         url = f"{self._api_base}/v1/text-to-speech/{self.voice_id}"
-        headers = {"xi-api-key": self._key_or_raise(), "accept": "audio/pcm"}
-        params = {"output_format": "pcm_16000"}
-
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
-        try:
-            for attempt in range(1, RETRY_ATTEMPTS + 1):
-                try:
-                    response = await client.post(
-                        url, json=body, headers=headers, params=params
-                    )
-                except (httpx.TimeoutException, httpx.TransportError) as exc:
-                    if attempt == RETRY_ATTEMPTS:
-                        raise ProviderError(
-                            ProviderFailure.TIMEOUT,
-                            f"ElevenLabs request failed after {attempt} attempts: {exc}",
-                            provider=self.name,
-                            model=self.model,
-                        ) from exc
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                if response.status_code == 200 and response.content:
-                    self.characters_billed += len(text)
-                    return response.content
-                if _retryable(response.status_code) and attempt < RETRY_ATTEMPTS:
-                    await asyncio.sleep(_backoff(attempt))
-                    continue
-                raise _error(response, self.name, self.model)
-        finally:
-            if self._client is None:
-                await client.aclose()
-        # Every iteration returns, raises or continues; reaching here means
-        # RETRY_ATTEMPTS was set below one.
-        raise ValueError(  # pragma: no cover
-            f"RETRY_ATTEMPTS must be at least 1, got {RETRY_ATTEMPTS}"
+        key = require_key(
+            self._api_key, "ELEVENLABS_API_KEY", provider=self.name, model=self.model
         )
-
-
-def _retryable(status: int) -> bool:
-    return status in (409, 429) or status >= 500
-
-
-def _backoff(attempt: int) -> float:
-    """tenacity's ``wait_exponential(multiplier=1, min=1, max=10)``."""
-    return min(RETRY_MAX_WAIT_S, max(RETRY_MIN_WAIT_S, 2.0 ** (attempt - 1)))
+        response = await post_with_retries(
+            self._http.client(self._timeout_s),
+            url,
+            attempts=RETRY_ATTEMPTS,
+            provider=self.name,
+            model=self.model,
+            json=body,
+            headers={"xi-api-key": key, "accept": "audio/pcm"},
+            params={"output_format": "pcm_16000"},
+        )
+        if response.status_code == 200 and response.content:
+            self.characters_billed += len(text)
+            return response.content
+        raise _error(response, self.name, self.model)
 
 
 def _error(response: httpx.Response, provider: str, model: str) -> ProviderError:
     status = response.status_code
-    detail = response.text[:300]
     if status == 200:
-        kind = ProviderFailure.MALFORMED
-        message = "ElevenLabs returned 200 with no audio"
-    elif status in (401, 403):
-        kind = ProviderFailure.AUTH
-        message = f"ElevenLabs rejected the key ({status}): {detail}"
-    elif status == 429:
-        kind = ProviderFailure.THROTTLED
-        message = f"ElevenLabs rate limit or quota ({status}): {detail}"
-    elif status >= 500:
-        kind = ProviderFailure.STREAM_BROKEN
-        message = f"ElevenLabs server error ({status}): {detail}"
-    else:
-        kind = ProviderFailure.MALFORMED
-        message = f"ElevenLabs rejected the request ({status}): {detail}"
-    return ProviderError(kind, message, provider=provider, model=model)
+        return ProviderError(
+            ProviderFailure.MALFORMED,
+            "ElevenLabs returned 200 with no audio",
+            provider=provider,
+            model=model,
+        )
+    return ProviderError(
+        http_failure(status),
+        f"ElevenLabs returned {status}: {response.text[:300]}",
+        provider=provider,
+        model=model,
+    )
 
 
 ELEVENLABS_TTS_SPEC = ProviderSpec(
@@ -305,7 +267,6 @@ ELEVENLABS_TTS_SPEC = ProviderSpec(
     modality=Modality.TTS,
     capabilities=ProviderCapabilities(modality=Modality.TTS, streams=False),
     credential_provider="elevenlabs",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 """``streams=False``: whole-utterance synthesis, as tau2 does it."""

@@ -2087,7 +2087,7 @@
         "total_records": 18,
         "success_rate": 0.4375,
         "mean_ci_lower": 0.1389,
-        "mean_ci_upper": 0.6944,
+        "mean_ci_upper": 0.7222,
         "mean_ci_n_scenarios": 6
       },
       "EVA-X_pass": {
@@ -2106,8 +2106,8 @@
         "none_count": 0,
         "total_records": 18,
         "success_rate": 0.8333,
-        "mean_ci_lower": 0.6648,
-        "mean_ci_upper": 0.8603,
+        "mean_ci_lower": 0.6634,
+        "mean_ci_upper": 0.8648,
         "mean_ci_n_scenarios": 6
       },
       "EVA-X_mean": {
@@ -2116,8 +2116,8 @@
         "none_count": 0,
         "total_records": 18,
         "success_rate": 0.6667,
-        "mean_ci_lower": 0.5335,
-        "mean_ci_upper": 0.689,
+        "mean_ci_lower": 0.5297,
+        "mean_ci_upper": 0.6884,
         "mean_ci_n_scenarios": 6
       },
       "EVA-overall_mean": {
@@ -2126,8 +2126,8 @@
         "none_count": 0,
         "total_records": 18,
         "success_rate": 0.9444,
-        "mean_ci_lower": 0.6317,
-        "mean_ci_upper": 0.7492,
+        "mean_ci_lower": 0.6301,
+        "mean_ci_upper": 0.7494,
         "mean_ci_n_scenarios": 6
       },
       "EVA-overall_pass": {
@@ -2166,7 +2166,7 @@
           "pass_power_k_theoretical": 0.3333,
           "k": 3,
           "count": 4,
-          "pass_at_1_ci_lower": 0.0833,
+          "pass_at_1_ci_lower": 0.1667,
           "pass_at_1_ci_upper": 0.8333,
           "pass_at_k_ci_lower": 0.25,
           "pass_at_k_ci_upper": 1.0,
@@ -2241,8 +2241,8 @@
         "error_count": 0,
         "missing_count": 0,
         "total_records": 18,
-        "mean_ci_lower": 0.594,
-        "mean_ci_upper": 0.7181,
+        "mean_ci_lower": 0.5974,
+        "mean_ci_upper": 0.7221,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": true,
         "pass_k": {
@@ -2297,8 +2297,8 @@
         "error_count": 2,
         "missing_count": 0,
         "total_records": 18,
-        "mean_ci_lower": 0.3889,
-        "mean_ci_upper": 0.6944,
+        "mean_ci_lower": 0.375,
+        "mean_ci_upper": 0.7083,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": true,
         "pass_k": {
@@ -2325,8 +2325,8 @@
         "error_count": 0,
         "missing_count": 0,
         "total_records": 18,
-        "mean_ci_lower": 1.3881,
-        "mean_ci_upper": 1.962,
+        "mean_ci_lower": 1.4031,
+        "mean_ci_upper": 1.9656,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": false
       },
@@ -2367,8 +2367,8 @@
         "error_count": 0,
         "missing_count": 4,
         "total_records": 18,
-        "mean_ci_lower": 248.6583,
-        "mean_ci_upper": 331.9572,
+        "mean_ci_lower": 245.8826,
+        "mean_ci_upper": 331.9567,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": false
       },
@@ -2381,8 +2381,8 @@
         "error_count": 0,
         "missing_count": 0,
         "total_records": 18,
-        "mean_ci_lower": 0.6351,
-        "mean_ci_upper": 0.8181,
+        "mean_ci_lower": 0.6409,
+        "mean_ci_upper": 0.8253,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": true,
         "pass_k": {
@@ -2393,7 +2393,7 @@
           "k": 3,
           "count": 6,
           "pass_at_1_ci_lower": 0.0556,
-          "pass_at_1_ci_upper": 0.7222,
+          "pass_at_1_ci_upper": 0.7778,
           "pass_at_k_ci_lower": 0.1667,
           "pass_at_k_ci_upper": 0.8333,
           "pass_power_k_observed_ci_lower": 0.0,
@@ -2409,8 +2409,8 @@
         "error_count": 0,
         "missing_count": 4,
         "total_records": 18,
-        "mean_ci_lower": 12.6931,
-        "mean_ci_upper": 16.5833,
+        "mean_ci_lower": 12.6937,
+        "mean_ci_upper": 16.5292,
         "mean_ci_n_scenarios": 6,
         "higher_is_better": false
       }

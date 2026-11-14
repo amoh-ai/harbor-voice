@@ -190,6 +190,17 @@ class UniversalSimulator:
         self._utterances: list[Utterance] = []
         self._pipeline.persona.apply_to_tts(self._tts)
 
+    async def aclose(self) -> None:
+        """Close the connections the caller holds: its TTS's, and its content
+        source's (a persona's LLM). The second is closed even if the first
+        fails."""
+        try:
+            if (aclose := getattr(self._tts, "aclose", None)) is not None:
+                await aclose()
+        finally:
+            if (aclose := getattr(self._content, "aclose", None)) is not None:
+                await aclose()
+
     # ------------------------------------------------------------- declared
 
     @property
@@ -373,17 +384,6 @@ class UniversalSimulator:
         self._index += 1
         self._utterances.append(utterance)
         return utterance
-
-    @property
-    def persona_brief(self) -> str:
-        """The caller's brief with L1's behaviour folded in.
-
-        The content source is given this rather than its own brief, so a task
-        persona and a behaviour variant compose instead of one replacing the
-        other.
-        """
-        base = getattr(self._content, "brief", "")
-        return self._pipeline.persona.brief_for(str(base))
 
     async def say(
         self,

@@ -34,7 +34,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Callable
 from collections.abc import Mapping
@@ -62,6 +61,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -307,14 +307,9 @@ class OpenAILiveTransport(VoiceTransport):
     async def open(self, config: SessionConfig) -> None:
         if self._open:
             return
-        key = self._api_key or os.environ.get("OPENAI_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                "OPENAI_API_KEY is not set",
-                provider=NAME,
-                model=self._model,
-            )
+        key = require_key(
+            self._api_key, "OPENAI_API_KEY", provider=NAME, model=self._model
+        )
         self._conn = self._connect(self._accept, self._audio, self._lost)
         try:
             created = await self._conn.start(

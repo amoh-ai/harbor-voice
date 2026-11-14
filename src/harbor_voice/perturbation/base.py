@@ -143,9 +143,6 @@ class Perturbation(ABC):
     def _record(self, **values: float) -> None:
         self._achieved.update(values)
 
-    def _accumulate(self, key: str, value: float) -> None:
-        self._achieved[key] = self._achieved.get(key, 0.0) + value
-
     @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.key})"

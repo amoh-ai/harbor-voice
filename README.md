@@ -27,11 +27,8 @@ harbor-voice to:
   [EVA](https://github.com/ServiceNow/eva). Enterprise calls in airline, IT
   service and medical HR.
 
-More voice benchmarks are on the way.
-
 Each adapter's README covers its tasks, agents, caller conditions and parity
-with the original harness. Support for more agents on both benchmarks is on
-the way; other agents run on the [library](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md)'s built-in call
+with the original harness. Other agents run on the [library](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md)'s built-in call
 loop.
 
 ## Install
@@ -60,6 +57,13 @@ uv sync   # harbor-voice, both adapters, all extras, dev tools
 Each trial then installs harbor-voice and the adapter from these source
 folders, so a change runs as it is. Prefix the commands below with `uv run`.
 
+## Try it without API keys
+
+The library has offline providers that need no keys and no network. A
+two-turn call on them takes a few seconds and writes the recording, the
+metrics and a validity report: see the example under
+[The built-in call loop](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md#the-built-in-call-loop).
+
 ## Run a benchmark
 
 Each benchmark needs its API keys in your environment, and a one-time setup
@@ -69,7 +73,7 @@ READMEs. Every call is a live session with paid APIs, so start with one call.
 Published datasets run without converting anything:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-control@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-control@0.1.2 \
     --task-names airline-0-d9c07603 --trials 1 -n 1 \
     --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
     -o one.yaml
@@ -80,10 +84,10 @@ Then a full job: τ-Voice's leaderboard condition, 3 trials per task with 4
 calls at a time, or all of EVA:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.0 \
+tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.2 \
     --trials 3 -n 4 --model openai.live/gpt-live-1 \
     --agent-config '{"backend_model": "gpt-6-luna"}' -o tau.yaml
-eva-adapter job-config --hub-dataset eva@0.1.0 \
+eva-adapter job-config --hub-dataset eva@0.1.2 \
     --model openai.realtime/gpt-realtime-1.5 -o eva.yaml
 harbor-voice jobs start -c tau.yaml
 ```
@@ -110,7 +114,10 @@ harbor-voice jobs start -c tau.yaml
 [`registry.json`](https://github.com/amoh-ai/harbor-voice/blob/main/registry.json) lists the datasets. Their tasks are in
 [harbor-voice-datasets](https://github.com/amoh-ai/harbor-voice-datasets) and
 their images on `ghcr.io/amoh-ai`, both pinned, so a version always runs the
-same thing. Without `@VERSION`, harbor picks the latest. For a condition or
+same thing. Published versions: 0.1.0, 0.1.1 and 0.1.2, the latest. The
+datasets repo's README says what changed in each and which images each pins.
+From 0.1.1 the images are built for x86 and ARM; each adapter's README lists
+the current tags. Without `@VERSION`, harbor picks the latest. For a condition or
 subset that isn't published, convert the tasks yourself from a checkout: each
 adapter's README shows how.
 
@@ -122,8 +129,10 @@ per trial and deletes it afterwards. Choose it with `job-config --env <type>`:
 - **Daytona.** Set `DAYTONA_API_KEY` and pass `--env daytona`.
 - **EC2.** harbor launches a VM per trial and reaches it over SSH; your
   account's settings go in the job config.
+- **Modal, Docker Sandboxes, GKE, Prime Intellect, Vercel.** `--env modal`,
+  `sbx`, `gke`, `prime` or `vercel`, with that service's sign-in.
 
-Setup for both, and prebuilt images for faster startup:
+Setup for each, and prebuilt images for faster startup:
 [docs/cloud.md](https://github.com/amoh-ai/harbor-voice/blob/main/docs/cloud.md).
 
 ## What a run leaves behind
@@ -166,7 +175,7 @@ From a source install:
 
 ```bash
 uv run pytest
-uv run ruff check src adapters tests && uv run ruff format src adapters tests
+uv run ruff check src adapters scripts tests && uv run ruff format src adapters scripts tests
 uv run ty check
 ```
 

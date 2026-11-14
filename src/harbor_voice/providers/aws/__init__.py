@@ -17,7 +17,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from harbor_voice.providers.aws import bedrock
+from harbor_voice.providers.aws import nova_sonic
 from harbor_voice.providers.aws.bedrock import BedrockLLM
+from harbor_voice.providers.aws.bedrock import NovaSonicSTT
 from harbor_voice.providers.aws.bedrock import NovaSonicTTS
 from harbor_voice.providers.aws.bedrock import SpokenAudio
 from harbor_voice.providers.aws.bedrock import VoxtralSTT
@@ -30,10 +33,12 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = [
     "MODEL_ID",
     "BedrockLLM",
+    "NovaSonicSTT",
     "NovaSonicTTS",
     "NovaSonicTransport",
     "SpokenAudio",
     "VoxtralSTT",
+    "register_all",
 ]
 
 
@@ -44,7 +49,5 @@ def register_all(registry: ProviderRegistry) -> None:
     the default registry — an import with a side effect on global state makes
     the provider you get depend on import order.
     """
-    from harbor_voice.providers.aws import bedrock, nova_sonic
-
     for spec, build in (*nova_sonic.REGISTRATIONS, *bedrock.REGISTRATIONS):
         registry.register(spec, build)

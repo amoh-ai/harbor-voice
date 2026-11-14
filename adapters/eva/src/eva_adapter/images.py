@@ -74,8 +74,12 @@ DESCRIPTIONS = {
 
 EVA_BASE = f"eva-base:{EVA_COMMIT}"
 """EVA's own Dockerfile at the commit (the sidecar Dockerfile's default)."""
-PLATFORM = "linux/amd64"
-"""EVA builds its image for amd64 (``scripts/docker_build.sh``)."""
+PLATFORMS = ("linux/amd64", "linux/arm64")
+"""Built into every image: x86 for most backends, ARM for sandboxes on Apple
+silicon (Docker Sandboxes, local Docker on a Mac), which run neither
+emulated. EVA's own script builds amd64 only (``scripts/docker_build.sh``);
+its Dockerfile builds on both. Building both needs Docker's containerd image
+store, Docker Desktop's default."""
 FROM_SOURCE = "eva-from-source"
 """The sidecar Dockerfile's own build of EVA's image (``EVA_BASE`` arg)."""
 
@@ -143,6 +147,12 @@ def _digest(parts: list[bytes]) -> str:
     return h.hexdigest()[:10]
 
 
+def _platforms() -> bytes:
+    """Part of every tag, so images built for other platforms get new tags
+    rather than replacing published ones."""
+    return ",".join(PLATFORMS).encode()
+
+
 def _named(name: str, tag: str, registry: str | None) -> str:
     return f"{registry.rstrip('/')}/{name}:{tag}" if registry else f"{name}:{tag}"
 
@@ -158,13 +168,15 @@ def sidecar_image(registry: str | None = None, *, from_source: bool = False) -> 
     files = [
         (SIDECAR / name).read_bytes().replace(b"\r\n", b"\n") for name in SIDECAR_FILES
     ]
-    tag = f"{EVA_COMMIT}-{_digest(files)}" + ("-src" if from_source else "")
+    tag = f"{EVA_COMMIT}-{_digest([*files, _platforms()])}" + (
+        "-src" if from_source else ""
+    )
     return _named("eva-sidecar", tag, registry)
 
 
 def main_image(registry: str | None = None, *, perturbed: bool = False) -> str:
     """``eva-main:<digest>``, or ``eva-main:perturbed-<digest>`` for a perturbed task."""
-    digest = _digest([main_dockerfile(perturbed).encode()])
+    digest = _digest([main_dockerfile(perturbed).encode(), _platforms()])
     return _named("eva-main", f"perturbed-{digest}" if perturbed else digest, registry)
 
 
@@ -254,8 +266,8 @@ def exists(image: str) -> bool:
 def build_eva_base(*, force: bool = False) -> str:
     """``eva-base:<commit>``: EVA's own Dockerfile on EVA's repo at the commit.
 
-    As EVA's ``scripts/docker_build.sh`` builds it (``linux/amd64``, the
-    ``GIT_*`` provenance args of a clean checkout), with the repo at the
+    As EVA's ``scripts/docker_build.sh`` builds it (the ``GIT_*`` provenance
+    args of a clean checkout), for :data:`PLATFORMS`, with the repo at the
     commit as the context instead of a local checkout.
     """
     if force or not exists(EVA_BASE):
@@ -264,7 +276,7 @@ def build_eva_base(*, force: bool = False) -> str:
                 "docker",
                 "build",
                 "--platform",
-                PLATFORM,
+                ",".join(PLATFORMS),
                 "-t",
                 EVA_BASE,
                 "--build-arg",
@@ -306,7 +318,7 @@ def build(
                 "docker",
                 "build",
                 "--platform",
-                PLATFORM,
+                ",".join(PLATFORMS),
                 *_labels("eva-sidecar"),
                 "-t",
                 sidecar,
@@ -321,7 +333,8 @@ def build(
         if force or not exists(main):
             # No build context: the Dockerfile copies nothing from disk.
             subprocess.run(
-                ["docker", "build", "--platform", PLATFORM, *_labels("eva-main")]
+                ["docker", "build", "--platform", ",".join(PLATFORMS)]
+                + _labels("eva-main")
                 + ["-t", main, "-"],
                 input=main_dockerfile(perturbed).encode(),
                 check=True,

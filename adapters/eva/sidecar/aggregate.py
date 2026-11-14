@@ -16,6 +16,12 @@ Run in the sidecar image; prints EVA's ``metrics_summary.json``::
 Each ``TRIAL_DIR`` is an extracted ``/files`` tar (or any EVA run
 directory). Archived attempts (``_failed_attempt_N``) are left out, as EVA
 leaves them out.
+
+EVA finds records with ``Path.iterdir()`` and does not sort them, and the
+bootstrap CIs depend on the order of the values. So EVA's CIs change with how
+the filesystem lists folders, which differs between machines and kernels.
+Here the records go to EVA sorted by id, so the same trials always give the
+same summary. Means, counts and pass@k do not depend on the order.
 """
 
 from __future__ import annotations
@@ -60,7 +66,14 @@ def aggregate(sources: list[Path], run_id: str, num_draws: int) -> str:
             target = run_dir / "records" / record_id / "metrics.json"
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(metrics, target)
-        asyncio.run(MetricsRunner.run_aggregate_only(run_dir, num_draws=num_draws))
+        discover = MetricsRunner._discover_record_dirs
+        MetricsRunner._discover_record_dirs = staticmethod(  # type: ignore[method-assign]
+            lambda run_dir, record_ids=None: sorted(discover(run_dir, record_ids))
+        )
+        try:
+            asyncio.run(MetricsRunner.run_aggregate_only(run_dir, num_draws=num_draws))
+        finally:
+            MetricsRunner._discover_record_dirs = staticmethod(discover)  # type: ignore[method-assign]
         return (run_dir / "metrics_summary.json").read_text()
 
 

@@ -299,12 +299,14 @@ class Recorder:
                 _last(sent_frames, Clock.TX) or 0.0,
                 party=sent_frames[0].party,
             )
-            self._place(sent_frames)
+            # What the caller sent carries a send stamp only; placing it by a
+            # receive stamp put every caller turn at zero.
+            self._place(sent_frames, Clock.TX)
 
         if turn.received:
             self._event(EventType.SPEECH_START, turn.first_rx or 0.0, party=turn.party)
             self._event(EventType.SPEECH_END, turn.last_rx or 0.0, party=turn.party)
-            self._place(turn.received)
+            self._place(turn.received, Clock.RX)
 
         for mark in turn.stages:
             self._event(
@@ -356,7 +358,7 @@ class Recorder:
         self._turns.append(record)
         return record
 
-    def _place(self, frames: Sequence[AudioFrame]) -> None:
+    def _place(self, frames: Sequence[AudioFrame], clock: Clock) -> None:
         from harbor_voice.trajectory.render import placed_from_frames
 
         for frame in frames:
@@ -367,7 +369,7 @@ class Recorder:
                 # A plan touched it but left no reference — the exact failure
                 # the clean reference exists to prevent.
                 self._unreferenced += 1
-        self._placed.extend(placed_from_frames(frames))
+        self._placed.extend(placed_from_frames(frames, clock=clock))
 
     # ---------------------------------------------------------- validity
 
@@ -454,6 +456,18 @@ class Recorder:
         """Mix every placed source onto one timeline."""
         return render_timeline(self._placed, fmt=self._config.fmt)
 
+    def segments(self) -> tuple[dict[str, Any], ...]:
+        """Each party's placed audio: who, when, and its hash."""
+        return tuple(
+            {
+                "party": str(p.party),
+                "t0": p.start_s,
+                "t1": p.end_s,
+                "digest": str(sha256_digest(p.pcm)),
+            }
+            for p in self._placed
+        )
+
     def finish(
         self,
         *,
@@ -478,15 +492,7 @@ class Recorder:
                     duration_s=mixed.duration_s,
                     bytes=len(mixed.pcm),
                 ),
-                segments=tuple(
-                    {
-                        "party": str(p.party),
-                        "t0": p.start_s,
-                        "t1": p.end_s,
-                        "digest": str(sha256_digest(p.pcm)),
-                    }
-                    for p in self._placed
-                ),
+                segments=self.segments(),
                 tier="T1",
             )
 
@@ -571,12 +577,20 @@ def _ref(pcm: bytes | None, fmt: AudioFormat) -> AudioRef | None:
 
 
 def matrix_from(
-    *, floor: BaseFloor, pipeline: PerturbationPipeline, profile: str = "clean"
+    *,
+    floor: BaseFloor,
+    pipeline: PerturbationPipeline,
+    agent_pipeline: Pipeline,
+    profile: str = "clean",
 ) -> ConfigMatrix:
-    """Build the pinned comparison dimensions from what actually ran."""
+    """Build the pinned comparison dimensions from what actually ran.
+
+    ``pipeline`` is the caller's perturbation stack; ``agent_pipeline`` is how
+    the agent under test turns audio into audio (cascade or s2s).
+    """
     return ConfigMatrix(
         duplex=floor.duplex,
-        pipeline=Pipeline.CASCADE,
+        pipeline=agent_pipeline,
         floor_policy=floor.name,
         profile=profile,
         seed_root=pipeline.seeds.root,

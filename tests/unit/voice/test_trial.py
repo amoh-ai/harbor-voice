@@ -173,18 +173,58 @@ class TestAHalfDuplexRun:
         matrix = result.trajectory.config_matrix
         assert matrix is not None
         assert matrix.duplex is Duplex.HALF
+        assert matrix.pipeline is Pipeline.CASCADE
         assert matrix.floor_policy == "HalfDuplexFloor"
         assert matrix.profile == "telephony"
         assert matrix.seed_root == 7
 
-    async def test_it_writes_the_three_documents(self, tmp_path: Path) -> None:
-        """The layering that keeps harbor's waist intact."""
+    def test_an_s2s_agent_is_recorded_as_s2s(self) -> None:
+        """The matrix names the agent's pipeline, not a fixed cascade."""
+        from harbor_voice.trajectory.recorder import matrix_from
+
+        trial = VoiceTrial(_config())
+        matrix = matrix_from(
+            floor=trial.floor(),
+            pipeline=trial.pipeline(),
+            agent_pipeline=Pipeline.S2S,
+        )
+        assert matrix.pipeline is Pipeline.S2S
+
+    async def test_it_writes_the_three_documents_and_the_call(
+        self, tmp_path: Path
+    ) -> None:
+        """The layering that keeps harbor's waist intact, plus the recording,
+        so whatever copies ``written`` takes the audio too."""
         result = await VoiceTrial(_config(), out_dir=tmp_path).run()
         assert {p.name for p in result.written} == {
             "measurement.json",
             "reward.json",
             "validity.json",
+            "call.wav",
         }
+
+    async def test_it_keeps_the_call_as_a_recording(self, tmp_path: Path) -> None:
+        """The call as heard, named in the trajectory by the file's hash, so
+        ``harbor-voice listen`` can find and play it."""
+        import hashlib
+        import wave
+
+        result = await VoiceTrial(_config(), out_dir=tmp_path).run()
+        recording = tmp_path / "call.wav"
+        ref = result.trajectory.artifacts.mixed_timeline
+        assert ref is not None and result.trajectory.artifacts.tier == "T1"
+        data = recording.read_bytes()
+        assert ref.digest == "sha256:" + hashlib.sha256(data).hexdigest()
+        assert ref.bytes == len(data)
+        with wave.open(str(recording)) as wav:
+            assert ref.duration_s == pytest.approx(
+                wav.getnframes() / wav.getframerate()
+            )
+            assert ref.duration_s > 0
+        # Each party's audio, placed on that timeline, stays listed too.
+        segments = result.trajectory.artifacts.segments
+        assert {s["party"] for s in segments} == {"caller", "agent"}
+        assert all(s["t1"] > s["t0"] for s in segments)
 
     async def test_nothing_is_written_without_an_out_dir(self) -> None:
         """A trial that only wants the trajectory should not litter."""
@@ -277,3 +317,104 @@ class TestWhatTheProfileDecides:
 
         with pytest.raises(UnknownProfile):
             await VoiceTrial(_config(profile="nope")).run()
+
+
+class TestAPersonaCallerHearsTheAgent:
+    """The caller reacts to what the agent said, not to the turn number."""
+
+    async def test_it_hears_a_cascades_own_words(self) -> None:
+        config = _config(
+            caller={
+                "source": "persona",
+                "brief": "a caller",
+                "llm": "offline.echo-llm",
+                "tts": "offline.tone-tts",
+            },
+            max_turns=2,
+        )
+        result = await VoiceTrial(config).run()
+        said = [t.said for t in result.trajectory.turns]
+        assert len(said) == 2
+        # The echo caller repeats what it was last told: on turn two that is
+        # the agent's first reply, not "0".
+        assert said[1] not in ("0", "1")
+        assert said[1] and said[1] != said[0]
+
+    async def test_a_speech_to_speech_agent_needs_a_caller_stt(self) -> None:
+        from types import SimpleNamespace
+
+        from harbor_voice.trial import TrialConfigError
+
+        config = _config(
+            caller={"source": "persona", "brief": "x", "llm": "offline.echo-llm"}
+        )
+        trial = VoiceTrial(config)
+        with pytest.raises(TrialConfigError, match="stt"):
+            await trial._agent_words(object(), [SimpleNamespace(received=())])  # ty: ignore[invalid-argument-type]
+
+    async def test_a_scripted_caller_reads_nothing(self) -> None:
+        assert await VoiceTrial(_config())._agent_words(object(), []) == []
+
+    async def test_a_cascades_words_are_grouped_by_turn(self) -> None:
+        """A probe draws a reply of its own, so ``said`` can have more lines
+        than there are turns; the caller must get one line per turn, or its
+        own lines and the agent's go out of step."""
+        from types import SimpleNamespace
+
+        config = _config(
+            caller={"source": "persona", "brief": "x", "llm": "offline.echo-llm"}
+        )
+        trial = VoiceTrial(config)
+        agent = SimpleNamespace(said=[])
+        turn = SimpleNamespace(received=())
+        assert await trial._agent_words(agent, []) == []  # ty: ignore[invalid-argument-type]
+        agent.said += ["Your code?", "Sure, go on."]  # a reply, and a probe's
+        assert await trial._agent_words(agent, [turn]) == [  # ty: ignore[invalid-argument-type]
+            "Your code? Sure, go on."
+        ]
+        agent.said += ["Booked."]
+        assert await trial._agent_words(agent, [turn, turn]) == [  # ty: ignore[invalid-argument-type]
+            "Your code? Sure, go on.",
+            "Booked.",
+        ]
+
+    async def test_a_second_run_hears_its_own_call(self) -> None:
+        """What the caller heard is forgotten when a call ends: a second run
+        of the same trial must not answer the first run's agent."""
+        config = _config(
+            caller={
+                "source": "persona",
+                "brief": "a caller",
+                "llm": "offline.echo-llm",
+                "tts": "offline.tone-tts",
+                "stt": "offline.scripted-stt",
+                "config": {"stt": {"turns": ["alpha", "beta", "gamma"]}},
+            },
+            max_turns=3,
+        )
+        trial = VoiceTrial(config)
+        first = await trial.run()
+        second = await trial.run()
+        assert [t.said for t in second.trajectory.turns] == [
+            t.said for t in first.trajectory.turns
+        ]
+
+    async def test_a_failing_close_neither_hides_the_call_nor_leaks_the_stt(
+        self,
+    ) -> None:
+        from types import SimpleNamespace
+
+        closed: list[str] = []
+
+        async def broken() -> None:
+            raise RuntimeError("close failed")
+
+        async def stt_close() -> None:
+            closed.append("stt")
+
+        trial = VoiceTrial(_config())
+        trial._hearing = SimpleNamespace(aclose=stt_close)
+        trial._heard_lines = ["old"]
+        await trial._close_caller(SimpleNamespace(aclose=broken))  # ty: ignore[invalid-argument-type]
+        assert closed == ["stt"]
+        assert trial._hearing is None and trial._heard_lines == []

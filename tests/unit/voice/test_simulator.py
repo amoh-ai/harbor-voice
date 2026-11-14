@@ -110,6 +110,52 @@ class TestContentSources:
         assert not source.is_deterministic
         assert source.kind is SourceKind.LLM
 
+    async def test_persona_is_told_who_it_is_and_hears_the_agent(self) -> None:
+        """The brief reaches the model, and each turn it sees the agent's
+        last line with its own earlier lines in between."""
+
+        class Recording:
+            name = "recording"
+
+            def __init__(self) -> None:
+                self.calls: list[tuple[str, list[str]]] = []
+
+            async def respond(self, prompt, history):  # noqa: ANN001, ANN202
+                self.calls.append((prompt, list(history)))
+                yield f"caller line {len(self.calls)}"
+
+        llm = Recording()
+        source = PersonaContent(brief="Maria, rebooking K7Q2ZP", llm=llm)
+        first = await source.next([])
+        second = await source.next(["What is your booking code?"])
+        assert first is not None and second is not None
+        opening, history = llm.calls[0]
+        assert "Maria, rebooking K7Q2ZP" in opening and history == []
+        prompt, history = llm.calls[1]
+        assert prompt == "What is your booking code?"
+        assert history == [opening, "caller line 1"]
+
+    async def test_persona_hangs_up_after_its_goodbye(self) -> None:
+        class Scripted:
+            name = "scripted"
+
+            def __init__(self, lines: list[str]) -> None:
+                self.lines = lines
+
+            async def respond(self, prompt, history):  # noqa: ANN001, ANN202
+                yield self.lines.pop(0)
+
+        source = PersonaContent(
+            brief="x", llm=Scripted(["Hi.", "Thanks, goodbye! [END CALL]", "more"])
+        )
+        assert (await source.next([])).text == "Hi."  # ty: ignore[possibly-missing-attribute]
+        last = await source.next(["Done."])
+        assert last is not None and last.text == "Thanks, goodbye!"
+        assert source.hung_up
+        assert await source.next(["Bye."]) is None
+        source.reset()
+        assert not source.hung_up
+
     async def test_persona_stops_at_its_turn_cap(self) -> None:
         source = PersonaContent(brief="x", llm=EchoLLM(), max_turns=2)
         assert await source.next(["a"]) is not None
@@ -305,3 +351,29 @@ class TestRepr:
     def test_repr_names_the_source_and_layers(self) -> None:
         r = repr(_sim(pipeline=_pipeline()))
         assert "source=script" in r and "layers=3" in r
+
+
+class TestClosingTheCaller:
+    async def test_the_persona_llm_is_closed_even_if_the_tts_close_fails(
+        self,
+    ) -> None:
+        closed: list[str] = []
+
+        class LLM:
+            name = "llm"
+
+            async def aclose(self) -> None:
+                closed.append("llm")
+
+        class TTS(ToneTTS):
+            async def aclose(self) -> None:
+                raise RuntimeError("tts close failed")
+
+        simulator = UniversalSimulator(
+            party=PartyId("caller"),
+            content=PersonaContent(brief="x", llm=LLM()),
+            tts=TTS(),
+        )
+        with pytest.raises(RuntimeError, match="tts close failed"):
+            await simulator.aclose()
+        assert closed == ["llm"]

@@ -114,10 +114,13 @@ class SteppedCall:
         max_steps: tau2's ``max_steps_ticks`` (1200 s / 0.2 s).
         audio_format: Of the wire, both ways; the transport's ``audio_in``.
         stepper: The provider's tick (:class:`AgentStepper`, tau2's Realtime
-            adapter, by default; :class:`LiveAgentStepper` for OpenAI Live).
+            adapter, by default; :class:`LiveAgentStepper` for OpenAI Live,
+            :class:`GeminiAgentStepper` for Gemini Live,
+            :class:`CascadeAgentStepper` for a duplex cascade).
             A stepper with ``convert_input`` turns each step of caller audio
-            into the provider's format, sent whole (``send_format``), as
-            tau2's Live adapter queues a tick at once for WebRTC to clock.
+            into the provider's format (``send_format``). It is sent whole
+            when the stepper ``sends_whole`` (Live and the cascade), else in
+            paced packets (Gemini, as tau2 sends it).
         realtime_pacing: tau2's ``realtime_pacing``: steps start on a fixed
             schedule rather than when the last one ended, so after a pause
             (the caller thinking) they run back to back until caught up.
@@ -171,7 +174,7 @@ class SteppedCall:
         self.fmt = audio_format
         self.gate = gate or StepGate()
         self.step_s = step_s
-        self.packet_bytes = audio_format.frame_bytes(packet_ms)
+        self.packet_ms = packet_ms
         self.step_bytes = step_bytes
         self.max_steps = max_steps
         self.greeting = greeting
@@ -273,10 +276,13 @@ class SteppedCall:
         await self.gate.advance(k)
         self._window = k
         self.stepper.begin()
-        if self._convert is not None:
+        if self._convert is None:
+            await self._send(audio, self.fmt)
+        elif self.stepper.sends_whole:
             await self._send_whole(self._convert(audio))
         else:
-            await self._send(audio)
+            assert self.send_format is not None
+            await self._send(self._convert(audio), self.send_format)
         remaining = self.step_s - (loop.time() - tick_start)
         if self.realtime_pacing:
             # tau2 still listens 10 ms when a step starts late (catching up).
@@ -304,24 +310,23 @@ class SteppedCall:
             await self._tools.wait_for(lambda: self._tool_steps.get(k, 0) == 0)
         return step
 
-    async def _send(self, audio: bytes) -> None:
-        for offset in range(0, len(audio), self.packet_bytes):
-            packet = audio[offset : offset + self.packet_bytes]
-            if len(packet) < self.packet_bytes:
-                break
+    async def _send(self, audio: bytes, fmt: AudioFormat) -> None:
+        """One step in packets, paced (tau2's VoIP-style send)."""
+        size = fmt.frame_bytes(self.packet_ms)
+        for offset in range(0, len(audio), size):
+            packet = audio[offset : offset + size]
             await self.transport.tx(
                 AudioFrame(
                     pcm=packet,
                     seq=self._seq,
                     party=self.party,
                     t_produced=0.0,
-                    fmt=self.fmt,
+                    fmt=fmt,
                 )
             )
             self._seq += 1
             await asyncio.sleep(
-                self.packet_bytes
-                / (self.fmt.sample_rate_hz * self.fmt.bytes_per_sample)
+                len(packet) / (fmt.sample_rate_hz * fmt.bytes_per_sample)
             )
 
     async def _send_whole(self, audio: bytes) -> None:

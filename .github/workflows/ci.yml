@@ -8,17 +8,24 @@ on:
 
 jobs:
   check:
+    # 3.13 jobs keep the names main's ruleset requires: check (<os>).
+    name: check (${{ matrix.os }}${{ matrix.python != '3.13' && format(', {0}', matrix.python) || '' }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        python: ["3.13"]
+        include:
+          # The oldest Python the package claims.
+          - os: ubuntu-latest
+            python: "3.12"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       # setup-uv publishes no major tags since v8: pin the exact release.
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: "3.13"
+          python-version: ${{ matrix.python }}
       - name: Install
         run: uv sync --locked
       - name: Lint

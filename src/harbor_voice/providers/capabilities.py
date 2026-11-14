@@ -47,6 +47,10 @@ class Modality(StrEnum):
     S2S = "s2s"
     """Audio in, audio out — a transport, not a slot."""
 
+    OMNI = "omni"
+    """Audio in, text out: hears the caller and writes the reply, in place of
+    a cascade's STT and LLM. A TTS speaks it."""
+
     @property
     def is_slot(self) -> bool:
         """Whether this modality composes into a cascade.

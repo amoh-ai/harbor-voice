@@ -11,6 +11,7 @@ import pytest
 from tau_voice import Sidecar
 from tau_voice import SidecarError
 from tau_voice import Tau2Content
+from harbor_voice.providers import base as provider_base
 from harbor_voice.providers.openai import llm as oa
 from tau_voice.reactive import CallerToolCall
 from tau_voice.reactive import CallerToolResult
@@ -66,7 +67,7 @@ def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     async def instant(_: float) -> None:
         return None
 
-    monkeypatch.setattr(oa.asyncio, "sleep", instant)
+    monkeypatch.setattr(provider_base.asyncio, "sleep", instant)
 
 
 def _content(llm_reply: dict) -> tuple[Tau2Content, list[httpx.Request]]:

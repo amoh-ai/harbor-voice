@@ -115,6 +115,35 @@ class AudioFormat:
         return f"{self.encoding}/{self.sample_rate_hz}Hz/{self.channels}ch"
 
 
+class FrameCutter:
+    """Re-cuts a byte stream into frame-sized chunks.
+
+    Streaming providers deliver audio in whatever sizes their HTTP body
+    arrives in. :meth:`feed` returns the whole frames each chunk completes;
+    :meth:`tail` returns what is left, trimmed to whole samples.
+    """
+
+    def __init__(self, fmt: AudioFormat) -> None:
+        self._size = fmt.frame_bytes()
+        self._slot = fmt.bytes_per_frame_slot
+        self._pending = bytearray()
+
+    def feed(self, chunk: bytes) -> list[bytes]:
+        self._pending += chunk
+        cut = len(self._pending) - len(self._pending) % self._size
+        frames = [
+            bytes(self._pending[i : i + self._size]) for i in range(0, cut, self._size)
+        ]
+        del self._pending[:cut]
+        return frames
+
+    def tail(self) -> bytes:
+        whole = len(self._pending) - len(self._pending) % self._slot
+        tail = bytes(self._pending[:whole])
+        self._pending.clear()
+        return tail
+
+
 CANONICAL = AudioFormat()
 """The one internal format. See the module docstring."""
 

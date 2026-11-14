@@ -8,10 +8,9 @@ Harbor has moved and reshaped that table between releases
 (``harbor.agents.model_connection`` with ``api_key_envs`` tuples, then
 ``harbor.agents.agent_auth_resolution`` with ``api_key_candidate_names``
 lists). We read either into our own :class:`CredentialAccess`, so this module
-works across those versions and nothing else here depends on harbor's shape. The overlay rather than an in-place edit
-because harbor-voice is a fork that may take upstream merges: a table we have
-rewritten conflicts on every upstream change to it, and an overlay conflicts
-never.
+works across those versions and nothing else here depends on harbor's shape.
+Our own entries sit in an overlay consulted first, since harbor is a pinned
+dependency we do not edit.
 
 What this module does *not* do is resolve connections the way harbor's
 ``resolve_model_connection`` does. That function's job is rewriting env-var
@@ -77,23 +76,52 @@ _AWS_ACCESS = CredentialAccess(
     ("AWS_ACCESS_KEY_ID",),
     extra_envs=("AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_REGION"),
 )
-"""Transcribe, Polly and Nova Sonic all authenticate the same way.
-
-One entry rather than three, because three identical entries would invite them
-to drift apart for no reason.
-"""
+"""Every AWS provider (Nova Sonic, Nova STT and TTS, Voxtral, Bedrock)
+authenticates the same way, so they share one entry rather than drifting
+apart as several."""
 
 VOICE_PROVIDER_ACCESS: dict[str, CredentialAccess] = {
     "aws": _AWS_ACCESS,
+    "azure-speech": CredentialAccess(
+        ("AZURE_SPEECH_KEY",), extra_envs=("AZURE_SPEECH_ENDPOINT",)
+    ),
     "elevenlabs": CredentialAccess(("ELEVENLABS_API_KEY",)),
+    "cartesia": CredentialAccess(("CARTESIA_API_KEY",)),
+    "deepgram": CredentialAccess(("DEEPGRAM_API_KEY",)),
+    "fishaudio": CredentialAccess(("FISH_API_KEY",)),
+    "sarvam": CredentialAccess(("SARVAM_API_KEY",)),
+    # litellm providers harbor's table does not list.
+    "hosted_vllm": CredentialAccess(
+        (), extra_envs=("HOSTED_VLLM_API_BASE", "HOSTED_VLLM_API_KEY")
+    ),
+    "meta_llama": CredentialAccess(("LLAMA_API_KEY",)),
+    # One entry per slot, each needing its own server's address: a model
+    # server that is not configured is "missing", not "ready".
+    **{
+        f"selfhosted-{slot}": CredentialAccess(
+            (), extra_envs=(f"SELFHOSTED_{slot.upper()}_BASE_URL", "SELFHOSTED_API_KEY")
+        )
+        for slot in ("stt", "tts", "llm", "realtime", "omni")
+    },
 }
 """Voice-only providers, consulted before harbor's table."""
 
 
+LITELLM_GUESS = "litellm:"
+"""Prefix of a slug for a litellm provider no table lists, e.g.
+``litellm:nscale``. Its variables follow litellm's own naming rule."""
+
+
 def access_for(slug: str | None) -> CredentialAccess | None:
-    """Find a provider's credential requirements. Overlay first, then harbor."""
+    """Find a provider's credential requirements. Overlay first, then harbor,
+    then litellm's naming rule for a ``litellm:<provider>`` slug."""
     if slug is None:
         return None
+    if slug.startswith(LITELLM_GUESS):
+        prefix = slug.removeprefix(LITELLM_GUESS).upper()
+        return CredentialAccess(
+            (f"{prefix}_API_KEY",), base_url_envs=(f"{prefix}_API_BASE",)
+        )
     return VOICE_PROVIDER_ACCESS.get(slug) or HARBOR_PROVIDERS.get(slug)
 
 
@@ -214,6 +242,8 @@ _OPTIONAL_ENVS: frozenset[str] = frozenset(
         "AWS_PROFILE",
         "GOOGLE_APPLICATION_CREDENTIALS",
         "AZURE_API_VERSION",
+        "SELFHOSTED_API_KEY",
+        "HOSTED_VLLM_API_KEY",
     }
 )
 """Variables whose absence is normal rather than a misconfiguration.

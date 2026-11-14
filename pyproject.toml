@@ -1,6 +1,6 @@
 [project]
 name = "harbor-voice"
-version = "0.1.1"
+version = "0.1.2"
 description = "Evaluate voice agents on phone-call benchmarks, on harbor."
 readme = "README.md"
 license = "Apache-2.0"
@@ -25,6 +25,10 @@ dependencies = [
     "harbor==0.25.0",
     "numpy>=2.0",
     "websockets>=13.0",
+    # litellm.llm (harbor pulls litellm in too). Before 1.108.8 every call
+    # with tools imported litellm's MCP proxy code, which needs `mcp`, a
+    # package litellm does not install: a cascade failed on its first tool.
+    "litellm>=1.108.8",
     # Real G.711 for telephony wire formats (harbor_voice/audio/g711.py).
     # audioop left the stdlib in 3.13; audioop-lts is its maintained port.
     "audioop-lts>=0.2; python_version >= '3.13'",
@@ -42,14 +46,25 @@ live = ["aiortc==1.15.0"]
 # Cloud backends are harbor's; these pass its extras through.
 daytona = ["harbor[daytona]==0.25.0"]
 ec2 = ["harbor[ec2]==0.25.0"]
+gke = ["harbor[gke]==0.25.0"]
+langsmith = ["harbor[langsmith]==0.25.0"]
+modal = ["harbor[modal]==0.25.0"]
+prime = ["harbor[prime]==0.25.0"]
+sbx = ["harbor[sbx]==0.25.0"]
+vercel = ["harbor[vercel]==0.25.0"]
+# Gemini Live on Vertex AI: an access token from Application Default
+# Credentials. AI Studio needs nothing extra.
+google = ["google-auth[requests]>=2.0"]
 # The benchmark adapters, released with harbor-voice at the same version.
-tau-voice = ["harbor-voice-tau-voice-adapter==0.1.1"]
-eva = ["harbor-voice-eva-adapter==0.1.1"]
+tau-voice = ["harbor-voice-tau-voice-adapter==0.1.2"]
+eva = ["harbor-voice-eva-adapter==0.1.2"]
 
 [project.urls]
 Homepage = "https://github.com/amoh-ai/harbor-voice"
 Repository = "https://github.com/amoh-ai/harbor-voice"
+Documentation = "https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md"
 Issues = "https://github.com/amoh-ai/harbor-voice/issues"
+Changelog = "https://github.com/amoh-ai/harbor-voice/releases"
 
 [project.scripts]
 harbor-voice = "harbor_voice.cli:main"
@@ -67,7 +82,7 @@ harbor-voice-eva-adapter = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "harbor-voice[aws,daytona,ec2,live]",
+    "harbor-voice[aws,daytona,ec2,gke,google,langsmith,live,modal,prime,sbx,vercel]",
     "harbor-voice-tau-voice-adapter",
     "harbor-voice-eva-adapter",
     "pytest>=8.4.2",

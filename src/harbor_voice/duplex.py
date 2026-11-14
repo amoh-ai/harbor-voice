@@ -51,13 +51,18 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import dataclasses
+from collections.abc import Callable
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
 from typing import override
 
 from harbor_voice.audio.clock import Clock
+from harbor_voice.audio import convert
 from harbor_voice.audio.clock import SessionClock
+from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.audio.stages import Stage
 from harbor_voice.adapter import Turn
@@ -75,11 +80,33 @@ from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.transport.base import SessionConfig
 from harbor_voice.transport.base import VoiceTransport
-from harbor_voice.transport.drain import DEFAULT_IDLE_S
 from harbor_voice.transport.drain import DrainStop
 from harbor_voice.transport.pump import InboundPump
 
 DEFAULT_TURN_TIMEOUT_S = 30.0
+LINE_FRAME_S = 0.02
+"""The line's pace: one frame every 20 ms for the whole call, caller speech
+when there is some and silence otherwise, as a phone line carries. Agents
+find the end of a turn by hearing the pause after it."""
+
+DUPLEX_IDLE_S = 1.0
+"""Quiet that ends the agent's turn on a full-duplex call. A model streaming
+at speaking pace leaves short gaps between words and sentences, so the 0.2 s a
+half-duplex drain uses would cut its reply after the first word."""
+
+
+@dataclass(slots=True)
+class _Speech:
+    """One caller utterance queued on the line, and what became of it."""
+
+    caller: PartyId
+    pending: list[tuple[AudioFrame, AudioFrame]]
+    sent: list[AudioFrame] = field(default_factory=list)
+    last_tx: float = 0.0
+    done: asyncio.Event = field(default_factory=asyncio.Event)
+    on_start: Callable[[], None] | None = None
+
+
 _POLL_S = 0.005
 
 
@@ -198,7 +225,8 @@ class DuplexDriver:
             than the gap between the two constructors -- so it surfaces under
             load and nowhere else. Share it with the transport too, if the
             transport stamps its own frames.
-        idle_s: Quiet period that ends the agent's turn.
+        idle_s: Quiet period that ends the agent's turn
+            (:data:`DUPLEX_IDLE_S` by default).
         turn_timeout_s: Hard ceiling. A turn that hits it is a reply we gave
             up on, so any yield aimed at it stays unresolved rather than being
             recorded as an agent that eventually stopped.
@@ -213,7 +241,7 @@ class DuplexDriver:
         floor: BargeInFloor | None = None,
         conversation: ConversationPlan | None = None,
         clock: SessionClock | None = None,
-        idle_s: float = DEFAULT_IDLE_S,
+        idle_s: float = DUPLEX_IDLE_S,
         turn_timeout_s: float = DEFAULT_TURN_TIMEOUT_S,
     ) -> None:
         self._transport = transport
@@ -225,6 +253,8 @@ class DuplexDriver:
         self._idle_s = idle_s
         self._turn_timeout_s = turn_timeout_s
         self._pump = InboundPump(transport)
+        self._queue: asyncio.Queue[_Speech] = asyncio.Queue()
+        self._line_task: asyncio.Task[None] | None = None
         self._turn_index = 0
         self._call_s = 0.0
 
@@ -271,9 +301,15 @@ class DuplexDriver:
             )
         await self._transport.open(config)
         self._pump.start()
+        self._line_task = asyncio.create_task(self._line())
 
     async def close(self) -> None:
         """Close the transport and stop the pump. Idempotent."""
+        if self._line_task is not None:
+            self._line_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await self._line_task
+            self._line_task = None
         await self._transport.close()
         await self._pump.stop()
 
@@ -287,7 +323,13 @@ class DuplexDriver:
 
         index = self._turn_index
         self._turn_index += 1
-        bled = self._pump.take_pending()
+        # Only sound counts: the quiet a continuously streaming agent sends
+        # between replies did not cross into the caller's turn.
+        bled = tuple(
+            frame
+            for frame in map(self._from_wire, self._pump.take_pending())
+            if not convert.is_quiet(frame.pcm)
+        )
         started_at = self._call_s
 
         sent, last_tx = await self._speak(utterance.frames, bid=Bid.FLOOR)
@@ -311,7 +353,12 @@ class DuplexDriver:
     # -------------------------------------------------------------- speaking
 
     async def _speak(
-        self, frames: Sequence[AudioFrame], *, bid: Bid, at_call_s: float | None = None
+        self,
+        frames: Sequence[AudioFrame],
+        *,
+        bid: Bid,
+        at_call_s: float | None = None,
+        on_start: Callable[[], None] | None = None,
     ) -> tuple[tuple[AudioFrame, ...], float]:
         """Transmit the caller's audio and hold the floor for as long as it lasts.
 
@@ -328,21 +375,130 @@ class DuplexDriver:
         caller = frames[0].party
         start = self._call_s if at_call_s is None else at_call_s
         self._floor.speech_start(caller, start, bid=bid)
-        sent: list[AudioFrame] = []
-        last_tx = self._clock.now()
-        for frame in frames:
-            now = self._clock.now()
-            if self._floor.may_transmit(caller, now) is not Decision.ALLOW:
-                continue
-            stamped = frame.stamp(Clock.TX, now)
-            await self._transport.tx(stamped)
-            sent.append(stamped)
-            last_tx = now
+        speech = _Speech(
+            caller=caller,
+            pending=list(zip(frames, self._to_wire(frames), strict=True)),
+            last_tx=self._clock.now(),
+            on_start=on_start,
+        )
+        await self._queue.put(speech)
+        await self._until(speech.done)
+        sent, last_tx = speech.sent, speech.last_tx
         spoken_s = sum(f.duration_s for f in frames)
         self._floor.speech_end(caller, start + spoken_s)
         if at_call_s is None:
             self._call_s = start + spoken_s
         return tuple(sent), last_tx
+
+    # ------------------------------------------------------------ formats
+
+    @property
+    def _wire(self) -> Any:
+        """The format the agent takes: its declared ``audio_in``."""
+        return getattr(self._transport.capabilities, "audio_in", None) or CANONICAL
+
+    def _to_wire(self, frames: Sequence[AudioFrame]) -> list[AudioFrame]:
+        """The caller's frames in the agent's input format, one for one.
+
+        The utterance is converted whole, so the resampler sees one signal
+        rather than a click at every frame edge, then cut back at the
+        original frames' boundaries.
+        """
+        wire = self._wire
+        if all(f.fmt == wire for f in frames):
+            return list(frames)
+        fmt = frames[0].fmt
+        if any(f.fmt != fmt for f in frames):
+            return [
+                dataclasses.replace(
+                    f, pcm=convert.convert(f.pcm, f.fmt, wire), fmt=wire
+                )
+                for f in frames
+            ]
+        data = convert.convert(b"".join(f.pcm for f in frames), fmt, wire)
+        step = wire.bytes_per_sample * wire.channels
+        out: list[AudioFrame] = []
+        elapsed, cut = 0.0, 0
+        for f in frames:
+            elapsed += f.duration_s
+            end = min(len(data), int(round(elapsed * wire.sample_rate_hz)) * step)
+            out.append(dataclasses.replace(f, pcm=data[cut:end], fmt=wire))
+            cut = end
+        return out
+
+    def _from_wire(self, frame: AudioFrame) -> AudioFrame:
+        """An agent frame in the recording format."""
+        if frame.fmt == CANONICAL:
+            return frame
+        return dataclasses.replace(
+            frame, pcm=convert.convert(frame.pcm, frame.fmt, CANONICAL), fmt=CANONICAL
+        )
+
+    # --------------------------------------------------------------- line
+
+    async def _line(self) -> None:
+        """Keep audio flowing to the agent in real time until the call closes.
+
+        Queued caller speech goes out frame by frame at its own pace; between
+        utterances the line carries silence in the agent's format. A frame
+        the floor refuses (the caller yielding) is replaced by silence, so
+        the line never stops.
+        """
+        loop = asyncio.get_running_loop()
+        wire = self._wire
+        quiet = convert.silence(wire, LINE_FRAME_S)
+        due = loop.time()
+        seq = 0
+        speech: _Speech | None = None
+        while True:
+            if speech is None and not self._queue.empty():
+                speech = self._queue.get_nowait()
+            length = LINE_FRAME_S
+            now = self._clock.now()
+            if speech is not None and speech.pending:
+                if speech.on_start is not None:
+                    speech.on_start()
+                    speech.on_start = None
+                frame, on_wire = speech.pending.pop(0)
+                length = frame.duration_s or LINE_FRAME_S
+                if self._floor.may_transmit(speech.caller, now) is Decision.ALLOW:
+                    await self._transport.tx(on_wire.stamp(Clock.TX, now))
+                    speech.sent.append(frame.stamp(Clock.TX, now))
+                    speech.last_tx = now
+                else:
+                    await self._transport.tx(self._quiet(quiet, wire, seq, now))
+                if not speech.pending:
+                    speech.done.set()
+                    speech = None
+            else:
+                await self._transport.tx(self._quiet(quiet, wire, seq, now))
+            seq += 1
+            due += length
+            await asyncio.sleep(max(0.0, due - loop.time()))
+
+    def _quiet(self, pcm: bytes, wire: Any, seq: int, now: float) -> AudioFrame:
+        return AudioFrame(
+            pcm=pcm,
+            seq=seq,
+            party=self._simulator.party,
+            t_produced=now,
+            fmt=wire,
+            filler=True,
+        ).stamp(Clock.TX, now)
+
+    async def _until(self, event: asyncio.Event) -> None:
+        """Wait for ``event``; raise if the line died first."""
+        line = self._line_task
+        if line is None:
+            raise DuplexError("the driver is not open")
+        waiter = asyncio.create_task(event.wait())
+        await asyncio.wait({waiter, line}, return_when=asyncio.FIRST_COMPLETED)
+        if not event.is_set():
+            waiter.cancel()
+            error = line.exception() if line.done() else None
+            if error is not None:
+                raise error
+            raise DuplexError("the line closed before the caller finished speaking")
 
     # -------------------------------------------------------------- draining
 
@@ -360,9 +516,26 @@ class DuplexDriver:
         received: list[AudioFrame] = []
         stream = self._pump.stream()
 
+        voiced = 0
+        # Frames up to the last voiced one: the quiet a continuously
+        # streaming agent sends after its reply is not part of the reply.
+        reply_end = 0
+
         async def _consume() -> None:
+            # An agent that streams continuously (WebRTC) sends silence
+            # between replies. Silence before the reply starts is not the
+            # reply; the reply ends when the agent goes quiet, not when frames
+            # stop arriving.
+            nonlocal voiced, reply_end
             async for frame in stream:
+                frame = self._from_wire(frame)
+                quiet = convert.is_quiet(frame.pcm)
+                if quiet and not voiced:
+                    continue
                 received.append(frame)
+                if not quiet:
+                    voiced += 1
+                    reply_end = len(received)
 
         task = asyncio.create_task(_consume())
         loop = asyncio.get_running_loop()
@@ -379,6 +552,10 @@ class DuplexDriver:
         stop = DrainStop.TIMEOUT
         try:
             while True:
+                # A transport whose stream fails (a cascade slot that broke)
+                # ends the call now, rather than after the turn's timeout or,
+                # on the last turn, not at all.
+                self._pump.check()
                 if task.done():
                     stop = DrainStop.STREAM_END
                     break
@@ -386,8 +563,8 @@ class DuplexDriver:
                 if now >= deadline:
                     stop = DrainStop.TIMEOUT
                     break
-                if len(received) != seen:
-                    seen, quiet_since = len(received), now
+                if voiced != seen:
+                    seen, quiet_since = voiced, now
                     if not holding:
                         holding = True
                         # The one thing the session clock is the right
@@ -401,15 +578,32 @@ class DuplexDriver:
                 reply_s = sum(f.duration_s for f in received)
                 while pending and pending[0].at_s <= reply_s:
                     probe = pending.pop(0)
+                    landed: list[tuple[float, int]] = []
+
+                    def _landed() -> None:
+                        # Where the reply had reached when the probe's first
+                        # frame went out on the line, not when it was queued.
+                        landed.append(
+                            (sum(f.duration_s for f in received), len(received))
+                        )
+
+                    await self._inject(
+                        probe, at_call_s=agent_t0 + reply_s, on_start=_landed
+                    )
+                    at_reply_s, frames_seen = (
+                        landed[0] if landed else (reply_s, len(received))
+                    )
                     fired.append(
                         _Injection(
                             probe=probe,
-                            at_reply_s=reply_s,
-                            frames_seen=len(received),
-                            t_tx=agent_t0 + reply_s,
+                            at_reply_s=at_reply_s,
+                            frames_seen=frames_seen,
+                            t_tx=agent_t0 + at_reply_s,
                         )
                     )
-                    await self._inject(probe, at_call_s=agent_t0 + reply_s)
+                    # The probe plays in real time; the agent's quiet period
+                    # counts from when the caller stopped, not from before.
+                    quiet_since = loop.time()
                     # Re-read: injecting awaits, so more frames may have landed
                     # and the next probe's offset may already have passed.
                     reply_s = sum(f.duration_s for f in received)
@@ -420,6 +614,8 @@ class DuplexDriver:
             with contextlib.suppress(asyncio.CancelledError):
                 await task
 
+        # Trailing quiet ends the reply; it is not part of it.
+        del received[reply_end:]
         if not received:
             stop = DrainStop.EMPTY
 
@@ -430,7 +626,13 @@ class DuplexDriver:
 
         return tuple(received), stop, self._results(probes, fired, received, stop)
 
-    async def _inject(self, probe: Probe, *, at_call_s: float) -> None:
+    async def _inject(
+        self,
+        probe: Probe,
+        *,
+        at_call_s: float,
+        on_start: Callable[[], None] | None = None,
+    ) -> None:
         """Synthesise and transmit one probe, under its own bid.
 
         ``at_call_s`` pins the probe to the agent's speech rather than to the
@@ -439,7 +641,9 @@ class DuplexDriver:
         """
         utterance = await self._simulator.probe_utterance(probe)
         if utterance.frames:
-            await self._speak(utterance.frames, bid=probe.bid, at_call_s=at_call_s)
+            await self._speak(
+                utterance.frames, bid=probe.bid, at_call_s=at_call_s, on_start=on_start
+            )
 
     def _results(
         self,

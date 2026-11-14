@@ -27,6 +27,7 @@ from tau_voice.reactive import CallerToolResult
 from tau_voice.reactive import HangUp
 from tau_voice.reactive import Pending
 from tau_voice.reactive import Say
+from tau_voice.agent_steps import GeminiAgentStepper
 from tau_voice.agent_steps import LiveAgentStepper
 from tau_voice.reactive import StepRecord
 from tau_voice.stepped_call import CallResult
@@ -308,6 +309,26 @@ async def test_a_live_step_goes_out_whole_in_the_providers_format() -> None:
     assert agent.frames[0].fmt == AudioFormat()
     assert agent.frames[0].pcm == _live().convert_input(audio)
     assert step.was_truncated is False
+
+
+async def test_a_gemini_step_goes_out_in_paced_packets_in_its_format() -> None:
+    """tau2's Gemini adapter converts a tick to 16 kHz and sends it in 20 ms
+    chunks (``send_audio_instant`` is off by default)."""
+    agent = NoTruncate()
+    pcm16k = AudioFormat(sample_rate_hz=16_000)
+    stepper = GeminiAgentStepper(bytes_per_step=1600, bytes_per_second=8000)
+    call = _call(Script([]), agent, stepper=stepper, send_format=pcm16k)
+    audio = SPEECH * 1600
+    expected = GeminiAgentStepper(
+        bytes_per_step=1600, bytes_per_second=8000
+    ).convert_input(audio)
+    await call._agent_step(1, audio, CallResult())
+
+    assert all(frame.fmt == pcm16k for frame in agent.frames)
+    # The resampler can come up a sample short; the short packet still goes.
+    assert all(len(f.pcm) == 640 for f in agent.frames[:-1])
+    assert len(agent.frames) == 10
+    assert b"".join(f.pcm for f in agent.frames) == expected
 
 
 async def test_realtime_pacing_makes_up_the_time_the_caller_spent() -> None:

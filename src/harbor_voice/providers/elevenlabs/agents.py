@@ -64,7 +64,6 @@ import asyncio
 import base64
 import contextlib
 import json
-import os
 import urllib.parse
 from collections import Counter
 from collections.abc import AsyncIterator
@@ -89,9 +88,13 @@ from harbor_voice.capabilities import Pipeline
 from harbor_voice.capabilities import TurnControl
 from harbor_voice.ids import PartyId
 from harbor_voice.providers.base import ProviderError
+from harbor_voice.providers.base import HTTPSession
+from harbor_voice.providers.base import PooledHTTP
 from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import http_failure
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -227,7 +230,7 @@ AgentsEvent = (
 # ----------------------------------------------------------------------- REST
 
 
-class AgentsAPI:
+class AgentsAPI(PooledHTTP):
     """The REST half of ElevenLabs Agents: the requests SDK 2.53 makes.
 
     No retries, as the SDK makes none by default; errors come back as
@@ -246,7 +249,7 @@ class AgentsAPI:
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._client = client
+        self._http = HTTPSession(client)
 
     @property
     def api_base(self) -> str:
@@ -254,12 +257,9 @@ class AgentsAPI:
 
     def require_key(self) -> str:
         """The API key, or an ``auth`` failure naming the variable (never the value)."""
-        key = self._api_key or os.environ.get("ELEVENLABS_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH, "ELEVENLABS_API_KEY is not set", provider=NAME
-            )
-        return key
+        return require_key(
+            self._api_key, "ELEVENLABS_API_KEY", provider=NAME, model=None
+        )
 
     def _headers(self) -> dict[str, str]:
         return {**SDK_HEADERS, "xi-api-key": self.require_key()}
@@ -273,7 +273,7 @@ class AgentsAPI:
         body: Mapping[str, Any] | None = None,
     ) -> httpx.Response:
         headers = self._headers()
-        client = self._client or httpx.AsyncClient(timeout=self._timeout_s)
+        client = self._http.client(self._timeout_s)
         try:
             response = await client.request(
                 method,
@@ -290,9 +290,6 @@ class AgentsAPI:
             raise ProviderError(
                 ProviderFailure.STREAM_BROKEN, f"{method} /{path}: {exc}", provider=NAME
             ) from exc
-        finally:
-            if self._client is None:
-                await client.aclose()
         if not 200 <= response.status_code < 300:
             raise _error(response, f"{method} /{path}")
         return response
@@ -366,19 +363,13 @@ def _path(segment: str) -> str:
 
 
 def _error(response: httpx.Response, what: str) -> ProviderError:
+    """A 404 is an agent or conversation this account cannot see."""
     status = response.status_code
-    detail = response.text[:300]
-    if status in (401, 403):
-        kind = ProviderFailure.AUTH
-    elif status == 404:
-        kind = ProviderFailure.NOT_ENABLED
-    elif status == 429:
-        kind = ProviderFailure.THROTTLED
-    elif status >= 500:
-        kind = ProviderFailure.STREAM_BROKEN
-    else:
-        kind = ProviderFailure.MALFORMED
-    return ProviderError(kind, f"{what} → {status}: {detail}", provider=NAME)
+    return ProviderError(
+        http_failure(status, not_found=ProviderFailure.NOT_ENABLED),
+        f"{what} → {status}: {response.text[:300]}",
+        provider=NAME,
+    )
 
 
 def with_sdk_source(signed_url: str) -> str:
@@ -1122,7 +1113,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="elevenlabs",
-    requires_extra="voice",
     default_model=None,
 )
 """The spec string names the agent: ``elevenlabs.agents/<agent_id>``."""

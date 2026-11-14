@@ -12,13 +12,85 @@ and checked, not probed.
 
 | Kind | Providers |
 |---|---|
-| Speech to speech | `openai.realtime`, `openai.live`, `aws.nova-sonic`, `elevenlabs.agents` |
-| Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral` |
-| LLM, for cascades | `openai.llm`, `aws.bedrock-llm` |
-| Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts` |
+| Speech to speech | `openai.realtime`, `openai.live`, `aws.nova-sonic`, `elevenlabs.agents`, `google.live`, `xai.realtime`, `deepgram.agent`, `selfhosted.realtime` |
+| Speech to text, for cascades | `aws.nova-stt`, `aws.voxtral`, `deepgram.stt`, `cartesia.stt`, `sarvam.stt`, `fishaudio.stt`, `xai.stt`, `meta.stt`, `microsoft.stt`, `openrouter.stt`, `selfhosted.stt` |
+| LLM, for cascades | `openai.llm`, `aws.bedrock-llm`, `litellm.llm`, `selfhosted.llm` |
+| Text to speech, for cascades | `elevenlabs.tts`, `aws.nova-tts`, `deepgram.tts`, `cartesia.tts`, `sarvam.tts`, `fishaudio.tts`, `xai.tts`, `openrouter.tts`, `selfhosted.tts` |
+| Omni (audio in, text out), in place of STT and LLM | `openrouter.omni`, `selfhosted.omni` |
 | Offline, for tests | `offline.scripted-stt`, `offline.echo-llm`, `offline.scripted-llm`, `offline.tool-echo-llm`, `offline.tone-tts` |
 
-More providers are on the way.
+- `google.live` signs in with an AI Studio key (`GEMINI_API_KEY`), or with
+  Vertex AI when `GOOGLE_GENAI_USE_VERTEXAI=true` (Application Default
+  Credentials, `GOOGLE_CLOUD_PROJECT`, the `google` extra).
+- `openai.llm` calls `/v1/chat/completions` by default. OpenAI's reasoning
+  models refuse tools there unless `reasoning_effort` is `"none"`, so to
+  reason and call tools set `api = "responses"` with an effort
+  (`--agent-config '{"llm": {"api": "responses", "reasoning_effort": "low"}}'`),
+  which sends the conversation to `/v1/responses` instead.
+- `litellm.llm/<litellm model>` routes through litellm, which harbor already
+  depends on: `litellm.llm/gemini/...`, `litellm.llm/vertex_ai/...`,
+  `litellm.llm/xai/...`, `litellm.llm/bedrock/...`,
+  `litellm.llm/openrouter/<model>` (`OPENROUTER_API_KEY`), and any vLLM, SGLang or
+  Ollama server as `litellm.llm/hosted_vllm/<model>` (`HOSTED_VLLM_API_BASE`).
+  Each model's variables are passed into the trial's sandbox. A litellm
+  provider harbor does not list follows litellm's naming:
+  `<PROVIDER>_API_KEY`, and `<PROVIDER>_API_BASE` if set.
+- `microsoft.stt` is MAI-Transcribe (default `MAI-Transcribe-2`) through an
+  Azure Speech resource: `AZURE_SPEECH_KEY` and `AZURE_SPEECH_ENDPOINT`
+  (`https://<resource>.cognitiveservices.azure.com`, in a region that offers it).
+- `selfhosted.stt` and `selfhosted.tts` call an OpenAI-compatible speech
+  server (vLLM, vLLM-Omni, SGLang): `/v1/audio/transcriptions` and
+  `/v1/audio/speech`, at `SELFHOSTED_STT_BASE_URL` / `SELFHOSTED_TTS_BASE_URL`.
+- `selfhosted.llm/<model>` calls a server's `/v1/chat/completions` directly
+  (vLLM, SGLang, Ollama), at `SELFHOSTED_LLM_BASE_URL`, with no litellm in
+  between.
+- `openrouter.stt/<model>` and `openrouter.tts/<model>` are OpenRouter's
+  speech models (`OPENROUTER_API_KEY`), e.g. `openrouter.stt/deepgram/nova-3`
+  or `openrouter.tts/elevenlabs/eleven-flash-v2.5` with `voice = "sarah"`.
+  Most speech models need a voice; each model's voices are in
+  `GET https://openrouter.ai/api/v1/models?output_modalities=speech`.
+  Models OpenRouter serves only as MP3 (MiniMax) are not supported.
+- `aws.bedrock-llm` holds a conversation too: OpenAI chat messages, tool
+  calls and results included, go to Bedrock as one Converse call, so it can
+  be a tau-voice cascade's LLM. It uses its own `system` only when the
+  conversation brings none.
+- `openai.llm` takes the agent's instructions as `system`, sent with the role
+  `system_role` names: `"system"` (default) or `"developer"` as the first
+  message, or `"instructions"`, the Responses API's top-level field (with
+  `api = "responses"`). A conversation that brings its own instructions (a
+  tau-voice cascade) keeps them, with these added after.
+- An omni model hears the caller and writes the reply in one call, and a TTS
+  speaks it: `pipeline = "cascade"` with `omni` and `tts` instead of `stt`,
+  `llm` and `tts`. `openrouter.omni/<model>` (e.g.
+  `openrouter.omni/qwen/qwen3.8-omni-flash`) and `selfhosted.omni/<model>` (a
+  server's `/v1/chat/completions` taking `input_audio`, at
+  `SELFHOSTED_OMNI_BASE_URL`). It runs on the built-in call loop only, offers
+  no tools, and has no ASR seam (said-vs-heard has nothing to read).
+- `selfhosted.realtime/<model>` is a speech-to-speech model behind vLLM-Omni's
+  `/v1/realtime` (Qwen3-Omni), at `SELFHOSTED_REALTIME_BASE_URL`. All five
+  send `SELFHOSTED_API_KEY` as a bearer token when it is set. Inside a
+  trial's sandbox `localhost` is the sandbox itself, so a base URL pointing
+  there is refused before the call starts: use `host.docker.internal` for
+  local Docker, or the server's public URL.
+- Serving Qwen3-Omni-30B-A3B with vLLM-Omni takes two 80 GB GPUs: it puts the
+  thinker on GPU 0 and the talker and code2wav on GPU 1. Install
+  `vllm-omni[server-vad]`, or the server refuses server VAD and the model
+  never hears the caller finish. On an image without the CUDA toolkit, set
+  `VLLM_USE_FLASHINFER_SAMPLER=0`, or vLLM tries to compile FlashInfer's
+  sampler at startup and fails.
+
+A benchmark driver that runs a full-duplex call (tau-voice's) gets a cascade
+as `harbor_voice.cascade.DuplexCascadeTransport`. It follows tau2's cascaded
+turn-taking and keeps the whole conversation, tool calls and results
+included. Turn detection is Deepgram's, as in tau2: one Deepgram stream per
+call gives the turns and the transcript, so the STT slot must be
+`deepgram.stt`, and any other is refused. Its LLM slot has to implement
+`ChatLLM` (`openai.llm`, `selfhosted.llm`, `litellm.llm`, `aws.bedrock-llm`,
+`offline.echo-llm`, `offline.tool-echo-llm`). Its `ref` names all three slots, and
+`usage_records()` gives one record per slot: audio seconds, LLM tokens and
+TTS characters. A job can set a driver's options for every task it
+runs with the call agent's `call_config` kwarg (`--ak 'call_config={...}'`),
+which overrides the task's `[call].config`.
 
 `harbor-voice caps` prints each provider's capabilities and which credentials
 are missing. The conformance suite checks a provider against what it
@@ -29,7 +101,7 @@ a live session (the module's docstring shows how).
 
 The benchmark adapters bring their own caller and call loop. A task that
 declares a `[caller]` instead runs on harbor-voice's own. It has a seeded
-simulated caller (a script, a persona LLM or recorded clips), half- or
+simulated caller (a script or a persona LLM), half- or
 full-duplex turn-taking, and perturbation layers. Each layer is recorded with
 what it achieved, not just what was asked for, and the clean audio is kept
 for comparison.
@@ -81,6 +153,27 @@ print(outcome.reward)  # the call's metrics, also in out/reward.json
 Path("out/trajectory.json").write_text(outcome.trajectory.to_atif_json(), encoding="utf-8")
 ```
 
+A persona caller is an LLM playing someone: `source = "persona"`, a `brief`
+(who they are and what they want), an `llm` and a `tts`. It hears the agent
+as text. A cascade agent's own words (what its TTS was given) are used by
+default. A speech-to-speech agent's words exist only as audio, so set
+`stt = "<provider/model>"` under `[caller]` to transcribe each reply; without
+it the trial fails with a config error. The caller hangs up by ending its goodbye line with
+`[END CALL]`. That line is spoken without the marker, and the call ends
+after it.
+
+```toml
+[caller]
+source = "persona"
+brief = "Dana Ruiz. Wants to move Tuesday's 3 pm appointment to Thursday."
+llm = "openai.llm/gpt-4.1"
+tts = "deepgram.tts/aura-2-thalia-en"
+stt = "deepgram.stt/nova-3"
+```
+
+The call itself is `out/call.wav`, both parties on one timeline; the
+trajectory names it by hash, so `harbor-voice listen out/trajectory.json` finds it.
+
 `out/` also gets `measurement.json` and `validity.json`, and
 `harbor-voice show out/trajectory.json` summarises the call.
 
@@ -109,5 +202,5 @@ these are optional:
 |---|---|
 | `live` | OpenAI Live, over WebRTC |
 | `aws` | Amazon Nova Sonic and the Bedrock providers |
-| `daytona` | harbor's Daytona backend |
-| `ec2` | harbor's EC2 backend |
+| `google` | Gemini Live on Vertex AI |
+| `daytona`, `ec2`, `gke`, `langsmith`, `modal`, `prime`, `sbx`, `vercel` | harbor's cloud backend of that name |

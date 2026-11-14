@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -47,6 +48,8 @@ from harbor_voice.providers import UnknownProvider
 from harbor_voice.providers.credentials import access_for
 from harbor_voice.providers.credentials import resolve as resolve_credentials
 from harbor_voice.providers.credentials import VOICE_PROVIDER_ACCESS
+from tests.unit.voice.fakes import Closed
+from tests.unit.voice.fakes import Rejected
 
 pytestmark = pytest.mark.unit
 
@@ -846,3 +849,179 @@ class TestReferenceStackApplicability:
         stack = ReferenceStack(reference_stt="deepgram.nova/en-US")
         verdict = stack.word_timing_applicability(registry_with_two_stts())
         assert verdict.verdict is Verdict.UNATTESTED
+
+
+@pytest.mark.parametrize(
+    ("status", "not_found", "kind"),
+    [
+        (401, None, "auth"),
+        (402, None, "auth"),
+        (404, None, "malformed"),
+        (404, "region", "region"),
+        (408, None, "timeout"),
+        (429, None, "throttled"),
+        (503, None, "stream_broken"),
+        (422, None, "malformed"),
+    ],
+)
+def test_http_failure_maps_statuses_alike_for_every_provider(
+    status: int, not_found: str | None, kind: str
+) -> None:
+    from harbor_voice.providers.base import ProviderFailure
+    from harbor_voice.providers.base import http_failure
+
+    extra = {"not_found": ProviderFailure(not_found)} if not_found else {}
+    assert http_failure(status, **extra) is ProviderFailure(kind)
+
+
+def test_require_key_takes_the_first_variable_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from harbor_voice.providers.base import ProviderError
+    from harbor_voice.providers.base import require_key
+
+    monkeypatch.delenv("A_KEY", raising=False)
+    monkeypatch.setenv("B_KEY", "b")
+    assert require_key(None, "A_KEY", "B_KEY", provider="p", model=None) == "b"
+    assert require_key("given", "A_KEY", provider="p", model=None) == "given"
+    monkeypatch.delenv("B_KEY")
+    with pytest.raises(ProviderError, match="A_KEY or B_KEY is not set"):
+        require_key(None, "A_KEY", "B_KEY", provider="p", model=None)
+    with pytest.raises(ProviderError, match=r"A_KEY is not set \(or sign in\)"):
+        require_key(None, "A_KEY", provider="p", model=None, hint="or sign in")
+
+
+@pytest.mark.parametrize(
+    ("exc", "kind"),
+    [
+        (Rejected(403), "auth"),
+        (Rejected(503), "stream_broken"),
+        (Closed(1013), "throttled"),
+        (Closed(1000), "stream_broken"),
+        (TimeoutError(), "timeout"),
+        (ConnectionRefusedError(), "stream_broken"),
+        (ConnectionResetError(), "stream_broken"),
+        (json.JSONDecodeError("bad", "x", 0), "malformed"),
+        (RuntimeError("odd"), "stream_broken"),
+    ],
+)
+def test_socket_failure_maps_one_way_for_every_provider(
+    exc: Exception, kind: str
+) -> None:
+    """A refused or reset connection is a broken stream, not a timeout."""
+    from harbor_voice.providers.base import socket_failure
+
+    close_codes = {1013: ProviderFailure.THROTTLED}
+    error = socket_failure(exc, provider="p", model="m", close_codes=close_codes)
+    assert error.kind is ProviderFailure(kind)
+    assert (error.provider, error.model) == ("p", "m")
+
+
+def test_retry_waits_double_from_one_second_up_to_ten() -> None:
+    from harbor_voice.providers.base import retry_wait
+
+    assert [retry_wait(n) for n in range(1, 7)] == [1, 2, 4, 8, 10, 10]
+
+
+async def test_an_http_session_keeps_one_client_until_closed() -> None:
+    from harbor_voice.providers.base import HTTPSession
+
+    session = HTTPSession()
+    first = session.client(5.0)
+    assert session.client(5.0) is first  # one connection pool per provider
+    await session.aclose()
+    assert first.is_closed
+    assert session.client(5.0) is not first  # reopens if used again
+
+
+async def test_an_http_session_leaves_a_callers_client_open() -> None:
+    import httpx
+
+    from harbor_voice.providers.base import HTTPSession
+
+    given = httpx.AsyncClient()
+    session = HTTPSession(given)
+    assert session.client(5.0) is given
+    await session.aclose()
+    assert not given.is_closed
+    await given.aclose()
+
+
+async def test_an_http_session_follows_a_slow_servers_redirect(monkeypatch) -> None:
+    """Modal's web proxy answers a request still running after ~150 s with a
+    303 to where the result will appear; the result must be read, not an
+    error raised over the redirect."""
+    import httpx
+
+    from harbor_voice.providers import base
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/chat/completions":
+            return httpx.Response(303, headers={"location": "/result/1"})
+        assert request.method == "GET"
+        return httpx.Response(200, json={"ok": True})
+
+    real = httpx.AsyncClient
+
+    def with_mock(**kw: object) -> httpx.AsyncClient:
+        return real(transport=httpx.MockTransport(handler), **kw)  # ty: ignore[invalid-argument-type]
+
+    monkeypatch.setattr(base.httpx, "AsyncClient", with_mock)
+    session = base.HTTPSession(follow_redirects=True)
+    response = await session.client(5.0).post("https://server/v1/chat/completions")
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+    await session.aclose()
+
+
+async def test_an_http_session_does_not_follow_redirects_by_default(
+    monkeypatch,
+) -> None:
+    """httpx drops only ``Authorization`` on a redirect to another host, so a
+    key in a vendor header (ElevenLabs' ``xi-api-key``) would follow it. Only
+    self-hosted providers opt in."""
+    import httpx
+
+    from harbor_voice.providers import base
+
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.host == "api.vendor":
+            return httpx.Response(307, headers={"location": "https://elsewhere/x"})
+        return httpx.Response(200)
+
+    real = httpx.AsyncClient
+
+    def with_mock(**kw: object) -> httpx.AsyncClient:
+        return real(transport=httpx.MockTransport(handler), **kw)  # ty: ignore[invalid-argument-type]
+
+    monkeypatch.setattr(base.httpx, "AsyncClient", with_mock)
+    session = base.HTTPSession()
+    response = await session.client(5.0).post(
+        "https://api.vendor/v1/tts", headers={"xi-api-key": "secret"}
+    )
+    assert response.status_code == 307
+    assert [r.url.host for r in seen] == ["api.vendor"]
+    await session.aclose()
+
+
+def test_only_self_hosted_providers_follow_redirects(monkeypatch) -> None:
+    from harbor_voice.providers.elevenlabs.tts import ElevenLabsTTS
+    from harbor_voice.providers.openai.llm import OpenAILLM
+    from harbor_voice.providers.selfhosted import llm as selfhosted_llm
+    from harbor_voice.providers.selfhosted.omni import OmniLLM
+    from harbor_voice.providers.selfhosted.speech import SelfHostedSTT
+    from harbor_voice.providers.selfhosted.speech import SelfHostedTTS
+
+    monkeypatch.setenv(selfhosted_llm.BASE_URL_ENV, "http://server")
+    following = [
+        selfhosted_llm.build(model="m"),
+        OmniLLM(model="m", base_url="http://server"),
+        SelfHostedSTT(model="m"),
+        SelfHostedTTS(model="m"),
+    ]
+    assert all(p._http._follow_redirects for p in following)
+    assert not OpenAILLM()._http._follow_redirects
+    assert not ElevenLabsTTS()._http._follow_redirects

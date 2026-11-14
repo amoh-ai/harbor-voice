@@ -38,7 +38,9 @@ second vendor is reachable.
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import AsyncIterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -48,7 +50,6 @@ from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.ids import PartyId
-from harbor_voice.providers.aws.nova_sonic import MAX_SESSION_S
 from harbor_voice.providers.aws.nova_sonic import NOVA_OUTPUT_FORMAT
 from harbor_voice.providers.aws.nova_sonic import NovaSonicTransport
 from harbor_voice.providers.aws.nova_sonic import _classify
@@ -58,15 +59,16 @@ from harbor_voice.perturbation.persona import Gender
 from harbor_voice.perturbation.persona import VoiceSelection
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.tools import ChatRound
 from harbor_voice.providers.tools import ToolInvocation
 from harbor_voice.providers.tools import ToolRouter
+from harbor_voice.providers.tools import ToolSpec
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.protocols import Transcript
 from harbor_voice.transport.base import SessionConfig
 
 VOXTRAL_MINI = "mistral.voxtral-mini-3b-2507"
-VOXTRAL_SMALL = "mistral.voxtral-small-24b-2507"
 NOVA_TTS_MODEL = "amazon.nova-2-5-sonic"
 DEFAULT_LLM = "amazon.nova-pro-v1:0"
 """ON_DEMAND and streaming in us-east-1.
@@ -282,6 +284,73 @@ class BedrockLLM:
                     yield text
             elif "metadata" in event:
                 self.usage = _usage_from_converse(event["metadata"].get("usage", {}))
+
+    # -------------------------------------------------------------- chat
+
+    async def chat(
+        self, messages: Sequence[Mapping[str, Any]], tools: Sequence[ToolSpec]
+    ) -> ChatRound:
+        """The :class:`~harbor_voice.providers.tools.ChatLLM` shape: one Converse call.
+
+        ``messages`` are OpenAI chat messages (what a tau-voice cascade
+        keeps); they are converted to Converse's format, the same request
+        LiteLLM sends for a ``bedrock/`` model. The conversation carries its
+        own system message; :attr:`system` is used only when it has none.
+        """
+        if self._client is None:
+            self._client = _runtime(self.region)
+        system, converse = _to_converse(messages)
+        request: dict[str, Any] = {
+            "modelId": self.model,
+            "messages": converse,
+            "inferenceConfig": {
+                "maxTokens": self.max_tokens,
+                "temperature": self.temperature,
+            },
+        }
+        # Converse refuses a blank system text, so none is sent when neither
+        # the conversation nor this LLM has instructions.
+        if instructions := system or ([self.system] if self.system else []):
+            request["system"] = [{"text": text} for text in instructions]
+        if tools:
+            request["toolConfig"] = {
+                "tools": [spec.as_bedrock() for spec in tools],
+                "toolChoice": {"auto": {}},
+            }
+        try:
+            response = await asyncio.to_thread(self._client.converse, **request)
+        except Exception as exc:
+            raise _classify(exc, self.model, self.name) from exc
+        counts = response.get("usage") or {}
+        self.usage = _usage_from_converse(counts)
+        content = ((response.get("output") or {}).get("message") or {}).get(
+            "content"
+        ) or []
+        spoken = _ReasoningFilter()
+        text = "".join(spoken.feed(b["text"]) for b in content if b.get("text"))
+        text += spoken.flush()
+        calls = tuple(
+            ToolInvocation(
+                tool_use_id=use.get("toolUseId", ""),
+                name=use.get("name", ""),
+                arguments=use.get("input")
+                if isinstance(use.get("input"), dict)
+                else {},
+            )
+            for use in (b.get("toolUse") for b in content)
+            if use
+        )
+        return ChatRound(
+            text=text.strip(),
+            calls=calls,
+            usage={
+                "prompt_tokens": int(counts.get("inputTokens") or 0),
+                "completion_tokens": int(counts.get("outputTokens") or 0),
+                "prompt_tokens_details": {
+                    "cached_tokens": int(counts.get("cacheReadInputTokens") or 0)
+                },
+            },
+        )
 
     # ------------------------------------------------------------- tools
 
@@ -504,6 +573,81 @@ def _keep_tail(text: str, tag: str) -> str:
         if tag.startswith(text[-size:]):
             return text[-size:]
     return ""
+
+
+def _to_converse(
+    messages: Sequence[Mapping[str, Any]],
+) -> tuple[list[str], list[dict[str, Any]]]:
+    """OpenAI chat messages as Converse's: system texts, then the turns.
+
+    Converse wants user and assistant turns alternating, tool results inside
+    a user turn, and tool calls as ``toolUse`` blocks with parsed input, so
+    consecutive messages of one role are merged into one turn.
+    """
+    system: list[str] = []
+    turns: list[dict[str, Any]] = []
+
+    def add(role: str, blocks: list[dict[str, Any]]) -> None:
+        if not blocks:
+            return
+        if turns and turns[-1]["role"] == role:
+            turns[-1]["content"].extend(blocks)
+        else:
+            turns.append({"role": role, "content": blocks})
+
+    for message in messages:
+        role = message.get("role")
+        text = _text_of(message.get("content"))
+        if role in ("system", "developer"):
+            if text:
+                system.append(text)
+        elif role == "tool":
+            add(
+                "user",
+                [
+                    {
+                        "toolResult": {
+                            "toolUseId": message.get("tool_call_id", ""),
+                            "content": [{"text": text or ""}],
+                        }
+                    }
+                ],
+            )
+        elif role == "assistant":
+            blocks: list[dict[str, Any]] = [{"text": text}] if text else []
+            for call in message.get("tool_calls") or ():
+                function = call.get("function") or {}
+                arguments = function.get("arguments") or "{}"
+                if isinstance(arguments, str):
+                    arguments = ToolInvocation.from_json(
+                        tool_use_id="", name="", raw=arguments
+                    ).arguments
+                blocks.append(
+                    {
+                        "toolUse": {
+                            "toolUseId": call.get("id", ""),
+                            "name": function.get("name", ""),
+                            "input": arguments,
+                        }
+                    }
+                )
+            add("assistant", blocks)
+        else:
+            add("user", [{"text": text}] if text else [])
+    return system, turns
+
+
+def _text_of(content: Any) -> str:
+    """A chat message's content as plain text (string or text parts)."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            part.get("text", "") for part in content if isinstance(part, Mapping)
+        )
+    return json.dumps(content)
 
 
 def _assistant(
@@ -936,5 +1080,3 @@ REGISTRATIONS: tuple[tuple[ProviderSpec, Any], ...] = (
     (NOVA_TTS_SPEC, build_tts),
     (NOVA_STT_SPEC, build_nova_stt),
 )
-
-MAX_TTS_SESSION_S = MAX_SESSION_S

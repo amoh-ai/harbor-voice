@@ -13,10 +13,15 @@ A transport declaring ``EVENT_STREAM`` yields, in arrival order:
 - :class:`OutputTranscript` — the agent's own transcript of an utterance, as
   deltas. tau-voice's caller reads *this*, not a recognition of the audio;
 - :class:`InputSpeech` — the provider's VAD opening or closing on our audio,
-  with its position in the input audio buffer.
+  with its position in the input audio buffer;
+- a cancelled :class:`ResponseDone`, from a transport that stops itself when
+  the caller barges in and has no ``TRUNCATE`` (Gemini Live): the point
+  where it gave up the utterance.
 
 A transport may also yield the session events below, but only when its
-caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``).
+caller asks for them (OpenAI Realtime: ``RealtimeSettings.extended_events``),
+or when its own turn-taking is made of them (a duplex cascade's
+``InputTranscript``: tau2's cascaded adapter treats one as a barge-in).
 A stepped consumer rejects a kind it does not know — deliberately, so nothing
 is dropped unseen — so these never reach one that did not opt in:
 
@@ -81,7 +86,8 @@ class InputSpeech:
 
 @dataclass(frozen=True, slots=True)
 class InputTranscript:
-    """The provider's transcript of a stretch of our audio, once final.
+    """The provider's transcript of a stretch of our audio, once final
+    (unless :attr:`is_final` says otherwise).
 
     Realtime: ``conversation.item.input_audio_transcription.completed``, or
     ``.failed`` with :attr:`error` set and empty text. ``text`` is exactly as
@@ -95,6 +101,10 @@ class InputTranscript:
     error: str | None = None
     """Why transcription failed, when it did. A recorder that keeps the turn
     anyway (EVA writes a placeholder) needs to know it happened."""
+    is_final: bool = True
+    """``False`` for an interim transcript, which a later one replaces. Only
+    a duplex cascade sends these (Deepgram's interim results); tau2's
+    cascaded adapter treats one as a barge-in, like a final."""
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,0 +1,153 @@
+{
+ "source": "tau2-bench@2174a60 DiscreteTimeGeminiAdapter",
+ "steps": [
+  {
+   "sent": "5568fd12117dcd08175da524016cbb72b73c19366b08a4ff7bfa69c2d34c5ca1",
+   "sent_len": 6398,
+   "played_sha256": "aa0abee9ee741362d2755bd5f09a5b9d88fdf694220df2a0d8bc713eca8b0f44",
+   "played_len": 1600,
+   "raw_len": 1200,
+   "transcript": "Hello, ",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-0"
+   ]
+  },
+  {
+   "sent": "d9b3d42218efef3af50eb4b4dfca32b1479e0f9208c6fb11f15b6ccb76793d90",
+   "sent_len": 6400,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "how can I help you",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-0"
+   ]
+  },
+  {
+   "sent": "96478a71f4c05d9842fb193e88e871125cfae35bdd144757703b5304ddab7eca",
+   "sent_len": 6400,
+   "played_sha256": "8a3046532f65e3a1ccb7a643dfd0d0960ee2408e5b1ed5365c5dbf79fb785262",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": " today?",
+   "contains_speech": null,
+   "vad_events": [
+    "interrupted"
+   ],
+   "was_truncated": true,
+   "truncated_audio_bytes": 800,
+   "utterances": [
+    "turn-0"
+   ]
+  },
+  {
+   "sent": "66a2466e31922162a943d25c1cb5ae6c721e29847fb09da9bd60c54bb42d1858",
+   "sent_len": 6398,
+   "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
+   "played_len": 1600,
+   "raw_len": 0,
+   "transcript": "",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 800,
+   "utterances": []
+  },
+  {
+   "sent": "96478a71f4c05d9842fb193e88e871125cfae35bdd144757703b5304ddab7eca",
+   "sent_len": 6400,
+   "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
+   "played_len": 1600,
+   "raw_len": 0,
+   "transcript": "",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  },
+  {
+   "sent": "d9b3d42218efef3af50eb4b4dfca32b1479e0f9208c6fb11f15b6ccb76793d90",
+   "sent_len": 6400,
+   "played_sha256": "469a0e56e015f07301da63cac1fdc3c95f8f6e2cadaa49af8fb9ffebb1b44c60",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "Sure, one mome",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-1"
+   ]
+  },
+  {
+   "sent": "96478a71f4c05d9842fb193e88e871125cfae35bdd144757703b5304ddab7eca",
+   "sent_len": 6400,
+   "played_sha256": "23be638e1b039affe01345046e88a1f0a41da7796d7bc12abc6ade911892ffac",
+   "played_len": 1600,
+   "raw_len": 1600,
+   "transcript": "",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-1"
+   ]
+  },
+  {
+   "sent": "d9b3d42218efef3af50eb4b4dfca32b1479e0f9208c6fb11f15b6ccb76793d90",
+   "sent_len": 6400,
+   "played_sha256": "66e8eb9f3e34983c39153b4ceff0a0ca4247d59742aa55406bafa9917f8576bd",
+   "played_len": 1600,
+   "raw_len": 1200,
+   "transcript": "nt.",
+   "contains_speech": null,
+   "vad_events": [
+    "interrupted"
+   ],
+   "was_truncated": true,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-1"
+   ]
+  },
+  {
+   "sent": "5568fd12117dcd08175da524016cbb72b73c19366b08a4ff7bfa69c2d34c5ca1",
+   "sent_len": 6398,
+   "played_sha256": "b6bfa5069d4bf0ae9490273783ac079c04895ea2762e26d6a36d2db651445503",
+   "played_len": 1600,
+   "raw_len": 800,
+   "transcript": "Okay.",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": [
+    "turn-2"
+   ]
+  },
+  {
+   "sent": "d9b3d42218efef3af50eb4b4dfca32b1479e0f9208c6fb11f15b6ccb76793d90",
+   "sent_len": 6400,
+   "played_sha256": "7c5ae07a9e21a19bb55f0497b4e673a03b41a4c51cb935a3619a9799722ca57c",
+   "played_len": 1600,
+   "raw_len": 0,
+   "transcript": "",
+   "contains_speech": null,
+   "vad_events": [],
+   "was_truncated": false,
+   "truncated_audio_bytes": 0,
+   "utterances": []
+  }
+ ]
+}

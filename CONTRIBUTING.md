@@ -59,15 +59,20 @@ uv run ty check
 
 ## Adding a provider
 
-A provider implements the transport contract
+A speech-to-speech provider implements the transport contract
 (`src/harbor_voice/transport/base.py`): four methods, plus a capability
-declaration for everything optional.
+declaration for everything optional. A speech-to-text, LLM or text-to-speech
+provider implements its protocol in `src/harbor_voice/providers/protocols.py`.
+Read keys with `require_key` and map HTTP errors with `http_failure`
+(`providers/base.py`).
 
 1. Put it under `src/harbor_voice/providers/<vendor>/` and add it to that
    package's `register_all`. A new vendor also goes in `_VENDORS`
-   (`src/harbor_voice/trial.py`).
-2. Test it offline, against a fake socket; no test calls a real API.
-3. Verify what it declares with `harbor_voice.conformance.run_conformance`,
+   (`src/harbor_voice/providers/registry.py`), and a new key in the table in
+   `providers/credentials.py` if harbor's table lacks it.
+2. Add it to the provider table in `docs/library.md`.
+3. Test it offline, against a fake socket; no test calls a real API.
+4. Verify what it declares with `harbor_voice.conformance.run_conformance`,
    from a test against a live session (the module's docstring shows how).
 
 ## Adding a benchmark
@@ -116,6 +121,8 @@ uv run python scripts/hub.py images             # build, push, record
 ```
 
 - Commit the records it writes, `adapters/*/images.json`.
+- Every image is built for `linux/amd64` and `linux/arm64` under one tag.
+- Update the tag tables in both adapters' READMEs ("Images") to the new tags.
 - A tag the registry already serves is never pushed again.
 - `--force` rebuilds first; an image built without the OCI labels needs it.
 
@@ -156,11 +163,12 @@ rm $D/eva/job.yaml $D/eva-parity/job.yaml eva-parity.json
 - `eva-adapter convert` also writes a `job.yaml` with local paths; the
   datasets repo's CI rejects it.
 
-**3. Release the tasks.** In the datasets repo, review the diff, then:
+**3. Release the tasks.** In the datasets repo, review the diff, then
+(with the new version in place of 0.1.2 throughout these steps):
 
 ```bash
-git add -A && git commit -m "v0.1.0" && git push
-git tag v0.1.0 && git push origin v0.1.0
+git add -A && git commit -m "v0.1.2" && git push
+git tag v0.1.2 && git push origin v0.1.2
 ```
 
 Its CI (the task checks, then `harbor lint`) must pass. Merge pull requests
@@ -171,7 +179,7 @@ squash or a rebase drops breaks every version pinned to it.
 
 ```bash
 uv run python scripts/hub.py register --datasets-repo ../harbor-voice-datasets \
-    --commit v0.1.0 --version 0.1.0 \
+    --commit v0.1.2 --version 0.1.2 \
     --dataset tau-voice-control "tau-voice: all 278 tau2 tasks, control speech" \
     --dataset tau-voice-regular "tau-voice: all 278 tau2 tasks, regular speech" \
     --dataset tau-voice-control-test "tau-voice: tau2's test split (100), control speech" \

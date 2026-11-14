@@ -3,8 +3,9 @@
 STT -> LLM -> TTS, composed in-process, so harbor-voice owns every seam and
 can mark all seven stages. A speech-to-speech provider exposes two.
 
-Turn boundaries are detected by input-side tail silence: once no frame has
-arrived for ``input_idle_s``, the accumulated audio is a turn and the pipeline
+Turn boundaries are detected by input-side tail silence: once no speech has
+arrived for ``input_idle_s`` (a driver's ``filler`` frames do not count), the
+accumulated audio is a turn and the pipeline
 runs. That is deliberately the same rule the output side uses
 (:func:`~harbor_voice.transport.drain.drain_until_idle`) — a turn ends when
 somebody stops talking, on both sides.
@@ -27,6 +28,7 @@ from harbor_voice.providers import LLMProvider
 from harbor_voice.providers import STTProvider
 from harbor_voice.providers import Transcript
 from harbor_voice.providers import TTSProvider
+from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.tools import ToolCallingLLM
 from harbor_voice.providers.tools import ToolRouter
 from harbor_voice.capabilities import Capabilities
@@ -83,6 +85,7 @@ class CascadeTransport(VoiceTransport):
         self._inbound: list[AudioFrame] = []
         self._outbound: asyncio.Queue[AudioFrame | None] = asyncio.Queue()
         self._watcher: asyncio.Task[None] | None = None
+        self._failure: BaseException | None = None
         self._last_input_at: float | None = None
         self._seq = 0
         self._history: list[str] = []
@@ -149,6 +152,7 @@ class CascadeTransport(VoiceTransport):
         self._outbound = asyncio.Queue()
         self._inbound = []
         self._last_input_at = None
+        self._failure = None
         self._watcher = asyncio.create_task(self._watch_for_turn_end())
 
     @override
@@ -160,10 +164,19 @@ class CascadeTransport(VoiceTransport):
                 await self._watcher
             self._watcher = None
         await self._outbound.put(None)
+        # Each slot keeps one connection for the call; this is where it ends.
+        for slot in (self._stt, self._llm, self._tts):
+            if (aclose := getattr(slot, "aclose", None)) is not None:
+                with contextlib.suppress(Exception):
+                    await aclose()
 
     @override
     async def tx(self, frame: AudioFrame) -> None:
         self.require_open()
+        # The driver's line silence between turns is not the caller talking;
+        # the tail silence below is measured from speech.
+        if frame.filler:
+            return
         if not self._inbound:
             self._mark(Stage.VAD_SPEECH_START, self._clock.now())
         self._inbound.append(frame)
@@ -175,6 +188,8 @@ class CascadeTransport(VoiceTransport):
             while True:
                 frame = await self._outbound.get()
                 if frame is None:
+                    if self._failure is not None:
+                        raise self._failure
                     return
                 yield frame
 
@@ -183,30 +198,34 @@ class CascadeTransport(VoiceTransport):
     # -------------------------------------------------------------- engine
 
     async def _watch_for_turn_end(self) -> None:
-        """Run the pipeline once the input side goes quiet."""
-        while True:
-            await asyncio.sleep(self._input_idle_s / 2)
-            if not self._inbound or self._last_input_at is None:
-                continue
-            if self._clock.now() - self._last_input_at < self._input_idle_s:
-                continue
-            turn_audio = list(self._inbound)
-            self._inbound = []
-            self._last_input_at = None
-            await self._run_pipeline(turn_audio)
+        """Run the pipeline once the input side goes quiet.
+
+        A slot that fails (a provider error, a broken stream) ends the
+        agent's audio with that error, so the call stops on it. Left to
+        itself the task would end silently, and every later turn would wait
+        out its timeout for a reply nobody is making.
+        """
+        try:
+            while True:
+                await asyncio.sleep(self._input_idle_s / 2)
+                if not self._inbound or self._last_input_at is None:
+                    continue
+                if self._clock.now() - self._last_input_at < self._input_idle_s:
+                    continue
+                turn_audio = list(self._inbound)
+                self._inbound = []
+                self._last_input_at = None
+                await self._run_pipeline(turn_audio)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - handed to the reader of rx()
+            self._failure = exc
+            await self._outbound.put(None)
 
     async def _run_pipeline(self, audio: list[AudioFrame]) -> None:
         """STT -> LLM -> TTS, marking each seam as it is crossed."""
         self._mark(Stage.VAD_SPEECH_END, self._clock.now())
-
-        heard = ""
-        async for partial in self._stt.transcribe(audio):
-            if partial.is_final:
-                heard = partial.text
-                self._transcripts.append(partial)
-                self._mark(Stage.ASR_FINAL, self._clock.now(), text=partial.text)
-            elif self._emit_partials:
-                self._mark(Stage.ASR_PARTIAL, self._clock.now(), text=partial.text)
+        heard = await self._hear(audio)
 
         said_parts: list[str] = []
         first_token = True
@@ -224,9 +243,26 @@ class CascadeTransport(VoiceTransport):
         self._mark(Stage.LLM_DONE, self._clock.now(), text=said)
         self._history.extend((heard, said))
 
+        async for frame in self._synthesize(said):
+            await self._outbound.put(frame)
+
+    async def _hear(self, audio: list[AudioFrame]) -> str:
+        """The STT's final transcript of one utterance, marking ASR."""
+        heard = ""
+        async for partial in self._stt.transcribe(audio):
+            if partial.is_final:
+                heard = partial.text
+                self._transcripts.append(partial)
+                self._mark(Stage.ASR_FINAL, self._clock.now(), text=partial.text)
+            elif self._emit_partials:
+                self._mark(Stage.ASR_PARTIAL, self._clock.now(), text=partial.text)
+        return heard
+
+    async def _synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
+        """The TTS's audio for ``text`` as frames, marking TTS and the response."""
         first_byte = True
         emitted = 0
-        async for pcm in self._tts.synthesize(said, party=self._party):
+        async for pcm in self._tts.synthesize(text, party=self._party):
             now = self._clock.now()
             if first_byte:
                 self._mark(Stage.TTS_FIRST_BYTE, now)
@@ -241,7 +277,7 @@ class CascadeTransport(VoiceTransport):
             ).stamp(Clock.RX, now)
             self._seq += 1
             emitted += 1
-            await self._outbound.put(frame)
+            yield frame
 
         done_at = self._clock.now()
         self._mark(Stage.TTS_DONE, done_at)
@@ -269,6 +305,18 @@ class CascadeTransport(VoiceTransport):
                 f"would answer without ever being offered them"
             )
         return self._llm.respond_with_tools(heard, self._history, router=self._tools)
+
+    @property
+    def ref(self) -> ProviderRef:
+        """The three slots as one agent: provider ``cascade``, and as model
+        each slot's ``provider/model`` joined by ``+``, the form tau-voice's
+        job config names a cascade in."""
+        return ProviderRef(
+            provider="cascade",
+            model="+".join(
+                _slot_name(slot) for slot in (self._stt, self._llm, self._tts)
+            ),
+        )
 
     @property
     def tools(self) -> ToolRouter | None:
@@ -306,3 +354,10 @@ class CascadeTransport(VoiceTransport):
                 meta=dict(meta),
             )
         )
+
+
+def _slot_name(slot: object) -> str:
+    """``provider/model``, or the provider alone when it has no model."""
+    name = str(getattr(slot, "name", type(slot).__name__))
+    model = getattr(slot, "model", None)
+    return f"{name}/{model}" if isinstance(model, str) and model else name

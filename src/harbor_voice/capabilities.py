@@ -114,10 +114,6 @@ class CapabilityError(ValueError):
     """A capability declaration is internally inconsistent."""
 
 
-class RequirementError(ValueError):
-    """A task demands something no party can serve. Rule 1 — a load error."""
-
-
 # ----------------------------------------------------------------- layer key
 
 

@@ -14,6 +14,8 @@ under test is this agent's model — the run's choice, never the task's::
 ``-m`` is an S2S spec; ``--ak agent_json=…`` takes any ``AgentSpec`` (a
 cascade). ``--ak seed=N`` overrides the task's seed: a job config listing
 this agent once per seed runs each task under each, as tau2's trials do.
+``--ak call_config='{…}'`` overrides settings of the task's driver
+(``[call].config``) for the run.
 
 The task reaches ``main`` through its instruction: harbor hands an agent the
 task's ``instruction.md`` and nothing else of the task folder, so a voice
@@ -37,6 +39,7 @@ import threading
 import time
 import tomllib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import override
 
@@ -51,10 +54,18 @@ from harbor_voice import install
 from harbor_voice.capabilities import Pipeline
 from harbor_voice.driver import PROGRESS_PREFIX
 
+if TYPE_CHECKING:
+    from harbor_voice.providers.registry import ProviderRegistry
+
 TASK_IN_ENV = "/task"
 CALL_OUT_IN_ENV = "/logs/agent/call"
 TRAJECTORY_IN_ENV = "/logs/agent/trajectory.json"
 """Where harbor reads an agent's ATIF trajectory."""
+KEYS_IN_ENV = "/task/.agent-keys"
+"""The agent's credentials, uploaded as a file the drive command reads and
+deletes before the call starts. Uploaded, not passed as ``exec`` env: harbor's
+Docker backend turns that into ``docker exec -e KEY=value``, which anyone on
+the host can read in the process list."""
 
 _SPEC = re.compile(r"```toml\n(.*?)\n```", re.DOTALL)
 
@@ -82,6 +93,10 @@ class VoiceCallOptions(InstalledAgentOptions):
         description="Agent under test as AgentSpec JSON; overrides the model.",
     )
     seed: int | None = Field(default=None, description="Run the task under this seed.")
+    call_config: dict[str, Any] | None = Field(
+        default=None,
+        description="Overrides for the task's [call].config, its driver's settings.",
+    )
 
 
 def call_spec(instruction: str) -> str:
@@ -141,6 +156,7 @@ _packages = _Packages()
 class VoiceCallAgent(BaseInstalledAgent):
     options_model = VoiceCallOptions
     capabilities = AgentCapabilities(atif=True)
+    _registry: ProviderRegistry | None = None
 
     @staticmethod
     @override
@@ -170,7 +186,25 @@ class VoiceCallAgent(BaseInstalledAgent):
         from harbor_voice.trial import AgentSpec
         from harbor_voice.trial import required_extras
 
-        return required_extras(AgentSpec.model_validate_json(self.agent_spec_json()))
+        spec = AgentSpec.model_validate_json(self.agent_spec_json())
+        return required_extras(spec, self._providers())
+
+    def agent_env(self) -> dict[str, str]:
+        """The agent under test's credentials, for the call's environment."""
+        from harbor_voice.trial import AgentSpec
+        from harbor_voice.trial import required_env
+
+        spec = AgentSpec.model_validate_json(self.agent_spec_json())
+        return required_env(spec, self._providers())
+
+    def _providers(self) -> ProviderRegistry:
+        """The provider registry, built once per agent (it imports every
+        vendor package) and shared by install and run."""
+        from harbor_voice.providers.registry import provider_registry
+
+        if self._registry is None:
+            self._registry = provider_registry()
+        return self._registry
 
     @override
     async def install(self, environment: BaseEnvironment) -> None:
@@ -202,22 +236,48 @@ class VoiceCallAgent(BaseInstalledAgent):
             raise VoiceInfrastructureError(str(exc)) from exc
 
         await environment.exec(f"mkdir -p {TASK_IN_ENV} {CALL_OUT_IN_ENV}")
+        keys = self.agent_env()
         with tempfile.TemporaryDirectory() as scratch:
             local = Path(scratch) / "voice.toml"
             local.write_text(spec, encoding="utf-8", newline="\n")
             await environment.upload_file(local, f"{TASK_IN_ENV}/voice.toml")
+            if keys:
+                secret = Path(scratch) / "keys.env"
+                secret.touch(mode=0o600)
+                secret.write_text(
+                    "".join(f"{k}={shlex.quote(v)}\n" for k, v in keys.items()),
+                    encoding="utf-8",
+                )
+                await environment.upload_file(secret, KEYS_IN_ENV)
 
         options = self.options
         seed = options.seed if isinstance(options, VoiceCallOptions) else None
+        call_config = (
+            options.call_config if isinstance(options, VoiceCallOptions) else None
+        )
         self.logger.info(
             f"call: {config.task or 'task'} · seed {seed if seed is not None else config.seed}"
             f" · agent {self.model_name or 'agent_json'}"
         )
-        command = (
+        # The file is removed whether or not it loaded: a failed source must
+        # not leave plaintext keys in the sandbox (or a snapshot of it). A
+        # POSIX shell exits outright when `.` fails, hence the exit trap.
+        load_keys = (
+            f"trap 'rm -f {KEYS_IN_ENV}' EXIT; "
+            f"set -a && . {KEYS_IN_ENV} && set +a && rm -f {KEYS_IN_ENV} && "
+            if keys
+            else ""
+        )
+        command = load_keys + (
             f"harbor-voice drive {TASK_IN_ENV} --out {CALL_OUT_IN_ENV} "
             f"--trajectory {TRAJECTORY_IN_ENV} "
             f"--agent-json {shlex.quote(agent)}"
             + (f" --seed {seed}" if seed is not None else "")
+            + (
+                f" --call-config {shlex.quote(json.dumps(call_config))}"
+                if call_config
+                else ""
+            )
         )
         started = time.monotonic()
         relay = _ProgressRelay(self.logger)

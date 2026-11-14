@@ -22,15 +22,16 @@
 
 from __future__ import annotations
 
-import importlib
-import warnings
-from collections.abc import Callable
+import contextlib
+
+from collections.abc import Mapping
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
 from typing import Any
 from typing import Literal
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -46,8 +47,11 @@ from harbor_voice.perturbation.base import SeedSet
 from harbor_voice.perturbation.plan import PerturbationPipeline
 from harbor_voice.perturbation.profiles import get_profile
 from harbor_voice.providers.capabilities import Modality
+from harbor_voice.providers.credentials import resolve as resolve_credentials
 from harbor_voice.providers.registry import ProviderRegistry
-from harbor_voice.providers.registry import default_registry
+from harbor_voice.providers.registry import Registration
+from harbor_voice.providers.registry import credential_slug
+from harbor_voice.providers.registry import provider_registry
 from harbor_voice.providers.tools import ToolExecutor
 from harbor_voice.providers.tools import ToolRouter
 from harbor.models.task.config import EnvironmentConfig
@@ -57,8 +61,13 @@ from harbor_voice.simulator.simulator import UniversalSimulator
 from harbor_voice.simulator.simulator import Utterance
 from harbor_voice.trajectory.model import VoiceTrajectory
 
+if TYPE_CHECKING:
+    from harbor_voice.trajectory.recorder import Recorder
+
 DEFAULT_CALLER = PartyId("caller")
 DEFAULT_AGENT = PartyId("agent")
+RECORDING = "call.wav"
+"""The built-in loop's recording, written beside the trajectory in ``out_dir``."""
 
 
 class TrialConfigError(ValueError):
@@ -86,6 +95,9 @@ class AgentSpec(BaseModel):
     stt: str | None = None
     llm: str | None = None
     tts: str | None = None
+    omni: str | None = None
+    """An omni model (audio in, text out) in place of ``stt`` and ``llm``: a
+    cascade of two slots, ``omni`` and ``tts``."""
     config: dict[str, dict[str, Any]] = Field(default_factory=dict)
     """Per-slot provider settings, keyed by slot name.
 
@@ -102,11 +114,24 @@ class AgentSpec(BaseModel):
         if self.pipeline is Pipeline.S2S:
             if self.s2s is None:
                 raise TrialConfigError("pipeline is s2s but no s2s provider was given")
-            if any(cascade):
+            if any(cascade) or self.omni is not None:
                 raise TrialConfigError(
                     "pipeline is s2s but cascade slots were also given; an S2S "
                     "model exposes no seam between hearing and reasoning, so "
                     "those slots would be silently ignored"
+                )
+            return self
+        if self.omni is not None:
+            if self.stt is not None or self.llm is not None:
+                raise TrialConfigError(
+                    "an omni cascade hears and answers in one model; stt and llm "
+                    "would be silently ignored, so give omni and tts only"
+                )
+            if self.tts is None:
+                raise TrialConfigError("an omni cascade needs a tts to speak its reply")
+            if self.s2s is not None:
+                raise TrialConfigError(
+                    "pipeline is cascade but an s2s provider was given"
                 )
             return self
         missing = [
@@ -134,6 +159,11 @@ class CallerSpec(BaseModel):
     turns: tuple[str, ...] = ()
     brief: str = ""
     llm: str | None = None
+    stt: str | None = None
+    """How a persona caller hears the agent: an STT that transcribes each
+    reply's audio. Without one, a cascade agent's own words (what its TTS
+    was given) are used; a speech-to-speech agent's words exist only as
+    audio, so a persona caller talking to one needs this."""
     config: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -184,8 +214,10 @@ class VoiceTaskConfig(BaseModel):
     seed: int = 0
     duplex: Duplex = Duplex.HALF
     max_turns: int = Field(default=8, gt=0)
-    idle_s: float = Field(default=0.2, gt=0)
-    """Quiet period that ends the agent's turn.
+    idle_s: float | None = Field(default=None, gt=0)
+    """Quiet period that ends the agent's turn. Unset, it is 0.2 s on a
+    half-duplex call and 1.0 s on a full-duplex one, where the agent streams at
+    speaking pace and pauses between sentences.
 
     Tunable because it is a property of the agent, not of the harness: a
     model that pauses mid-sentence needs a longer one, and a run that cuts
@@ -235,6 +267,19 @@ class VoiceTaskConfig(BaseModel):
                 update={"config": {**self.call.config, "seed": seed}}
             )
         return self.model_copy(update=update)
+
+    def with_call_config(self, overrides: Mapping[str, Any]) -> VoiceTaskConfig:
+        """This task with its driver's settings overridden for one run.
+
+        A job sets what the task leaves to the run, the same for every task
+        it runs (tau-voice: whether a cascade agent may take the call).
+        """
+        if self.call is None:
+            raise TrialConfigError("call settings given, but the task names no [call]")
+        call = self.call.model_copy(
+            update={"config": {**self.call.config, **overrides}}
+        )
+        return self.model_copy(update={"call": call})
 
     @classmethod
     def from_toml(cls, path: Path) -> VoiceTaskConfig:
@@ -303,6 +348,11 @@ class VoiceTrial:
         self._task_dir = task_dir
         self._agent_spec_override = agent_spec
         self._registry = registry if registry is not None else provider_registry()
+        # What a persona caller has heard of the agent in the current call;
+        # reset when the call ends (see _agent_words).
+        self._hearing: Any = None
+        self._heard_lines: list[str] = []
+        self._said_taken = 0
         self._out_dir = out_dir
         self._caller = caller
         self._agent = agent
@@ -385,22 +435,41 @@ class VoiceTrial:
                 tools=self._router,
                 **spec.config.get("s2s", {}),
             )
+        if spec.omni is not None:
+            from harbor_voice.cascade.omni import OmniCascadeTransport
+
+            return OmniCascadeTransport(
+                omni=self._registry.create(
+                    spec.omni, modality=Modality.OMNI, **spec.config.get("omni", {})
+                ),
+                tts=self._registry.create(
+                    str(spec.tts), modality=Modality.TTS, **spec.config.get("tts", {})
+                ),
+                tools=self._router,
+                party=self._agent,
+                clock=self._clock,
+            )
         from harbor_voice.cascade import CascadeTransport
 
         return CascadeTransport(
             tools=self._router,
-            stt=self._registry.create(
-                str(spec.stt), modality=Modality.STT, **spec.config.get("stt", {})
-            ),
-            llm=self._registry.create(
-                str(spec.llm), modality=Modality.LLM, **spec.config.get("llm", {})
-            ),
-            tts=self._registry.create(
-                str(spec.tts), modality=Modality.TTS, **spec.config.get("tts", {})
-            ),
             party=self._agent,
             clock=self._clock,
+            **self._slots(spec),
         )
+
+    def _slots(self, spec: AgentSpec) -> dict[str, Any]:
+        """A cascade's three providers, each with its own settings."""
+        return {
+            slot: self._registry.create(
+                str(getattr(spec, slot)), modality=modality, **spec.config.get(slot, {})
+            )
+            for slot, modality in (
+                ("stt", Modality.STT),
+                ("llm", Modality.LLM),
+                ("tts", Modality.TTS),
+            )
+        }
 
     def floor(self) -> Any:
         """Half-duplex queues; full duplex measures who yielded.
@@ -427,9 +496,65 @@ class VoiceTrial:
         transport = self.transport()
         floor = self.floor()
 
-        turns, probes = await self._call(transport, simulator, floor)
+        try:
+            turns, probes = await self._call(transport, simulator, floor)
+        finally:
+            await self._close_caller(simulator)
         trajectory = self._record(pipeline, simulator, transport, floor, turns, probes)
         return self._score(trajectory, turns)
+
+    async def _close_caller(self, simulator: UniversalSimulator) -> None:
+        """Close the caller's connections (its voice, its persona's model, its
+        STT) and forget what it heard, so a second run starts clean. A
+        failure to close is not the call's failure and must not hide one."""
+        for close in (simulator.aclose, getattr(self._hearing, "aclose", None)):
+            if close is not None:
+                with contextlib.suppress(Exception):
+                    await close()
+        self._hearing = None
+        self._heard_lines = []
+        self._said_taken = 0
+
+    async def _agent_words(self, transport: Any, turns: Sequence[Turn]) -> list[str]:
+        """What the agent has said so far, one line per turn, for a caller
+        that reacts to it. A scripted caller reads nothing.
+
+        Called before each caller line, so what the agent said since the
+        last call belongs to the turn that just ended. A cascade's ``said``
+        has one line per reply, not per turn (a probe draws a reply of its
+        own, and a late reply lands in the next turn), so it is grouped by
+        turn here to keep the caller's lines and the agent's paired.
+        """
+        caller = self._config.caller
+        if caller is None or caller.source != "persona":
+            return []
+        if caller.stt is not None:
+            if self._hearing is None:
+                self._hearing = self._registry.create(
+                    caller.stt, modality=Modality.STT, **caller.config.get("stt", {})
+                )
+            while len(self._heard_lines) < len(turns):
+                turn = turns[len(self._heard_lines)]
+                # A half-duplex turn keeps the agent's frames in its TTS's
+                # format; the STT expects the recording format.
+                frames = [_canonical(frame) for frame in turn.received]
+                text = ""
+                async for partial in self._hearing.transcribe(frames):
+                    if partial.is_final:
+                        text = partial.text
+                self._heard_lines.append(text)
+            return list(self._heard_lines)
+        said = getattr(transport, "said", None)
+        if said is None:
+            raise TrialConfigError(
+                "a persona caller cannot hear this agent: a speech-to-speech "
+                "agent's words exist only as audio, so set [caller] stt to "
+                "transcribe them"
+            )
+        while len(self._heard_lines) < len(turns):
+            self._heard_lines.append(" ".join(said[self._said_taken :]))
+            self._said_taken = len(said)
+        return list(self._heard_lines)
 
     async def _call(
         self, transport: Any, simulator: UniversalSimulator, floor: Any
@@ -441,20 +566,23 @@ class VoiceTrial:
             return await self._call_duplex(transport, simulator, floor)
 
         from harbor_voice.cascade import CascadeAdapter
+        from harbor_voice.transport.drain import DEFAULT_IDLE_S
 
         adapter = CascadeAdapter(
             transport,
             party=self._agent,
             floor=floor,
             clock=self._clock,
-            idle_s=self._config.idle_s,
+            idle_s=self._config.idle_s or DEFAULT_IDLE_S,
             turn_timeout_s=self._config.turn_timeout_s,
         )
         await adapter.open(SessionConfig(party=self._agent))
         turns: list[Turn] = []
         try:
             for _ in range(self._config.max_turns):
-                utterance = await simulator.next_utterance(_heard(turns))
+                utterance = await simulator.next_utterance(
+                    await self._agent_words(transport, turns)
+                )
                 if utterance is None or not utterance.frames:
                     break
                 turns.append(await adapter.call(utterance.frames))
@@ -465,6 +593,7 @@ class VoiceTrial:
     async def _call_duplex(
         self, transport: Any, simulator: UniversalSimulator, floor: Any
     ) -> tuple[list[Turn], list[Any]]:
+        from harbor_voice.duplex import DUPLEX_IDLE_S
         from harbor_voice.duplex import DuplexDriver
         from harbor_voice.transport.base import SessionConfig
 
@@ -474,7 +603,7 @@ class VoiceTrial:
             party=self._agent,
             floor=floor,
             clock=self._clock,
-            idle_s=self._config.idle_s,
+            idle_s=self._config.idle_s or DUPLEX_IDLE_S,
             turn_timeout_s=self._config.turn_timeout_s,
         )
         await driver.open(SessionConfig(party=self._agent))
@@ -482,7 +611,9 @@ class VoiceTrial:
         probes: list[Any] = []
         try:
             for _ in range(self._config.max_turns):
-                utterance = await simulator.next_utterance(_heard(turns))
+                utterance = await simulator.next_utterance(
+                    await self._agent_words(transport, turns)
+                )
                 if utterance is None or not utterance.frames:
                     break
                 exchange = await driver.exchange(utterance)
@@ -566,12 +697,41 @@ class VoiceTrial:
 
         ``overrides`` win over the agent's configured settings: a benchmark
         supplies its own system prompt, and that is the benchmark's call.
+
+        A cascade is built for a full-duplex call
+        (:class:`~harbor_voice.cascade.DuplexCascadeTransport`) and takes only
+        a ``system_prompt``; any other override is a speech-to-speech
+        provider's setting, and a driver that passes one is refused rather
+        than given an agent that ignores it. Its STT slot must be
+        ``deepgram.stt``, which finds the turns; another is refused.
         """
         spec = self.agent_spec()
-        if spec.pipeline is not Pipeline.S2S:
+        if spec.omni is not None:
             raise TrialConfigError(
-                "drivers take an s2s agent for now; a cascade agent needs the "
-                "transport surface the driver uses (EVENT_STREAM, TRUNCATE)"
+                "an omni cascade runs on harbor-voice's own call loop only; a "
+                "driven benchmark's cascade needs deepgram.stt to find the turns "
+                "and an LLM that holds the conversation and its tools"
+            )
+        if spec.pipeline is Pipeline.CASCADE:
+            from harbor_voice.cascade import DuplexCascadeTransport
+            from harbor_voice.cascade.duplex import stt_refusal
+
+            if (refusal := stt_refusal(str(spec.stt))) is not None:
+                raise TrialConfigError(refusal)
+
+            unknown = sorted(set(overrides) - {"system_prompt"})
+            if unknown:
+                raise TrialConfigError(
+                    f"a cascade agent takes only a system_prompt from a driver; "
+                    f"this driver also sets {unknown}, which only a "
+                    f"speech-to-speech provider reads"
+                )
+            return DuplexCascadeTransport(
+                tools=tools,
+                party=self._agent,
+                clock=self._clock,
+                system_prompt=overrides.get("system_prompt", ""),
+                **self._slots(spec),
             )
         return self._registry.create(
             str(spec.s2s),
@@ -649,14 +809,42 @@ class VoiceTrial:
             recorder.record_probes(probes, by=self._caller)
         recorder.session_close(self._clock.now())
 
-        return recorder.finish(
+        trajectory = recorder.finish(
             config_matrix=matrix_from(
-                floor=floor, pipeline=pipeline, profile=self._config.profile
+                floor=floor,
+                pipeline=pipeline,
+                agent_pipeline=self.agent_spec().pipeline,
+                profile=self._config.profile,
             ),
             pipeline=pipeline,
             fidelity=simulator.fidelity(),
             render=False,
         )
+        if self._out_dir is None:
+            return trajectory
+        return self._save_recording(recorder, trajectory)
+
+    def _save_recording(
+        self, recorder: Recorder, trajectory: VoiceTrajectory
+    ) -> VoiceTrajectory:
+        """Write the call as heard, both parties on one timeline, beside the
+        trajectory, and name it there by the file's hash, as the adapters name
+        theirs. ``harbor-voice listen`` finds it by that hash."""
+        from harbor_voice.trajectory.model import Artifacts
+        from harbor_voice.trajectory.render import to_wav
+        from harbor_voice.trajectory.stepped import audio_ref
+
+        mixed = recorder.render()
+        if not mixed.pcm:
+            return trajectory
+        assert self._out_dir is not None
+        path = self._out_dir / RECORDING
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(to_wav(mixed.pcm, mixed.fmt))
+        artifacts = Artifacts(
+            mixed_timeline=audio_ref(path), segments=recorder.segments(), tier="T1"
+        )
+        return trajectory.model_copy(update={"artifacts": artifacts})
 
     def _agent_name(self) -> str:
         spec = self.agent_spec()
@@ -688,9 +876,11 @@ class VoiceTrial:
             ),
             comparable_on=trajectory.comparable_on,
         )
-        written = (
-            tuple(outputs.write(self._out_dir)) if self._out_dir is not None else ()
-        )
+        written: tuple[Path, ...] = ()
+        if self._out_dir is not None:
+            written = tuple(outputs.write(self._out_dir))
+            if trajectory.artifacts is not None:  # the recording was written
+                written += (self._out_dir / RECORDING,)
         return TrialOutcome(
             trajectory=trajectory,
             turns=tuple(turns),
@@ -700,57 +890,83 @@ class VoiceTrial:
         )
 
 
-def provider_registry(
-    report: Callable[[str], None] | None = None,
-) -> ProviderRegistry:
-    """Offline providers, plus every vendor whose providers register.
-
-    A vendor that fails to register is skipped, not fatal: a task naming only
-    offline providers must run without the cloud SDKs. The failure is
-    reported, through ``report`` or else as a warning, so a provider's import
-    bug does not surface later as "unknown provider".
-    """
-    registry = default_registry()
-    for vendor in _VENDORS:
-        try:
-            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
-            module.register_all(registry)
-        except Exception as exc:  # noqa: BLE001 - optional extra; reported, not fatal
-            message = f"{vendor} providers unavailable ({exc})"
-            if report is None:
-                warnings.warn(message, RuntimeWarning, stacklevel=2)
-            else:
-                report(message)
-    return registry
-
-
-_VENDORS = ("aws", "elevenlabs", "openai")
-"""Provider packages registered lazily; each has a ``register_all``."""
-
-
-def required_extras(spec: AgentSpec) -> list[str]:
-    """harbor-voice extras the agent's providers declare (``requires_extra``).
-
-    A provider the registry cannot resolve here needs nothing named; building
-    it will say what is missing.
-    """
-    registry = provider_registry()
-    extras: list[str] = []
-    for name in (spec.s2s, spec.stt, spec.llm, spec.tts):
-        if not name:
-            continue
-        try:
-            registration, _ = registry.resolve(name)
-        except Exception:  # noqa: BLE001 - see above
-            continue
-        if registration.spec.requires_extra:
-            extras.append(registration.spec.requires_extra)
+def required_extras(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> list[str]:
+    """harbor-voice extras the agent's providers declare (``requires_extra``)."""
+    extras = [
+        entry.spec.requires_extra
+        for entry, _ in _resolved(spec, registry)
+        if entry.spec.requires_extra
+    ]
     return list(dict.fromkeys(extras))
 
 
-def _heard(turns: Sequence[Turn]) -> list[str]:
-    """What the agent has said so far, for a content source that reacts."""
-    return [str(t.index) for t in turns]
+def required_env(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> dict[str, str]:
+    """The credentials the agent's providers need, from this process's environment.
+
+    A task's ``[environment] env`` names the keys its own caller and grader
+    use (OpenAI, ElevenLabs, AWS). The agent under test can be any provider,
+    so its keys are passed into the call here: Gemini Live needs
+    ``GEMINI_API_KEY`` and Grok ``XAI_API_KEY``, which no task names. Unset
+    variables are left out; the provider says what is missing when it opens.
+    Variables that name something on this machine (:data:`HOST_ONLY_ENVS`)
+    are left out too, and each provider's ``sandbox_env`` has the last word.
+    """
+    env: dict[str, str] = {}
+    for entry, model in _resolved(spec, registry):
+        found = resolve_credentials(credential_slug(entry.spec, model)).container_env()
+        if entry.spec.sandbox_env:
+            found = entry.spec.sandbox_env(found)
+        env.update(found)
+    return {k: v for k, v in env.items() if k not in HOST_ONLY_ENVS}
+
+
+HOST_ONLY_ENVS = frozenset(
+    {
+        "AWS_PROFILE",
+        "AWS_CONFIG_FILE",
+        "AWS_SHARED_CREDENTIALS_FILE",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+)
+"""Variables naming a profile or a file on this machine, meaningless in a
+sandbox: an ``AWS_PROFILE`` there fails with ProfileNotFound even when the
+exported keys are present."""
+
+
+def _canonical(frame: Any) -> Any:
+    """``frame`` in :data:`~harbor_voice.audio.format.CANONICAL`."""
+    from dataclasses import replace
+
+    from harbor_voice.audio.convert import convert
+    from harbor_voice.audio.format import CANONICAL
+
+    if frame.fmt == CANONICAL:
+        return frame
+    return replace(frame, pcm=convert(frame.pcm, frame.fmt, CANONICAL), fmt=CANONICAL)
+
+
+def _resolved(
+    spec: AgentSpec, registry: ProviderRegistry | None = None
+) -> list[tuple[Registration, str]]:
+    """Each provider the agent names: its registration and the model.
+
+    A provider the registry cannot resolve here is skipped: it needs nothing
+    named, and building it will say what is missing.
+    """
+    registry = registry or provider_registry()
+    found: list[tuple[Registration, str]] = []
+    for name in (spec.s2s, spec.stt, spec.llm, spec.omni, spec.tts):
+        if not name:
+            continue
+        try:
+            found.append(registry.resolve(name))
+        except Exception:  # noqa: BLE001 - see the docstring
+            continue
+    return found
 
 
 def _utterance_for(simulator: UniversalSimulator, index: int) -> Utterance | None:

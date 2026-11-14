@@ -228,13 +228,12 @@ async def install_into(
     """Install ``packages`` into ``main`` with ``uv pip install``, as root.
 
     Wheels are uploaded first; pinned packages come from the index.
-    harbor-voice's own package brings its ``voice`` extra when its
-    distribution declares one, and ``extras``, the ones the agent under test
-    needs (``live`` for OpenAI Live), when declared.
+    harbor-voice's own package brings ``extras``, the ones the agent under
+    test needs (``live`` for OpenAI Live), when its distribution declares them.
     """
     voice = distribution_of("harbor_voice")
     declared = importlib.metadata.metadata(voice).get_all("Provides-Extra") or []
-    wanted = [e for e in dict.fromkeys(("voice", *extras)) if e in declared]
+    wanted = [e for e in dict.fromkeys(extras) if e in declared]
     targets: list[str] = []
     pinned = uploading = False
     for package in packages:

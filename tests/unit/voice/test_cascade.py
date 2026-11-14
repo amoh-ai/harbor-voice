@@ -271,3 +271,68 @@ class TestConformance:
             timeout_s=1.0,
         )
         assert "audio_out" in report.attested
+
+
+class TestASlotFailureEndsTheCall:
+    """A failing slot must stop the call, not leave every later turn waiting."""
+
+    async def test_the_tts_error_comes_out_of_rx(self) -> None:
+        import asyncio
+
+        from harbor_voice.providers.base import ProviderError
+        from harbor_voice.providers.base import ProviderFailure
+
+        class BrokenTTS(ToneTTS):
+            async def synthesize(self, text, *, party):  # noqa: ANN001, ANN202
+                raise ProviderError(
+                    ProviderFailure.STREAM_BROKEN, "cut off", provider="t", model="m"
+                )
+                yield b""  # pragma: no cover - makes this a generator
+
+        t = CascadeTransport(
+            stt=ScriptedSTT(turns=["hello"]),
+            llm=EchoLLM(),
+            tts=BrokenTTS(),
+            party=AGENT,
+            input_idle_s=0.05,
+        )
+        await t.open(CFG)
+        for frame in _input():
+            await t.tx(frame)
+
+        async def read() -> None:
+            async for _ in t.rx():
+                pass
+
+        with pytest.raises(ProviderError, match="cut off"):
+            await asyncio.wait_for(read(), 2.0)
+        await t.close()
+
+    async def test_the_adapter_raises_it_on_the_turn_it_broke(self) -> None:
+        """Through the adapter the error must not wait for a next turn: on
+        the last turn there is none, and the broken call would be scored."""
+        from harbor_voice.adapter import AdapterError
+        from harbor_voice.providers.base import ProviderError
+        from harbor_voice.providers.base import ProviderFailure
+
+        class BrokenTTS(ToneTTS):
+            async def synthesize(self, text, *, party):  # noqa: ANN001, ANN202
+                raise ProviderError(
+                    ProviderFailure.STREAM_BROKEN, "cut off", provider="t", model="m"
+                )
+                yield b""  # pragma: no cover - makes this a generator
+
+        t = CascadeTransport(
+            stt=ScriptedSTT(turns=["hello"]),
+            llm=EchoLLM(),
+            tts=BrokenTTS(),
+            party=AGENT,
+            input_idle_s=0.05,
+        )
+        a = CascadeAdapter(t, party=AGENT, idle_s=0.1, turn_timeout_s=0.5)
+        await a.open(CFG)
+        try:
+            with pytest.raises(AdapterError, match="cut off"):
+                await a.call(_input())
+        finally:
+            await a.close()

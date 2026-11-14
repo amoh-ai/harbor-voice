@@ -330,3 +330,124 @@ class TestNovaSonicVoiceSelection:
         pipeline.persona.apply_to_tts(bedrock.NovaSonicTTS())
         record = pipeline.as_record().as_dict()["layers"]
         assert record["L1.accent"]["achieved"] == {"voice_honoured": 0.0}
+
+
+class _Converse:
+    """A Bedrock runtime client that answers ``converse`` with a fixed reply."""
+
+    def __init__(self, reply: dict) -> None:
+        self.reply = reply
+        self.requests: list[dict] = []
+
+    def converse(self, **request: object) -> dict:
+        self.requests.append(request)
+        return self.reply
+
+
+class TestBedrockHoldsAConversation:
+    """aws.bedrock-llm is a ChatLLM, so a tau-voice cascade can hold it."""
+
+    def test_it_is_a_chat_llm(self) -> None:
+        from harbor_voice.providers.tools import ChatLLM
+
+        assert isinstance(bedrock.BedrockLLM(), ChatLLM)
+
+    def test_chat_messages_become_converse_turns(self) -> None:
+        system, turns = bedrock._to_converse(
+            [
+                {"role": "system", "content": "Be brief."},
+                {"role": "user", "content": "Find booking EHGLP3."},
+                {
+                    "role": "assistant",
+                    "content": "Looking.",
+                    "tool_calls": [
+                        {
+                            "id": "c1",
+                            "type": "function",
+                            "function": {
+                                "name": "get_reservation",
+                                "arguments": '{"id": "EHGLP3"}',
+                            },
+                        }
+                    ],
+                },
+                {"role": "tool", "tool_call_id": "c1", "content": '{"ok": true}'},
+                {"role": "user", "content": "Cancel it."},
+            ]
+        )
+        assert system == ["Be brief."]
+        assert [t["role"] for t in turns] == ["user", "assistant", "user"]
+        assert turns[1]["content"][1] == {
+            "toolUse": {
+                "toolUseId": "c1",
+                "name": "get_reservation",
+                "input": {"id": "EHGLP3"},
+            }
+        }
+        # The tool result and the next user message share one user turn.
+        assert turns[2]["content"] == [
+            {"toolResult": {"toolUseId": "c1", "content": [{"text": '{"ok": true}'}]}},
+            {"text": "Cancel it."},
+        ]
+
+    async def test_chat_returns_text_calls_and_usage(self) -> None:
+        from harbor_voice.providers.tools import ToolSpec
+
+        client = _Converse(
+            {
+                "output": {
+                    "message": {
+                        "role": "assistant",
+                        "content": [
+                            {"text": "<thinking>look it up</thinking>One moment."},
+                            {
+                                "toolUse": {
+                                    "toolUseId": "t1",
+                                    "name": "get_reservation",
+                                    "input": {"id": "EHGLP3"},
+                                }
+                            },
+                        ],
+                    }
+                },
+                "usage": {"inputTokens": 12, "outputTokens": 5},
+            }
+        )
+        llm = bedrock.BedrockLLM(_client=client)
+        spec = ToolSpec(name="get_reservation", description="d", input_schema={})
+        round_ = await llm.chat([{"role": "user", "content": "Hi"}], [spec])
+        assert round_.text == "One moment."
+        assert [(c.tool_use_id, c.arguments) for c in round_.calls] == [
+            ("t1", {"id": "EHGLP3"})
+        ]
+        assert round_.usage["prompt_tokens"] == 12
+        (request,) = client.requests
+        assert request["system"] == [{"text": llm.system}]
+        assert (
+            request["toolConfig"]["tools"][0]["toolSpec"]["name"] == "get_reservation"
+        )
+
+    async def test_no_blank_system_text_is_sent(self) -> None:
+        """Converse refuses a blank system text, so with no instructions on
+        either side the field is left out rather than sent empty."""
+        client = _Converse(
+            {"output": {"message": {"role": "assistant", "content": [{"text": "Hi."}]}}}
+        )
+        llm = bedrock.BedrockLLM(system="", _client=client)
+        round_ = await llm.chat([{"role": "user", "content": "Hi"}], [])
+        assert round_.text == "Hi."
+        (request,) = client.requests
+        assert "system" not in request
+        assert "toolConfig" not in request
+
+    async def test_the_conversations_system_message_wins(self) -> None:
+        client = _Converse({"output": {"message": {"content": []}}})
+        llm = bedrock.BedrockLLM(_client=client)
+        await llm.chat(
+            [
+                {"role": "system", "content": "Policy."},
+                {"role": "user", "content": "Hi"},
+            ],
+            [],
+        )
+        assert client.requests[0]["system"] == [{"text": "Policy."}]

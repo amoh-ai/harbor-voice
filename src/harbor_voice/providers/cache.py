@@ -205,10 +205,6 @@ class Cassette:
     _takes: dict[str, list[Chunk]] = field(default_factory=dict, repr=False)
     used_replay: bool = False
 
-    @property
-    def is_active(self) -> bool:
-        return self.mode is not CassetteMode.OFF
-
     def record(self, key: str, chunks: Iterable[Chunk]) -> list[Chunk]:
         """Keep a stream. Returns it so a caller can record while yielding."""
         kept = list(chunks)

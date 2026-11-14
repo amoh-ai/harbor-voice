@@ -23,6 +23,8 @@ only create a way for the two to disagree.
 
 from __future__ import annotations
 
+import importlib
+import warnings
 from collections.abc import Callable
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -155,7 +157,7 @@ class ProviderRegistry:
 
         The provider is read before the model because the registration is what
         supplies the default model — ``offline.tone-tts`` is a complete spec
-        and ``aws.polly`` is not, and only the registry knows which.
+        and ``aws.nova-sonic`` is not, and only the registry knows which.
         """
         name = spec_string.partition("/")[0].strip()
         if not name:
@@ -171,8 +173,8 @@ class ProviderRegistry:
 
     def credentials(self, spec_string: str, **resolve_kwargs: Any) -> CredentialStatus:
         """Whether this provider's credentials are available. Never prints them."""
-        entry, _ = self.resolve(spec_string)
-        return resolve_credentials(entry.spec.credential_provider, **resolve_kwargs)
+        entry, model = self.resolve(spec_string)
+        return resolve_credentials(credential_slug(entry.spec, model), **resolve_kwargs)
 
     def create(self, spec_string: str, *, modality: Modality, **config: Any) -> Any:
         """Build a provider for one slot.
@@ -205,8 +207,8 @@ def default_registry() -> ProviderRegistry:
     """A registry holding the offline reference set.
 
     Offline only. Cloud providers register through their own modules, which are
-    imported lazily so that the 380-test offline suite keeps running with no
-    SDK and no credential installed.
+    imported lazily so that the offline test suite keeps running with no SDK
+    and no credential installed.
     """
     from harbor_voice.providers import offline
 
@@ -214,3 +216,53 @@ def default_registry() -> ProviderRegistry:
     for spec, build in offline.REGISTRATIONS:
         registry.register(spec, build)
     return registry
+
+
+def credential_slug(spec: ProviderSpec, model: str) -> str | None:
+    """Which credentials one provider needs for one model."""
+    if spec.credential_slug_for:
+        return spec.credential_slug_for(model)
+    return spec.credential_provider
+
+
+def provider_registry(
+    report: Callable[[str], None] | None = None,
+) -> ProviderRegistry:
+    """Offline providers, plus every vendor whose providers register.
+
+    A vendor that fails to register is skipped, not fatal: a task naming only
+    offline providers must run without the cloud SDKs. The failure is
+    reported, through ``report`` or else as a warning, so a provider's import
+    bug does not surface later as "unknown provider".
+    """
+    registry = default_registry()
+    for vendor in _VENDORS:
+        try:
+            module = importlib.import_module(f"harbor_voice.providers.{vendor}")
+            module.register_all(registry)
+        except Exception as exc:  # noqa: BLE001 - optional extra; reported, not fatal
+            message = f"{vendor} providers unavailable ({exc})"
+            if report is None:
+                warnings.warn(message, RuntimeWarning, stacklevel=2)
+            else:
+                report(message)
+    return registry
+
+
+_VENDORS = (
+    "aws",
+    "cartesia",
+    "deepgram",
+    "elevenlabs",
+    "fishaudio",
+    "google",
+    "litellm",
+    "meta",
+    "microsoft",
+    "openai",
+    "openrouter",
+    "sarvam",
+    "selfhosted",
+    "xai",
+)
+"""Provider packages registered lazily; each has a ``register_all``."""

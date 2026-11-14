@@ -33,12 +33,12 @@ import asyncio
 import base64
 import contextlib
 import json
-import os
 from collections.abc import AsyncIterator
 from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import fields
 from typing import Any
+from typing import ClassVar
 from typing import Literal
 from typing import override
 
@@ -62,6 +62,7 @@ from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderRef
 from harbor_voice.providers.base import ProviderSpec
 from harbor_voice.providers.base import Usage
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.tools import ToolInvocation
@@ -212,6 +213,12 @@ TAU2_SETTINGS = RealtimeSettings()
 
 class OpenAIRealtimeTransport(VoiceTransport):
     """One OpenAI Realtime session over a websocket."""
+
+    provider_name: ClassVar[str] = NAME
+    """The name in errors. A wire-compatible vendor's subclass sets its own."""
+    api_key_env: ClassVar[str] = "OPENAI_API_KEY"
+    connect_options: ClassVar[dict[str, Any]] = {}
+    """Extra keyword arguments for ``websockets.connect``."""
 
     def __init__(
         self,
@@ -391,26 +398,25 @@ class OpenAIRealtimeTransport(VoiceTransport):
     async def open(self, config: SessionConfig) -> None:
         if self._open:
             return
-        key = self._api_key or os.environ.get("OPENAI_API_KEY")
-        if not key:
-            raise ProviderError(
-                ProviderFailure.AUTH,
-                "OPENAI_API_KEY is not set",
-                provider=NAME,
-                model=self._model,
-            )
+        key = require_key(
+            self._api_key,
+            self.api_key_env,
+            provider=self.provider_name,
+            model=self._model,
+        )
         connect = self._connect or _websockets().connect
         try:
             self._ws = await connect(
                 f"{self._url}?model={self._model}",
                 additional_headers={"Authorization": f"Bearer {key}"},
+                **self.connect_options,
             )
             created = json.loads(await self._ws.recv())
             if created.get("type") != "session.created":
                 raise ProviderError(
                     ProviderFailure.MALFORMED,
                     f"expected session.created, got {created.get('type')}: {str(created)[:300]}",
-                    provider=NAME,
+                    provider=self.provider_name,
                     model=self._model,
                 )
             self.session_id = (created.get("session") or {}).get("id")
@@ -430,7 +436,7 @@ class OpenAIRealtimeTransport(VoiceTransport):
                     raise ProviderError(
                         ProviderFailure.MALFORMED,
                         f"session.update rejected: {reply.get('error')}",
-                        provider=NAME,
+                        provider=self.provider_name,
                         model=self._model,
                     )
         except ProviderError:
@@ -438,7 +444,7 @@ class OpenAIRealtimeTransport(VoiceTransport):
             raise
         except Exception as exc:
             await self._drop()
-            raise _classify(exc, self._model) from exc
+            raise _classify(exc, self._model, self.provider_name) from exc
         self._open = True
         self._pump = asyncio.create_task(self._receive())
 
@@ -460,8 +466,8 @@ class OpenAIRealtimeTransport(VoiceTransport):
             if frame.fmt.encoding != "pcm16" or frame.fmt.channels != 1:
                 raise ProviderError(
                     ProviderFailure.MALFORMED,
-                    f"{NAME} takes μ-law 8 kHz or mono PCM16 frames, got {frame.fmt}",
-                    provider=NAME,
+                    f"{self.provider_name} takes μ-law 8 kHz or mono PCM16 frames, got {frame.fmt}",
+                    provider=self.provider_name,
                     model=self._model,
                 )
             payload = self._to_pcmu(frame)
@@ -470,8 +476,8 @@ class OpenAIRealtimeTransport(VoiceTransport):
         else:
             raise ProviderError(
                 ProviderFailure.MALFORMED,
-                f"{NAME} takes mono PCM16 or μ-law frames, got {frame.fmt}",
-                provider=NAME,
+                f"{self.provider_name} takes mono PCM16 or μ-law frames, got {frame.fmt}",
+                provider=self.provider_name,
                 model=self._model,
             )
         await self._ws.send(
@@ -762,7 +768,7 @@ def response_text(response: Mapping[str, Any]) -> str:
     return "".join(parts).strip()
 
 
-def _classify(exc: Exception, model: str) -> ProviderError:
+def _classify(exc: Exception, model: str, provider: str = NAME) -> ProviderError:
     text = str(exc)
     if "401" in text or "403" in text:
         kind = ProviderFailure.AUTH
@@ -775,7 +781,7 @@ def _classify(exc: Exception, model: str) -> ProviderError:
     else:
         kind = ProviderFailure.STREAM_BROKEN
     return ProviderError(
-        kind, f"{type(exc).__name__}: {text[:300]}", provider=NAME, model=model
+        kind, f"{type(exc).__name__}: {text[:300]}", provider=provider, model=model
     )
 
 
@@ -790,7 +796,6 @@ SPEC = ProviderSpec(
         diarizes=False,
     ),
     credential_provider="openai",
-    requires_extra="voice",
     default_model=DEFAULT_MODEL,
 )
 

@@ -52,7 +52,7 @@ Environment (names only; nothing is written into a task):
 | `ELEVENLABS_API_KEY` | main | the caller (ElevenLabs Agents) |
 | `EVA_EN_USER_F`, `EVA_EN_USER_M` | main | EVA's two English caller agents (`eva-adapter agents`) |
 | `EVA_MODEL_LIST` | eva | EVA's LiteLLM deployments for its judges, as EVA reads it |
-| `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `VERTEXAI_*`, `GOOGLE_APPLICATION_CREDENTIALS` | eva, optional | Gemini, the audio judges (whichever the model list uses) |
+| `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `VERTEXAI_PROJECT`, `VERTEXAI_CREDENTIALS`, `GOOGLE_APPLICATION_CREDENTIALS` | eva, optional | Gemini, the audio judges (whichever route `eva-adapter judges --gemini` chose) |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `AWS_REGION` | eva, optional | Bedrock, the faithfulness judge |
 | `JUDGE_MODEL` | eva, optional | EVA's own judge override |
 | `EVA_SIDECAR_METRIC_CONFIGS` | eva, optional | EVA's `metric_configs` as JSON (`EVA_METRIC_CONFIGS`' format), handed to EVA by the sidecar; empty is EVA's judges |
@@ -66,7 +66,8 @@ EVA setting a run may want, which judges grade (`sidecar/server.py`); EVA
 ignores the name itself.
 
 **The judges' model list** is [`judges.json`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/src/eva_adapter/judges.json):
-`EVA_MODEL_LIST="$(eva-adapter judges)"`. It names every judge
+`EVA_MODEL_LIST="$(eva-adapter judges)"`, or `eva-adapter judges --gemini
+vertex` for Vertex AI (below). It names every judge
 deployment EVA's metrics ask for, as EVA's published setup runs them, and
 holds only `os.environ/…` references, never a key:
 
@@ -77,10 +78,27 @@ holds only `os.environ/…` references, never a key:
 | `gemini-3-flash-preview` | agent and user speech fidelity (audio), EVA's default | the Gemini API, `GEMINI_API_KEY` |
 | `us.anthropic.claude-opus-4-6-v1` | faithfulness | Bedrock, `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, region from `AWS_REGION` |
 
+**The Gemini judge through Vertex AI.** `eva-adapter judges --gemini <route>`
+picks how the audio judges reach Gemini. The deployment keeps its name, so
+EVA's metrics find it on any route:
+
+| `--gemini` | Through | Needs |
+|---|---|---|
+| `api-key` (default) | the Gemini API | `GEMINI_API_KEY` |
+| `vertex` | Vertex AI, Application Default Credentials | `VERTEXAI_PROJECT`, and ADC where the sidecar runs: a GCP workload identity, or `GOOGLE_APPLICATION_CREDENTIALS` naming a file. A local `gcloud auth application-default login` serves a sidecar run outside a container |
+| `vertex-json` | Vertex AI, credentials passed in | `VERTEXAI_PROJECT` and `VERTEXAI_CREDENTIALS`: the credentials JSON itself (a service account key, or an ADC file's contents) |
+
+Gemini 3 previews are served from Vertex's `global` location only, so the
+list sets it. LiteLLM has no API-key route for Vertex, so Vertex means ADC or
+a credentials JSON. `vertex-json` puts that credential in the sidecar's
+environment: on a cloud sandbox, prefer a service account key scoped to
+Vertex AI over your own ADC file.
+
 - EVA names `gpt-5.2-medium` but never defines it. This file reads the name
   as gpt-5.2 at medium reasoning effort.
-- EVA's own setup reaches Gemini through Vertex; `gemini-3-flash-preview`
-  here uses a Gemini API key. The model is the same.
+- EVA's own setup reaches Gemini through Vertex. `judges.json` uses a
+  Gemini API key; `--gemini vertex` or `vertex-json` matches EVA's route. The
+  model is the same.
 
 **The audio judges.** A plain run uses EVA's `gemini-3-flash-preview`
 through the Gemini API (`GEMINI_API_KEY`). To judge audio with another
@@ -91,7 +109,8 @@ model, `gemini-3.8-flash` on Vertex AI say (as the parity run did, PARITY.md
    like: `"model": "gemini/gemini-3.8-flash"` with
    `"api_key": "os.environ/GEMINI_API_KEY"`; `"vertex_ai/gemini-3.8-flash"`
    with `vertex_project`, `vertex_location` (`global`) and credentials the
-   container can read (`GOOGLE_APPLICATION_CREDENTIALS`); or an
+   container can read (`GOOGLE_APPLICATION_CREDENTIALS`, or
+   `"vertex_credentials": "os.environ/VERTEXAI_CREDENTIALS"`); or an
    OpenAI-compatible LiteLLM proxy, `"model": "openai/gemini-3.8-flash"` with
    `"api_base"` and `"api_key"` as `os.environ/<NAME>` references.
 2. Convert with `--sidecar-env <NAME> ...` for every variable the deployment
@@ -153,6 +172,20 @@ call agent once per seed 0, 1, 2.
 
 The sidecar is EVA's image at the commit plus `sidecar/server.py`; `main`
 is a slim Python with uv. Tags carry the EVA commit and a digest of our files.
+All three are built for `linux/amd64` and `linux/arm64`, so they run without
+emulation on x86 backends and on Apple silicon.
+
+The current images on `ghcr.io/amoh-ai`, each one tag with both
+architectures:
+
+| Image | Tag |
+|---|---|
+| sidecar | `ghcr.io/amoh-ai/eva-sidecar:039efa0a-077f8e4f23` |
+| `main` | `ghcr.io/amoh-ai/eva-main:413a7f6ab7` |
+| `main` for perturbed tasks | `ghcr.io/amoh-ai/eva-main:perturbed-117ca3664e` |
+
+`adapters/eva/images.json` records their digests. Dataset versions before
+0.1.1 pin older images built for x86 only.
 
 - **Default**: each task builds the sidecar where it runs, EVA included, from
   ServiceNow's public repo at the full commit (`EVA_BASE=eva-from-source`: EVA's
@@ -283,7 +316,8 @@ In [`tests/adapters/eva/`](https://github.com/amoh-ai/harbor-voice/tree/main/tes
   pass^k and the range overlap, one condition and one audio judge at a
   time, judge-errored trials, the `extend` hook, the CLI.
 - `test_eva_trial.py`, `test_eva_convert.py`: the driver's attempt loop, the
-  parity guard against EVA's recorded session, the trajectory, the tasks.
+  parity guard against EVA's recorded session, the trajectory, the tasks,
+  and the judge list's Vertex routes (`judges --gemini`).
 - `test_eva_e2e.py`: one trial through `drive_here` with the real sidecar
   (its judges faked), a fake OpenAI Realtime server and a fake ElevenLabs
   server on localhost; a validated attempt, and a rerun after EVA's gate

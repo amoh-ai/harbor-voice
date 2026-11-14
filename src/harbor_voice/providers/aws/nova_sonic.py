@@ -51,6 +51,7 @@ from typing import override
 from harbor_voice._deps import numpy as _numpy
 from harbor_voice.audio.format import CANONICAL
 from harbor_voice.audio.format import AudioFormat
+from harbor_voice.audio.clock import SessionClock
 from harbor_voice.audio.frame import AudioFrame
 from harbor_voice.audio.stages import Stage
 from harbor_voice.audio.stages import StageMark
@@ -183,8 +184,12 @@ class NovaSonicTransport(VoiceTransport):
         max_tokens: int = 1024,
         endpointing_sensitivity: str = "HIGH",
         tools: ToolRouter | None = None,
+        clock: SessionClock | None = None,
     ) -> None:
         self._party = party
+        # The call's clock, as every transport stamps with: frames placed on
+        # another timebase put the agent hours away from the caller.
+        self._clock = clock or SessionClock()
         self._model = model
         self._region = region
         self._voice = voice
@@ -542,10 +547,8 @@ class NovaSonicTransport(VoiceTransport):
         remainder is zero-padded rather than dropped — a dropped tail would
         shorten the measured response by up to a frame.
         """
-        import time
-
         size = NOVA_OUTPUT_FORMAT.frame_bytes()
-        arrived = time.monotonic()
+        arrived = self._clock.now()
         for start in range(0, len(pcm), size):
             piece = pcm[start : start + size]
             if len(piece) < size:
@@ -563,10 +566,8 @@ class NovaSonicTransport(VoiceTransport):
             )
 
     def _mark(self, stage: Stage) -> None:
-        import time
-
         self.stages.append(
-            StageMark(stage=stage, t=time.monotonic(), party=self._party)
+            StageMark(stage=stage, t=self._clock.now(), party=self._party)
         )
 
     @override

@@ -34,8 +34,10 @@ SIDECAR = Path(__file__).resolve().parents[2] / "sidecar"
 SIDECAR_FILES = ("Dockerfile", "server.py", "evaluate.py")
 RECORD = Path(__file__).resolve().parents[2] / "images.json"
 """Published images, ``{registry: {"name:tag": "sha256:..."}}``."""
-PLATFORM = "linux/amd64"
-"""What every backend runs; an ARM machine would otherwise build ARM images."""
+PLATFORMS = ("linux/amd64", "linux/arm64")
+"""Built into every image: x86 for most backends, ARM for sandboxes on Apple
+silicon (Docker Sandboxes on a Mac), which run neither emulated. Building both
+needs Docker's containerd image store, Docker Desktop's default."""
 SOURCE = "https://github.com/amoh-ai/harbor-voice"
 LABELS = {
     "org.opencontainers.image.source": SOURCE,
@@ -72,14 +74,23 @@ def _named(name: str, tag: str, registry: str | None) -> str:
     return f"{registry.rstrip('/')}/{name}:{tag}" if registry else f"{name}:{tag}"
 
 
+def _platforms() -> bytes:
+    """Part of every tag, so images built for other platforms get new tags
+    rather than replacing published ones."""
+    return ",".join(PLATFORMS).encode()
+
+
 def tau2_image(registry: str | None = None) -> str:
     """The sidecar: tau2 at a pinned commit, plus our server and grader."""
     files = [(SIDECAR / name).read_bytes() for name in SIDECAR_FILES]
-    return _named("tau-voice-runtime", f"{TAU2_COMMIT}-{_digest(files)}", registry)
+    tag = f"{TAU2_COMMIT}-{_digest([*files, _platforms()])}"
+    return _named("tau-voice-runtime", tag, registry)
 
 
 def main_image(registry: str | None = None) -> str:
-    return _named("tau-voice-main", _digest([MAIN_DOCKERFILE.encode()]), registry)
+    return _named(
+        "tau-voice-main", _digest([MAIN_DOCKERFILE.encode(), _platforms()]), registry
+    )
 
 
 def refs(registry: str | None = None) -> list[str]:
@@ -168,7 +179,7 @@ def build(
     if push and not registry:
         raise ValueError("push needs a registry")
     tau2, main = refs(registry)
-    platform = ["--platform", PLATFORM]
+    platform = ["--platform", ",".join(PLATFORMS)]
     if force or not exists(tau2):
         subprocess.run(
             ["docker", "build", *platform, *_labels("tau-voice-runtime"), "-t", tau2]

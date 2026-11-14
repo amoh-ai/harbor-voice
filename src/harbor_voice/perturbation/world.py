@@ -39,7 +39,6 @@ indistinguishable in the results, and they are the interesting part.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
 from enum import StrEnum
@@ -260,9 +259,6 @@ class WorldPlan:
         self._delayed += 1
         self._observed.add(delay)
         return ToolOutcome(tool=tool, delay_ms=delay, reason="injected latency")
-
-    def outage_windows(self) -> Sequence[Outage]:
-        return self.outages
 
     # --------------------------------------------------------------- record
 
