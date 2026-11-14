@@ -8,6 +8,8 @@ on:
 
 jobs:
   check:
+    # 3.13 jobs keep the names main's ruleset requires: check (<os>).
+    name: check (${{ matrix.os }}${{ matrix.python != '3.13' && format(', {0}', matrix.python) || '' }})
     strategy:
       fail-fast: false
       matrix:
