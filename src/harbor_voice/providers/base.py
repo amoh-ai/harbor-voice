@@ -534,7 +534,12 @@ class HTTPSession:
 
     def client(self, timeout_s: float) -> httpx.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=timeout_s)
+            # Redirects are followed: a server behind Modal's web proxy that
+            # takes longer than ~150 s (a model still loading) answers 303 to
+            # a URL where the result will appear. httpx turns the POST into a
+            # GET for a 303, as the proxy expects, and drops the auth header
+            # if a redirect leaves the original host.
+            self._client = httpx.AsyncClient(timeout=timeout_s, follow_redirects=True)
         return self._client
 
     async def aclose(self) -> None:

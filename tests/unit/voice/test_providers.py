@@ -945,3 +945,30 @@ async def test_an_http_session_leaves_a_callers_client_open() -> None:
     await session.aclose()
     assert not given.is_closed
     await given.aclose()
+
+
+async def test_an_http_session_follows_a_slow_servers_redirect(monkeypatch) -> None:
+    """Modal's web proxy answers a request still running after ~150 s with a
+    303 to where the result will appear; the result must be read, not an
+    error raised over the redirect."""
+    import httpx
+
+    from harbor_voice.providers import base
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/chat/completions":
+            return httpx.Response(303, headers={"location": "/result/1"})
+        assert request.method == "GET"
+        return httpx.Response(200, json={"ok": True})
+
+    real = httpx.AsyncClient
+
+    def with_mock(**kw: object) -> httpx.AsyncClient:
+        return real(transport=httpx.MockTransport(handler), **kw)  # ty: ignore[invalid-argument-type]
+
+    monkeypatch.setattr(base.httpx, "AsyncClient", with_mock)
+    session = base.HTTPSession()
+    response = await session.client(5.0).post("https://server/v1/chat/completions")
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+    await session.aclose()
