@@ -141,6 +141,8 @@ class OpenAILLM(PooledHTTP):
             ``"developer"`` as the first message, or ``"instructions"``, the
             Responses API's top-level field (``api="responses"`` only). It
             applies to a conversation's own system messages too.
+        follow_redirects: Follow HTTP redirects. Off for OpenAI; on for a
+            self-hosted server behind Modal's proxy (``selfhosted.llm``).
     """
 
     def __init__(
@@ -156,6 +158,7 @@ class OpenAILLM(PooledHTTP):
         api: API = "chat",
         system: str | None = None,
         system_role: SystemRole = "system",
+        follow_redirects: bool = False,
     ) -> None:
         if api not in APIS:
             raise ValueError(f"{NAME}: api must be one of {APIS}, not {api!r}")
@@ -178,7 +181,7 @@ class OpenAILLM(PooledHTTP):
         self._api_key = api_key
         self._api_base = api_base.rstrip("/")
         self._timeout_s = timeout_s
-        self._http = HTTPSession(client)
+        self._http = HTTPSession(client, follow_redirects=follow_redirects)
         # Responses API reasoning items, by the call ids of the round that
         # produced them. See _responses_input.
         self._rounds: dict[tuple[str, ...], list[dict[str, Any]]] = {}
@@ -257,9 +260,10 @@ class OpenAILLM(PooledHTTP):
         """``messages`` with the instructions in place, as messages.
 
         :attr:`system` goes after the conversation's own instructions (first,
-        when it has none); a ``system`` or ``developer`` message is sent under
-        :attr:`system_role`. With ``"instructions"`` the caller lifts them
-        out instead (see :meth:`_split_instructions`).
+        when it has none). With ``system_role="developer"`` every ``system``
+        message becomes ``developer``; with ``"system"`` messages keep their
+        roles. With ``"instructions"`` the caller lifts them out instead (see
+        :meth:`_split_instructions`).
         """
         out = [dict(m) for m in messages]
         if self.system:
@@ -414,9 +418,27 @@ class OpenAILLM(PooledHTTP):
             json=body,
             headers={"Authorization": f"Bearer {key}"},
         )
-        if response.status_code == 200:
-            return response.json()
-        raise _error(response, self.name, model)
+        if response.status_code != 200:
+            raise _error(response, self.name, model)
+        try:
+            data = response.json()
+        except ValueError as exc:
+            # A proxy in front of a self-hosted server can answer 200 with a
+            # page, not JSON.
+            raise ProviderError(
+                ProviderFailure.MALFORMED,
+                f"the reply is not JSON: {response.text[:300]}",
+                provider=self.name,
+                model=model,
+            ) from exc
+        if not isinstance(data, dict):
+            raise ProviderError(
+                ProviderFailure.MALFORMED,
+                f"the reply is not a JSON object: {response.text[:300]}",
+                provider=self.name,
+                model=model,
+            )
+        return data
 
 
 def _instruction(message: Mapping[str, Any]) -> bool:

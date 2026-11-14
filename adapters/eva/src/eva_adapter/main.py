@@ -12,7 +12,8 @@
                            --model openai.realtime/gpt-realtime-1.5 \\
                            [--trials 3] [-n 4] [--env daytona]
                            [--override-storage-mb <MB>] -o job.yaml
-    eva-adapter judges            EVA's judge deployments, for EVA_MODEL_LIST
+    eva-adapter judges [--gemini api-key|vertex|vertex-json]
+                                  EVA's judge deployments, for EVA_MODEL_LIST
     eva-adapter agents ...        EVA's ElevenLabs caller agents (agents.py)
     eva-adapter sample ...        the records a parity comparison runs (sample.py)
     eva-adapter compare --harbor <job> ... --original <EVA run> ...
@@ -111,9 +112,11 @@ SIDECAR_ENV = ("OPENAI_API_KEY", "EVA_MODEL_LIST")
 deployments (``EVA_MODEL_LIST``), which validation needs on every attempt.
 Without them no attempt can pass, so a trial refuses to start."""
 SIDECAR_OPTIONAL_ENV = (
-    # Gemini, for the audio judges: an API key, or Vertex (the model list
-    # names the project; GOOGLE_APPLICATION_CREDENTIALS must then hold what
-    # LiteLLM's vertex_credentials takes inside the container).
+    # Gemini, for the audio judges: an API key, or Vertex AI with
+    # VERTEXAI_PROJECT and either ADC (GOOGLE_APPLICATION_CREDENTIALS naming
+    # a file inside the container) or the credentials JSON itself in
+    # VERTEXAI_CREDENTIALS. See GEMINI_ROUTES. VERTEXAI_LOCATION is only for
+    # a model list of your own: the generated one pins "global".
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
     "GOOGLE_APPLICATION_CREDENTIALS",
@@ -869,15 +872,11 @@ def judge_list(gemini: str = "api-key") -> list[dict[str, Any]]:
         params = deployment["litellm_params"]
         if not params["model"].startswith("gemini/"):
             continue
-        model = params["model"].removeprefix("gemini/")
-        params.clear()
-        params.update(
-            {
-                "model": f"vertex_ai/{model}",
-                "vertex_project": "os.environ/VERTEXAI_PROJECT",
-                "vertex_location": VERTEX_GEMINI_LOCATION,
-            }
-        )
+        # Swap the route and its auth; keep any other settings.
+        params.pop("api_key", None)
+        params["model"] = "vertex_ai/" + params["model"].removeprefix("gemini/")
+        params["vertex_project"] = "os.environ/VERTEXAI_PROJECT"
+        params["vertex_location"] = VERTEX_GEMINI_LOCATION
         if gemini == "vertex-json":
             params["vertex_credentials"] = "os.environ/VERTEXAI_CREDENTIALS"
     return deployments

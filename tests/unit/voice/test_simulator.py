@@ -351,3 +351,29 @@ class TestRepr:
     def test_repr_names_the_source_and_layers(self) -> None:
         r = repr(_sim(pipeline=_pipeline()))
         assert "source=script" in r and "layers=3" in r
+
+
+class TestClosingTheCaller:
+    async def test_the_persona_llm_is_closed_even_if_the_tts_close_fails(
+        self,
+    ) -> None:
+        closed: list[str] = []
+
+        class LLM:
+            name = "llm"
+
+            async def aclose(self) -> None:
+                closed.append("llm")
+
+        class TTS(ToneTTS):
+            async def aclose(self) -> None:
+                raise RuntimeError("tts close failed")
+
+        simulator = UniversalSimulator(
+            party=PartyId("caller"),
+            content=PersonaContent(brief="x", llm=LLM()),
+            tts=TTS(),
+        )
+        with pytest.raises(RuntimeError, match="tts close failed"):
+            await simulator.aclose()
+        assert closed == ["llm"]

@@ -354,3 +354,67 @@ class TestAPersonaCallerHearsTheAgent:
 
     async def test_a_scripted_caller_reads_nothing(self) -> None:
         assert await VoiceTrial(_config())._agent_words(object(), []) == []
+
+    async def test_a_cascades_words_are_grouped_by_turn(self) -> None:
+        """A probe draws a reply of its own, so ``said`` can have more lines
+        than there are turns; the caller must get one line per turn, or its
+        own lines and the agent's go out of step."""
+        from types import SimpleNamespace
+
+        config = _config(
+            caller={"source": "persona", "brief": "x", "llm": "offline.echo-llm"}
+        )
+        trial = VoiceTrial(config)
+        agent = SimpleNamespace(said=[])
+        turn = SimpleNamespace(received=())
+        assert await trial._agent_words(agent, []) == []  # ty: ignore[invalid-argument-type]
+        agent.said += ["Your code?", "Sure, go on."]  # a reply, and a probe's
+        assert await trial._agent_words(agent, [turn]) == [  # ty: ignore[invalid-argument-type]
+            "Your code? Sure, go on."
+        ]
+        agent.said += ["Booked."]
+        assert await trial._agent_words(agent, [turn, turn]) == [  # ty: ignore[invalid-argument-type]
+            "Your code? Sure, go on.",
+            "Booked.",
+        ]
+
+    async def test_a_second_run_hears_its_own_call(self) -> None:
+        """What the caller heard is forgotten when a call ends: a second run
+        of the same trial must not answer the first run's agent."""
+        config = _config(
+            caller={
+                "source": "persona",
+                "brief": "a caller",
+                "llm": "offline.echo-llm",
+                "tts": "offline.tone-tts",
+                "stt": "offline.scripted-stt",
+                "config": {"stt": {"turns": ["alpha", "beta", "gamma"]}},
+            },
+            max_turns=3,
+        )
+        trial = VoiceTrial(config)
+        first = await trial.run()
+        second = await trial.run()
+        assert [t.said for t in second.trajectory.turns] == [
+            t.said for t in first.trajectory.turns
+        ]
+
+    async def test_a_failing_close_neither_hides_the_call_nor_leaks_the_stt(
+        self,
+    ) -> None:
+        from types import SimpleNamespace
+
+        closed: list[str] = []
+
+        async def broken() -> None:
+            raise RuntimeError("close failed")
+
+        async def stt_close() -> None:
+            closed.append("stt")
+
+        trial = VoiceTrial(_config())
+        trial._hearing = SimpleNamespace(aclose=stt_close)
+        trial._heard_lines = ["old"]
+        await trial._close_caller(SimpleNamespace(aclose=broken))  # ty: ignore[invalid-argument-type]
+        assert closed == ["stt"]
+        assert trial._hearing is None and trial._heard_lines == []

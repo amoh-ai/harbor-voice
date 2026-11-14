@@ -348,8 +348,11 @@ class VoiceTrial:
         self._task_dir = task_dir
         self._agent_spec_override = agent_spec
         self._registry = registry if registry is not None else provider_registry()
+        # What a persona caller has heard of the agent in the current call;
+        # reset when the call ends (see _agent_words).
         self._hearing: Any = None
         self._heard_lines: list[str] = []
+        self._said_taken = 0
         self._out_dir = out_dir
         self._caller = caller
         self._agent = agent
@@ -496,17 +499,32 @@ class VoiceTrial:
         try:
             turns, probes = await self._call(transport, simulator, floor)
         finally:
-            await simulator.aclose()
-            if (close := getattr(self._hearing, "aclose", None)) is not None:
-                with contextlib.suppress(Exception):
-                    await close()
-            self._hearing = None
+            await self._close_caller(simulator)
         trajectory = self._record(pipeline, simulator, transport, floor, turns, probes)
         return self._score(trajectory, turns)
 
+    async def _close_caller(self, simulator: UniversalSimulator) -> None:
+        """Close the caller's connections (its voice, its persona's model, its
+        STT) and forget what it heard, so a second run starts clean. A
+        failure to close is not the call's failure and must not hide one."""
+        for close in (simulator.aclose, getattr(self._hearing, "aclose", None)):
+            if close is not None:
+                with contextlib.suppress(Exception):
+                    await close()
+        self._hearing = None
+        self._heard_lines = []
+        self._said_taken = 0
+
     async def _agent_words(self, transport: Any, turns: Sequence[Turn]) -> list[str]:
         """What the agent has said so far, one line per turn, for a caller
-        that reacts to it. A scripted caller reads nothing."""
+        that reacts to it. A scripted caller reads nothing.
+
+        Called before each caller line, so what the agent said since the
+        last call belongs to the turn that just ended. A cascade's ``said``
+        has one line per reply, not per turn (a probe draws a reply of its
+        own, and a late reply lands in the next turn), so it is grouped by
+        turn here to keep the caller's lines and the agent's paired.
+        """
         caller = self._config.caller
         if caller is None or caller.source != "persona":
             return []
@@ -533,7 +551,10 @@ class VoiceTrial:
                 "agent's words exist only as audio, so set [caller] stt to "
                 "transcribe them"
             )
-        return list(said)
+        while len(self._heard_lines) < len(turns):
+            self._heard_lines.append(" ".join(said[self._said_taken :]))
+            self._said_taken = len(said)
+        return list(self._heard_lines)
 
     async def _call(
         self, transport: Any, simulator: UniversalSimulator, floor: Any

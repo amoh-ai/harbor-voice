@@ -1,6 +1,6 @@
 [project]
 name = "harbor-voice"
-version = "0.1.1"
+version = "0.1.2"
 description = "Evaluate voice agents on phone-call benchmarks, on harbor."
 readme = "README.md"
 license = "Apache-2.0"
@@ -56,13 +56,15 @@ vercel = ["harbor[vercel]==0.25.0"]
 # Credentials. AI Studio needs nothing extra.
 google = ["google-auth[requests]>=2.0"]
 # The benchmark adapters, released with harbor-voice at the same version.
-tau-voice = ["harbor-voice-tau-voice-adapter==0.1.1"]
-eva = ["harbor-voice-eva-adapter==0.1.1"]
+tau-voice = ["harbor-voice-tau-voice-adapter==0.1.2"]
+eva = ["harbor-voice-eva-adapter==0.1.2"]
 
 [project.urls]
 Homepage = "https://github.com/amoh-ai/harbor-voice"
 Repository = "https://github.com/amoh-ai/harbor-voice"
+Documentation = "https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md"
 Issues = "https://github.com/amoh-ai/harbor-voice/issues"
+Changelog = "https://github.com/amoh-ai/harbor-voice/releases"
 
 [project.scripts]
 harbor-voice = "harbor_voice.cli:main"

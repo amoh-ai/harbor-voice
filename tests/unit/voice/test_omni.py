@@ -52,6 +52,14 @@ def _omni(handler, **kw) -> tuple[OmniLLM, list[httpx.Request]]:
 
 
 class TestTheOmniModel:
+    async def test_a_reply_that_is_not_json_is_malformed(self) -> None:
+        """A proxy in front of a server can answer 200 with an HTML page."""
+        omni, _ = _omni(lambda _: httpx.Response(200, text="<html>loading</html>"))
+        with pytest.raises(ProviderError) as caught:
+            await omni.reply(b"\x00\x00" * 10)
+        assert caught.value.kind is ProviderFailure.MALFORMED
+        assert "loading" in str(caught.value)
+
     async def test_it_sends_the_audio_as_wav_and_reads_the_text(self) -> None:
         omni, seen = _omni(
             lambda _: httpx.Response(200, json=_completion(" Sure. ")),
@@ -125,6 +133,8 @@ class TestTheOmniCascade:
         assert first.received
         assert [n for _, n in omni.calls] == [0, 1]
         assert t.said == ["reply 1", "reply 2"]
+        # No ASR seam, so no HEARD side: not an empty line per turn.
+        assert t.heard == []
         assert first.stage_at(Stage.LLM_DONE) is not None
         assert first.stage_at(Stage.ASR_FINAL) is None
         assert t.ref.model == "fake.omni/m+tone-tts"

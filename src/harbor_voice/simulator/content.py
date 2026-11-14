@@ -241,3 +241,8 @@ class PersonaContent:
     def reset(self) -> None:
         self._said = []
         self._hung_up = False
+
+    async def aclose(self) -> None:
+        """Close the LLM's connections, if it holds any."""
+        if (aclose := getattr(self.llm, "aclose", None)) is not None:
+            await aclose()

@@ -91,7 +91,7 @@ class SelfHostedSTT:
     _http: HTTPSession = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        self._http = HTTPSession(self.client)
+        self._http = HTTPSession(self.client, follow_redirects=True)
 
     async def aclose(self) -> None:
         """Close this provider's connections. Safe to call more than once."""
@@ -167,7 +167,7 @@ class SelfHostedTTS:
     _http: HTTPSession = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        self._http = HTTPSession(self.client)
+        self._http = HTTPSession(self.client, follow_redirects=True)
 
     async def aclose(self) -> None:
         """Close this provider's connections. Safe to call more than once."""

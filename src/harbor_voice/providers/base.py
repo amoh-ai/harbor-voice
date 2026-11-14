@@ -526,20 +526,28 @@ class HTTPSession:
     lands in the measured response time as harness overhead. The client is
     made on first use; :meth:`aclose` closes it unless the caller passed
     its own.
+
+    ``follow_redirects`` is for self-hosted servers only: one behind Modal's
+    web proxy that takes longer than ~150 s (a model still loading) answers
+    303 to a URL where the result will appear, and httpx turns the POST into
+    a GET for a 303, as the proxy expects. It is off by default because
+    httpx drops only ``Authorization`` when a redirect leaves the original
+    host; a key in a vendor header (``xi-api-key``,
+    ``Ocp-Apim-Subscription-Key``) would go to the new host with the body.
     """
 
-    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(
+        self, client: httpx.AsyncClient | None = None, *, follow_redirects: bool = False
+    ) -> None:
         self._client = client
         self._owned = client is None
+        self._follow_redirects = follow_redirects
 
     def client(self, timeout_s: float) -> httpx.AsyncClient:
         if self._client is None:
-            # Redirects are followed: a server behind Modal's web proxy that
-            # takes longer than ~150 s (a model still loading) answers 303 to
-            # a URL where the result will appear. httpx turns the POST into a
-            # GET for a 303, as the proxy expects, and drops the auth header
-            # if a redirect leaves the original host.
-            self._client = httpx.AsyncClient(timeout=timeout_s, follow_redirects=True)
+            self._client = httpx.AsyncClient(
+                timeout=timeout_s, follow_redirects=self._follow_redirects
+            )
         return self._client
 
     async def aclose(self) -> None:

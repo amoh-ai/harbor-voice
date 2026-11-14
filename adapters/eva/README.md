@@ -66,7 +66,8 @@ EVA setting a run may want, which judges grade (`sidecar/server.py`); EVA
 ignores the name itself.
 
 **The judges' model list** is [`judges.json`](https://github.com/amoh-ai/harbor-voice/blob/main/adapters/eva/src/eva_adapter/judges.json):
-`EVA_MODEL_LIST="$(eva-adapter judges)"`. It names every judge
+`EVA_MODEL_LIST="$(eva-adapter judges)"`, or `eva-adapter judges --gemini
+vertex` for Vertex AI (below). It names every judge
 deployment EVA's metrics ask for, as EVA's published setup runs them, and
 holds only `os.environ/…` references, never a key:
 
@@ -95,8 +96,9 @@ Vertex AI over your own ADC file.
 
 - EVA names `gpt-5.2-medium` but never defines it. This file reads the name
   as gpt-5.2 at medium reasoning effort.
-- EVA's own setup reaches Gemini through Vertex; `gemini-3-flash-preview`
-  here uses a Gemini API key. The model is the same.
+- EVA's own setup reaches Gemini through Vertex. `judges.json` uses a
+  Gemini API key; `--gemini vertex` or `vertex-json` matches EVA's route. The
+  model is the same.
 
 **The audio judges.** A plain run uses EVA's `gemini-3-flash-preview`
 through the Gemini API (`GEMINI_API_KEY`). To judge audio with another
@@ -107,7 +109,8 @@ model, `gemini-3.8-flash` on Vertex AI say (as the parity run did, PARITY.md
    like: `"model": "gemini/gemini-3.8-flash"` with
    `"api_key": "os.environ/GEMINI_API_KEY"`; `"vertex_ai/gemini-3.8-flash"`
    with `vertex_project`, `vertex_location` (`global`) and credentials the
-   container can read (`GOOGLE_APPLICATION_CREDENTIALS`); or an
+   container can read (`GOOGLE_APPLICATION_CREDENTIALS`, or
+   `"vertex_credentials": "os.environ/VERTEXAI_CREDENTIALS"`); or an
    OpenAI-compatible LiteLLM proxy, `"model": "openai/gemini-3.8-flash"` with
    `"api_base"` and `"api_key"` as `os.environ/<NAME>` references.
 2. Convert with `--sidecar-env <NAME> ...` for every variable the deployment
@@ -313,7 +316,8 @@ In [`tests/adapters/eva/`](https://github.com/amoh-ai/harbor-voice/tree/main/tes
   pass^k and the range overlap, one condition and one audio judge at a
   time, judge-errored trials, the `extend` hook, the CLI.
 - `test_eva_trial.py`, `test_eva_convert.py`: the driver's attempt loop, the
-  parity guard against EVA's recorded session, the trajectory, the tasks.
+  parity guard against EVA's recorded session, the trajectory, the tasks,
+  and the judge list's Vertex routes (`judges --gemini`).
 - `test_eva_e2e.py`: one trial through `drive_here` with the real sidecar
   (its judges faked), a fake OpenAI Realtime server and a fake ElevenLabs
   server on localhost; a validated attempt, and a rerun after EVA's gate

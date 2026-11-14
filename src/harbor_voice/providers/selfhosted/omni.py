@@ -104,7 +104,7 @@ class OmniLLM(PooledHTTP):
         self._url = base_url.rstrip("/").removesuffix("/v1") + "/v1/chat/completions"
         self._api_key = api_key
         self._timeout_s = timeout_s
-        self._http = HTTPSession(client)
+        self._http = HTTPSession(client, follow_redirects=True)
 
     async def reply(self, audio: bytes, history: Sequence[OmniTurn] = ()) -> OmniReply:
         """The model's text answer to the caller's latest ``audio``.
@@ -148,13 +148,13 @@ class OmniLLM(PooledHTTP):
                 provider=self.name,
                 model=self.model,
             )
-        data = response.json()
         try:
+            data = response.json()
             text = data["choices"][0]["message"].get("content") or ""
-        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
             raise ProviderError(
                 ProviderFailure.MALFORMED,
-                f"no choices in the reply: {str(data)[:300]}",
+                f"no choices in the reply: {response.text[:300]}",
                 provider=self.name,
                 model=self.model,
             ) from exc

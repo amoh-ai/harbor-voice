@@ -303,12 +303,15 @@ class BedrockLLM:
         request: dict[str, Any] = {
             "modelId": self.model,
             "messages": converse,
-            "system": [{"text": text} for text in system or [self.system]],
             "inferenceConfig": {
                 "maxTokens": self.max_tokens,
                 "temperature": self.temperature,
             },
         }
+        # Converse refuses a blank system text, so none is sent when neither
+        # the conversation nor this LLM has instructions.
+        if instructions := system or ([self.system] if self.system else []):
+            request["system"] = [{"text": text} for text in instructions]
         if tools:
             request["toolConfig"] = {
                 "tools": [spec.as_bedrock() for spec in tools],

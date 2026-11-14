@@ -426,3 +426,28 @@ class TestBedrockHoldsAConversation:
         assert (
             request["toolConfig"]["tools"][0]["toolSpec"]["name"] == "get_reservation"
         )
+
+    async def test_no_blank_system_text_is_sent(self) -> None:
+        """Converse refuses a blank system text, so with no instructions on
+        either side the field is left out rather than sent empty."""
+        client = _Converse(
+            {"output": {"message": {"role": "assistant", "content": [{"text": "Hi."}]}}}
+        )
+        llm = bedrock.BedrockLLM(system="", _client=client)
+        round_ = await llm.chat([{"role": "user", "content": "Hi"}], [])
+        assert round_.text == "Hi."
+        (request,) = client.requests
+        assert "system" not in request
+        assert "toolConfig" not in request
+
+    async def test_the_conversations_system_message_wins(self) -> None:
+        client = _Converse({"output": {"message": {"content": []}}})
+        llm = bedrock.BedrockLLM(_client=client)
+        await llm.chat(
+            [
+                {"role": "system", "content": "Policy."},
+                {"role": "user", "content": "Hi"},
+            ],
+            [],
+        )
+        assert client.requests[0]["system"] == [{"text": "Policy."}]

@@ -191,9 +191,15 @@ class UniversalSimulator:
         self._pipeline.persona.apply_to_tts(self._tts)
 
     async def aclose(self) -> None:
-        """Close the caller's TTS connections, if it holds any."""
-        if (aclose := getattr(self._tts, "aclose", None)) is not None:
-            await aclose()
+        """Close the connections the caller holds: its TTS's, and its content
+        source's (a persona's LLM). The second is closed even if the first
+        fails."""
+        try:
+            if (aclose := getattr(self._tts, "aclose", None)) is not None:
+                await aclose()
+        finally:
+            if (aclose := getattr(self._content, "aclose", None)) is not None:
+                await aclose()
 
     # ------------------------------------------------------------- declared
 

@@ -495,3 +495,13 @@ class TestInstructions:
             {"role": "developer", "content": "No markdown."},
             {"role": "user", "content": "Hi"},
         ]
+
+
+@pytest.mark.parametrize("body", ["<html>loading</html>", "[1, 2]"])
+async def test_a_200_that_is_not_a_json_object_is_malformed(body: str) -> None:
+    """A proxy in front of a self-hosted server can answer 200 with a page."""
+    client, _ = _client(lambda _: httpx.Response(200, text=body))
+    llm = oa.OpenAILLM(api_key="k", client=client)
+    with pytest.raises(ProviderError) as caught:
+        await llm.complete(dict(BODY))
+    assert caught.value.kind is ProviderFailure.MALFORMED

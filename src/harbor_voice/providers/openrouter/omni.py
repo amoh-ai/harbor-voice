@@ -10,9 +10,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from harbor_voice.providers.base import ProviderError
-from harbor_voice.providers.base import ProviderFailure
 from harbor_voice.providers.base import ProviderSpec
+from harbor_voice.providers.base import require_key
 from harbor_voice.providers.capabilities import Modality
 from harbor_voice.providers.capabilities import ProviderCapabilities
 from harbor_voice.providers.openrouter.speech import BASE_URL
@@ -25,11 +24,7 @@ NAME = "openrouter.omni"
 
 
 def build(*, model: str, **config: Any) -> OmniLLM:
-    key = config.pop("api_key", None) or os.environ.get(KEY_ENV)
-    if not key:
-        raise ProviderError(
-            ProviderFailure.AUTH, f"{KEY_ENV} is not set", provider=NAME, model=model
-        )
+    key = require_key(config.pop("api_key", None), KEY_ENV, provider=NAME, model=model)
     base = config.pop("base_url", None) or os.environ.get(BASE_URL_ENV) or BASE_URL
     return OmniLLM(model=model, base_url=base, api_key=key, name=NAME, **config)
 

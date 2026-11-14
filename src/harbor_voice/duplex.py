@@ -323,7 +323,13 @@ class DuplexDriver:
 
         index = self._turn_index
         self._turn_index += 1
-        bled = tuple(self._from_wire(f) for f in self._pump.take_pending())
+        # Only sound counts: the quiet a continuously streaming agent sends
+        # between replies did not cross into the caller's turn.
+        bled = tuple(
+            frame
+            for frame in map(self._from_wire, self._pump.take_pending())
+            if not convert.is_quiet(frame.pcm)
+        )
         started_at = self._call_s
 
         sent, last_tx = await self._speak(utterance.frames, bid=Bid.FLOOR)
@@ -546,6 +552,10 @@ class DuplexDriver:
         stop = DrainStop.TIMEOUT
         try:
             while True:
+                # A transport whose stream fails (a cascade slot that broke)
+                # ends the call now, rather than after the turn's timeout or,
+                # on the last turn, not at all.
+                self._pump.check()
                 if task.done():
                     stop = DrainStop.STREAM_END
                     break

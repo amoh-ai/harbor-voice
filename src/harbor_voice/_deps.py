@@ -1,21 +1,16 @@
-"""Lazy access to the ``voice`` extra, with an error that says what to install.
+"""Lazy imports of numpy and websockets, with an error that says what to install.
 
-harbor ships no numpy, scipy or soundfile, and resolves vendor SDKs lazily via
-``(module, class_name, pip_extra)`` in ``environments/factory.py`` so a broken
-or absent vendor package cannot break unrelated backends. harbor_voice follows
-the same rule: nothing at import time depends on the ``voice`` extra, so a
-plain ``import harbor_voice`` works without it.
+Both are core dependencies of harbor-voice, so this only fires in a broken
+environment. Importing them on first use keeps ``import harbor_voice`` light.
 """
 
 from __future__ import annotations
 
 from types import ModuleType
 
-_EXTRA = "voice"
-
 
 class MissingVoiceDependency(ImportError):
-    """A voice-only dependency is needed and not installed."""
+    """A dependency harbor-voice needs is not installed."""
 
 
 def _require(module: str, *, used_for: str) -> ModuleType:
@@ -27,7 +22,7 @@ def _require(module: str, *, used_for: str) -> ModuleType:
     except ImportError as exc:  # pragma: no cover - exercised by the message test
         raise MissingVoiceDependency(
             f"{module!r} is needed for {used_for} but is not installed. "
-            f"Install the voice extra:  pip install 'harbor[{_EXTRA}]'"
+            f"Reinstall harbor-voice:  pip install --force-reinstall harbor-voice"
         ) from exc
 
 

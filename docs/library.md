@@ -50,6 +50,10 @@ and checked, not probed.
   Most speech models need a voice; each model's voices are in
   `GET https://openrouter.ai/api/v1/models?output_modalities=speech`.
   Models OpenRouter serves only as MP3 (MiniMax) are not supported.
+- `aws.bedrock-llm` holds a conversation too: OpenAI chat messages, tool
+  calls and results included, go to Bedrock as one Converse call, so it can
+  be a tau-voice cascade's LLM. It uses its own `system` only when the
+  conversation brings none.
 - `openai.llm` takes the agent's instructions as `system`, sent with the role
   `system_role` names: `"system"` (default) or `"developer"` as the first
   message, or `"instructions"`, the Responses API's top-level field (with
@@ -81,8 +85,8 @@ turn-taking and keeps the whole conversation, tool calls and results
 included. Turn detection is Deepgram's, as in tau2: one Deepgram stream per
 call gives the turns and the transcript, so the STT slot must be
 `deepgram.stt`, and any other is refused. Its LLM slot has to implement
-`ChatLLM` (`openai.llm`, `selfhosted.llm`, `litellm.llm`, `offline.echo-llm`,
-`offline.tool-echo-llm`). Its `ref` names all three slots, and
+`ChatLLM` (`openai.llm`, `selfhosted.llm`, `litellm.llm`, `aws.bedrock-llm`,
+`offline.echo-llm`, `offline.tool-echo-llm`). Its `ref` names all three slots, and
 `usage_records()` gives one record per slot: audio seconds, LLM tokens and
 TTS characters. A job can set a driver's options for every task it
 runs with the call agent's `call_config` kwarg (`--ak 'call_config={...}'`),
@@ -97,7 +101,7 @@ a live session (the module's docstring shows how).
 
 The benchmark adapters bring their own caller and call loop. A task that
 declares a `[caller]` instead runs on harbor-voice's own. It has a seeded
-simulated caller (a script, a persona LLM or recorded clips), half- or
+simulated caller (a script or a persona LLM), half- or
 full-duplex turn-taking, and perturbation layers. Each layer is recorded with
 what it achieved, not just what was asked for, and the clean audio is kept
 for comparison.
@@ -147,6 +151,24 @@ config = VoiceTaskConfig.from_toml(Path("my-task/voice.toml"))
 outcome = asyncio.run(VoiceTrial(config, out_dir=Path("out")).run())
 print(outcome.reward)  # the call's metrics, also in out/reward.json
 Path("out/trajectory.json").write_text(outcome.trajectory.to_atif_json(), encoding="utf-8")
+```
+
+A persona caller is an LLM playing someone: `source = "persona"`, a `brief`
+(who they are and what they want), an `llm` and a `tts`. It hears the agent
+as text. A cascade agent's own words (what its TTS was given) are used by
+default. A speech-to-speech agent's words exist only as audio, so set
+`stt = "<provider/model>"` under `[caller]` to transcribe each reply; without
+it the trial fails with a config error. The caller hangs up by ending its goodbye line with
+`[END CALL]`. That line is spoken without the marker, and the call ends
+after it.
+
+```toml
+[caller]
+source = "persona"
+brief = "Dana Ruiz. Wants to move Tuesday's 3 pm appointment to Thursday."
+llm = "openai.llm/gpt-4.1"
+tts = "deepgram.tts/aura-2-thalia-en"
+stt = "deepgram.stt/nova-3"
 ```
 
 The call itself is `out/call.wav`, both parties on one timeline; the

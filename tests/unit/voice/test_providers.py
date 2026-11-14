@@ -967,8 +967,61 @@ async def test_an_http_session_follows_a_slow_servers_redirect(monkeypatch) -> N
         return real(transport=httpx.MockTransport(handler), **kw)  # ty: ignore[invalid-argument-type]
 
     monkeypatch.setattr(base.httpx, "AsyncClient", with_mock)
-    session = base.HTTPSession()
+    session = base.HTTPSession(follow_redirects=True)
     response = await session.client(5.0).post("https://server/v1/chat/completions")
     assert response.status_code == 200
     assert response.json() == {"ok": True}
     await session.aclose()
+
+
+async def test_an_http_session_does_not_follow_redirects_by_default(
+    monkeypatch,
+) -> None:
+    """httpx drops only ``Authorization`` on a redirect to another host, so a
+    key in a vendor header (ElevenLabs' ``xi-api-key``) would follow it. Only
+    self-hosted providers opt in."""
+    import httpx
+
+    from harbor_voice.providers import base
+
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.host == "api.vendor":
+            return httpx.Response(307, headers={"location": "https://elsewhere/x"})
+        return httpx.Response(200)
+
+    real = httpx.AsyncClient
+
+    def with_mock(**kw: object) -> httpx.AsyncClient:
+        return real(transport=httpx.MockTransport(handler), **kw)  # ty: ignore[invalid-argument-type]
+
+    monkeypatch.setattr(base.httpx, "AsyncClient", with_mock)
+    session = base.HTTPSession()
+    response = await session.client(5.0).post(
+        "https://api.vendor/v1/tts", headers={"xi-api-key": "secret"}
+    )
+    assert response.status_code == 307
+    assert [r.url.host for r in seen] == ["api.vendor"]
+    await session.aclose()
+
+
+def test_only_self_hosted_providers_follow_redirects(monkeypatch) -> None:
+    from harbor_voice.providers.elevenlabs.tts import ElevenLabsTTS
+    from harbor_voice.providers.openai.llm import OpenAILLM
+    from harbor_voice.providers.selfhosted import llm as selfhosted_llm
+    from harbor_voice.providers.selfhosted.omni import OmniLLM
+    from harbor_voice.providers.selfhosted.speech import SelfHostedSTT
+    from harbor_voice.providers.selfhosted.speech import SelfHostedTTS
+
+    monkeypatch.setenv(selfhosted_llm.BASE_URL_ENV, "http://server")
+    following = [
+        selfhosted_llm.build(model="m"),
+        OmniLLM(model="m", base_url="http://server"),
+        SelfHostedSTT(model="m"),
+        SelfHostedTTS(model="m"),
+    ]
+    assert all(p._http._follow_redirects for p in following)
+    assert not OpenAILLM()._http._follow_redirects
+    assert not ElevenLabsTTS()._http._follow_redirects

@@ -57,6 +57,13 @@ uv sync   # harbor-voice, both adapters, all extras, dev tools
 Each trial then installs harbor-voice and the adapter from these source
 folders, so a change runs as it is. Prefix the commands below with `uv run`.
 
+## Try it without API keys
+
+The library has offline providers that need no keys and no network. A
+two-turn call on them takes a few seconds and writes the recording, the
+metrics and a validity report: see the example under
+[The built-in call loop](https://github.com/amoh-ai/harbor-voice/blob/main/docs/library.md#the-built-in-call-loop).
+
 ## Run a benchmark
 
 Each benchmark needs its API keys in your environment, and a one-time setup
@@ -66,7 +73,7 @@ READMEs. Every call is a live session with paid APIs, so start with one call.
 Published datasets run without converting anything:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-control@0.1.1 \
+tau-voice job-config --hub-dataset tau-voice-control@0.1.2 \
     --task-names airline-0-d9c07603 --trials 1 -n 1 \
     --model openai.live/gpt-live-1 --agent-config '{"backend_model": "gpt-6-luna"}' \
     -o one.yaml
@@ -77,10 +84,10 @@ Then a full job: τ-Voice's leaderboard condition, 3 trials per task with 4
 calls at a time, or all of EVA:
 
 ```bash
-tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.1 \
+tau-voice job-config --hub-dataset tau-voice-regular-test@0.1.2 \
     --trials 3 -n 4 --model openai.live/gpt-live-1 \
     --agent-config '{"backend_model": "gpt-6-luna"}' -o tau.yaml
-eva-adapter job-config --hub-dataset eva@0.1.1 \
+eva-adapter job-config --hub-dataset eva@0.1.2 \
     --model openai.realtime/gpt-realtime-1.5 -o eva.yaml
 harbor-voice jobs start -c tau.yaml
 ```
@@ -166,7 +173,7 @@ From a source install:
 
 ```bash
 uv run pytest
-uv run ruff check src adapters tests && uv run ruff format src adapters tests
+uv run ruff check src adapters scripts tests && uv run ruff format src adapters scripts tests
 uv run ty check
 ```
 

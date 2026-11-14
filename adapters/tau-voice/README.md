@@ -63,6 +63,7 @@ start):
 | `TAU2_VOICE_ID_<PERSONA>` | one ElevenLabs voice per tau2 persona: `MATT_DELANEY`, `LISA_BRENNER` (`control`), `MILDRED_KAPLAN`, `ARJUN_ROY`, `WEI_LIN`, `MAMADOU_DIALLO`, `PRIYA_PATIL` (`regular`). `tau-voice voices create --yes` makes them once, as tau2's `setup_voices` does (same prompts, settings and seed), and prints these lines; `tau-voice voices list` prints them again |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | tau2's hallucination reviewer, Claude Opus 4.5 on Bedrock |
 | `TAU_VOICE_REVIEW_MODEL` | optional: another reviewer model |
+| the agent's own keys | another agent's provider keys, e.g. `GEMINI_API_KEY` for `google.live`, `DEEPGRAM_API_KEY` for a cascade's STT; harbor-voice's agent passes the ones its providers need |
 
 ## One call
 
@@ -152,15 +153,16 @@ agent's kwargs, which the driver reads. Without job-config:
 `--ak agent_json='<a cascade AgentSpec>' --ak 'call_config={"allow_cascade": true}'`.
 `--agent-config` takes per-slot settings, e.g. `'{"llm": {"temperature": 0}}'`.
 OpenAI reasoning models (`gpt-6-luna`) refuse tools on chat completions at
-their default effort, so give them `'{"llm": {"reasoning_effort": "none"}}'`.
+their default effort, so give them `'{"llm": {"reasoning_effort": "none"}}'`,
+or `'{"llm": {"api": "responses", "reasoning_effort": "low"}}'` to reason.
 A provider failure that cannot clear by itself (a rejected key, a refused
 request) ends the call as an error rather than a silent agent.
 The STT slot must be `deepgram.stt`: Deepgram finds the turns, as in tau2,
 and any other STT is refused before the call starts. Any registered TTS
 works. The LLM slot has to keep the whole
 conversation, tool results included: `openai.llm`, `selfhosted.llm`,
-`litellm.llm` (which also reaches Bedrock, as `litellm.llm/bedrock/...`) and
-the offline LLMs do; `aws.bedrock-llm` does not, and is refused.
+`litellm.llm`, `aws.bedrock-llm` and the offline echo LLMs do; any other is
+refused.
 
 The cascade follows tau2's own cascaded adapter (its `livekit` provider,
 `CascadedVoiceProvider` and `LiveKitCascadedAdapter`), with harbor-voice's
@@ -196,8 +198,10 @@ Differences from tau2:
   scored.
 - The LLM answers in one call instead of streaming tokens; tau2 waits for the
   whole reply before speaking too, so what the caller hears is the same.
-- A failed provider call is recorded in the attempt's `summary.json`
-  (`agent.errors`) and the call goes on, as tau2 logs it and goes on.
+- A provider call that fails in a way that can clear by itself (a rate
+  limit, a timeout) is recorded in the attempt's `summary.json`
+  (`agent.errors`) and the call goes on, as tau2 logs it and goes on. One
+  that cannot clear ends the call as an error, as said above.
 
 ## Images
 

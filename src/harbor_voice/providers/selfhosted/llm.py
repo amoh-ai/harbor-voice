@@ -44,6 +44,7 @@ def build(*, model: str, **config: Any) -> OpenAILLM:
         model=model,
         api_base=base.rstrip("/").removesuffix("/v1") + "/v1",
         api_key=key,
+        follow_redirects=config.pop("follow_redirects", True),
         **config,
     )
     llm.name = NAME

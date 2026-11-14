@@ -96,5 +96,12 @@ class OmniCascadeTransport(CascadeTransport):
         )
 
     @property
+    @override
+    def heard(self) -> list[str]:
+        """Nothing: the omni model never writes down what it heard, so there
+        is no HEARD side (an empty line would read as "heard silence")."""
+        return []
+
+    @property
     def omni_turns(self) -> Sequence[OmniTurn]:
         return tuple(self._turns)
