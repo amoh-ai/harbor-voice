@@ -25,6 +25,10 @@ dependencies = [
     "harbor==0.25.0",
     "numpy>=2.0",
     "websockets>=13.0",
+    # litellm.llm (harbor pulls litellm in too). Before 1.108.8 every call
+    # with tools imported litellm's MCP proxy code, which needs `mcp`, a
+    # package litellm does not install: a cascade failed on its first tool.
+    "litellm>=1.108.8",
     # Real G.711 for telephony wire formats (harbor_voice/audio/g711.py).
     # audioop left the stdlib in 3.13; audioop-lts is its maintained port.
     "audioop-lts>=0.2; python_version >= '3.13'",
