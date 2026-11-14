@@ -158,9 +158,14 @@ PERSONA_FRAMING = (
     "You are the caller in a phone call to a voice agent, and you play this "
     "person:\n\n{brief}\n\nStay in character. Reply with only the words you "
     "say aloud, one or two short sentences at a time; the agent's words come to "
-    "you as the other side of the call. The call has just connected: say your "
-    "opening line."
+    "you as the other side of the call. When the call is over (your goal is "
+    "done, or you give up), say your goodbye and end that line with "
+    "{end_marker} to hang up. The call has just connected: say your opening "
+    "line."
 )
+END_CALL = "[END CALL]"
+"""What a persona caller ends its last line with to hang up. Stripped before
+the line is spoken."""
 """The persona's instructions, sent as the conversation's first message so
 any LLM provider takes them, whatever it does with a system prompt."""
 
@@ -180,6 +185,7 @@ class PersonaContent:
     llm: Any
     max_turns: int = 20
     _said: list[str] = field(default_factory=list, init=False)
+    _hung_up: bool = field(default=False, init=False)
 
     @property
     def kind(self) -> SourceKind:
@@ -198,9 +204,9 @@ class PersonaContent:
         assistant's, the agent's as the user's. ``heard`` is what the agent
         said, not anything about the turn.
         """
-        if len(self._said) >= self.max_turns:
+        if self._hung_up or len(self._said) >= self.max_turns:
             return None
-        opening = PERSONA_FRAMING.format(brief=self.brief)
+        opening = PERSONA_FRAMING.format(brief=self.brief, end_marker=END_CALL)
         history: list[str] = []
         prompt = opening
         if self._said:
@@ -215,10 +221,22 @@ class PersonaContent:
         # Concatenated: a streaming LLM yields raw fragments (", I'll"),
         # which a space-join mangles.
         text = "".join(chunks).strip()
+        if text.rstrip(" .!\"'").endswith(END_CALL):
+            # Only at the end of a line, where it was asked for: a model that
+            # quotes its instructions has not hung up. The goodbye is still
+            # spoken; the call ends after it.
+            self._hung_up = True
+            text = text.rstrip(" .!\"'").removesuffix(END_CALL).strip()
         if not text:
             return None
         self._said.append(text)
         return Content(text=text, intent=None)
 
+    @property
+    def hung_up(self) -> bool:
+        """Whether the caller ended the call (rather than running out of turns)."""
+        return self._hung_up
+
     def reset(self) -> None:
         self._said = []
+        self._hung_up = False

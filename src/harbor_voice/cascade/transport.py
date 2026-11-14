@@ -85,6 +85,7 @@ class CascadeTransport(VoiceTransport):
         self._inbound: list[AudioFrame] = []
         self._outbound: asyncio.Queue[AudioFrame | None] = asyncio.Queue()
         self._watcher: asyncio.Task[None] | None = None
+        self._failure: BaseException | None = None
         self._last_input_at: float | None = None
         self._seq = 0
         self._history: list[str] = []
@@ -151,6 +152,7 @@ class CascadeTransport(VoiceTransport):
         self._outbound = asyncio.Queue()
         self._inbound = []
         self._last_input_at = None
+        self._failure = None
         self._watcher = asyncio.create_task(self._watch_for_turn_end())
 
     @override
@@ -186,6 +188,8 @@ class CascadeTransport(VoiceTransport):
             while True:
                 frame = await self._outbound.get()
                 if frame is None:
+                    if self._failure is not None:
+                        raise self._failure
                     return
                 yield frame
 
@@ -194,17 +198,29 @@ class CascadeTransport(VoiceTransport):
     # -------------------------------------------------------------- engine
 
     async def _watch_for_turn_end(self) -> None:
-        """Run the pipeline once the input side goes quiet."""
-        while True:
-            await asyncio.sleep(self._input_idle_s / 2)
-            if not self._inbound or self._last_input_at is None:
-                continue
-            if self._clock.now() - self._last_input_at < self._input_idle_s:
-                continue
-            turn_audio = list(self._inbound)
-            self._inbound = []
-            self._last_input_at = None
-            await self._run_pipeline(turn_audio)
+        """Run the pipeline once the input side goes quiet.
+
+        A slot that fails (a provider error, a broken stream) ends the
+        agent's audio with that error, so the call stops on it. Left to
+        itself the task would end silently, and every later turn would wait
+        out its timeout for a reply nobody is making.
+        """
+        try:
+            while True:
+                await asyncio.sleep(self._input_idle_s / 2)
+                if not self._inbound or self._last_input_at is None:
+                    continue
+                if self._clock.now() - self._last_input_at < self._input_idle_s:
+                    continue
+                turn_audio = list(self._inbound)
+                self._inbound = []
+                self._last_input_at = None
+                await self._run_pipeline(turn_audio)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - handed to the reader of rx()
+            self._failure = exc
+            await self._outbound.put(None)
 
     async def _run_pipeline(self, audio: list[AudioFrame]) -> None:
         """STT -> LLM -> TTS, marking each seam as it is crossed."""

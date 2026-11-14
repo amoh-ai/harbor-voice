@@ -135,6 +135,27 @@ class TestContentSources:
         assert prompt == "What is your booking code?"
         assert history == [opening, "caller line 1"]
 
+    async def test_persona_hangs_up_after_its_goodbye(self) -> None:
+        class Scripted:
+            name = "scripted"
+
+            def __init__(self, lines: list[str]) -> None:
+                self.lines = lines
+
+            async def respond(self, prompt, history):  # noqa: ANN001, ANN202
+                yield self.lines.pop(0)
+
+        source = PersonaContent(
+            brief="x", llm=Scripted(["Hi.", "Thanks, goodbye! [END CALL]", "more"])
+        )
+        assert (await source.next([])).text == "Hi."  # ty: ignore[possibly-missing-attribute]
+        last = await source.next(["Done."])
+        assert last is not None and last.text == "Thanks, goodbye!"
+        assert source.hung_up
+        assert await source.next(["Bye."]) is None
+        source.reset()
+        assert not source.hung_up
+
     async def test_persona_stops_at_its_turn_cap(self) -> None:
         source = PersonaContent(brief="x", llm=EchoLLM(), max_turns=2)
         assert await source.next(["a"]) is not None
